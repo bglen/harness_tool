@@ -209,7 +209,7 @@ export function derive(h: Harness, cat: CatalogIndex, settings: Pick<Settings, "
       if (!ext) continue;
       const [a, b] = extentCoverage(s, ext);
       if (b - a <= 0) continue;
-      const part = cat.layer(l.pn);
+      const part = cat.layer(ext.pn ?? l.pn);
       const t = layerThickness(l, part);
       od += 2 * t;
       stack.push({ layer: l, part, thicknessMm: t, odAfterMm: od, partial: a > 0.01 || b < s.lengthMm - 0.01 });

@@ -309,16 +309,24 @@ export function terminationDiameter(h: Harness, d: Derived, t: Termination): num
 function autoSizeParts(h: Harness, d: Derived, cat: CatalogIndex) {
   // Layers: resize unpinned layers to the diameter underneath (§6.6).
   for (const l of h.layers) {
-    if (l.pinned) continue;
-    let dia = 0;
-    for (const e of l.extents) dia = Math.max(dia, diameterUnderLayer(d, e.segmentId, l.id));
-    const current = cat.layer(l.pn);
-    const material = current?.material ?? (l.material || undefined);
-    const part = cat.layerFor(l.type, material, Math.max(dia, 0.5)) ?? cat.layerFor(l.type, undefined, Math.max(dia, 0.5));
-    if (part) {
-      l.pn = part.pn;
-      l.material = part.material;
+    if (l.pinned) {
+      for (const e of l.extents) delete e.pn;
+      continue;
     }
+    const material = l.material || cat.layer(l.pn)?.material || undefined;
+    const pick = (dia: number) => cat.layerFor(l.type, material, Math.max(dia, 0.5)) ?? cat.layerFor(l.type, undefined, Math.max(dia, 0.5));
+    // Primary part sized for the largest diameter; smaller segments get their own size when needed.
+    const dias = l.extents.map((e) => diameterUnderLayer(d, e.segmentId, l.id));
+    const primary = pick(Math.max(0, ...dias));
+    if (primary) {
+      l.pn = primary.pn;
+      l.material = primary.material;
+    }
+    l.extents.forEach((e, i) => {
+      const cur = primary && dias[i]! >= primary.minDiaMm && dias[i]! <= primary.maxDiaMm ? primary : pick(dias[i]!);
+      if (cur && cur.pn !== l.pn) e.pn = cur.pn;
+      else delete e.pn;
+    });
   }
   // Backshells: keep style/angle, pick the size whose cable clamp fits (§6.1).
   for (const c of h.connectors) {

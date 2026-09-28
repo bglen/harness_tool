@@ -115,7 +115,8 @@
     "selected": {
       "qty": 10,
       "tier": "standard"
-    }
+    },
+    "customerFurnished": []
   },
   "revisions": [
     {
@@ -1192,13 +1193,16 @@
                 "segmentId": "c2faf22b-def6-464e-a893-5402f6cafc11"
               },
               {
-                "segmentId": "963572f5-0748-4afa-ae02-4e4cf91d6869"
+                "segmentId": "963572f5-0748-4afa-ae02-4e4cf91d6869",
+                "pn": "HSL-OB-TC-06"
               },
               {
-                "segmentId": "d3651966-f6c5-48a2-ace3-eeb3e167b6ed"
+                "segmentId": "d3651966-f6c5-48a2-ace3-eeb3e167b6ed",
+                "pn": "HSL-OB-TC-06"
               },
               {
-                "segmentId": "1094bfd7-4d75-4506-a322-bed22863a3c9"
+                "segmentId": "1094bfd7-4d75-4506-a322-bed22863a3c9",
+                "pn": "HSL-OB-TC-06"
               }
             ],
             "stackOrder": 2,

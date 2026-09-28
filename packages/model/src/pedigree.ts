@@ -78,9 +78,3 @@ export function monotonicityWarnings(scheme: PedigreeScheme): string[] {
   }
   return out;
 }
-
-/** Curated CVD-checked pedigree hues (§16.3). Index = Pedigree.color. */
-export const PEDIGREE_COLORS = {
-  dark: ["#8A93A0", "#56B4E9", "#E69F00", "#009E73", "#CC79A7", "#F0E442", "#D55E00", "#B8A6FF"],
-  light: ["#646C79", "#0072B2", "#A66A00", "#007A5A", "#A24D86", "#8A7F00", "#B54A00", "#6B55C9"],
-};

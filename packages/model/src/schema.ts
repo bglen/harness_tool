@@ -157,6 +157,8 @@ export const LayerExtentSchema = z.object({
   /** Distance from node A in mm; undefined = segment start */
   startMm: z.number().optional(),
   endMm: z.number().optional(),
+  /** Per-segment part when one size can't cover every segment (e.g. braid on branches vs trunk). */
+  pn: z.string().optional(),
 });
 export type LayerExtent = z.infer<typeof LayerExtentSchema>;
 
@@ -499,7 +501,14 @@ export const ProjectSchema = z.object({
   presets: z.array(FinishingPresetSchema).default([]),
   titleBlock: TitleBlockSchema.default({}),
   report: ReportTextSchema.default({}),
-  quote: z.object({ quantities: z.array(z.number().int().positive()).default([1, 5, 10, 25, 100]), selected: z.object({ qty: z.number(), tier: z.string() }).default({ qty: 10, tier: "standard" }) }).default({}),
+  quote: z
+    .object({
+      quantities: z.array(z.number().int().positive()).default([1, 5, 10, 25, 100]),
+      selected: z.object({ qty: z.number(), tier: z.string() }).default({ qty: 10, tier: "standard" }),
+      customerFurnished: z.array(z.string()).default([]),
+      highestOrderedPedigree: z.string().optional(),
+    })
+    .default({}),
   revisions: z.array(RevisionSchema).min(1),
   currentRevisionId: z.string(),
   catalogVersion: z.string().default(""),

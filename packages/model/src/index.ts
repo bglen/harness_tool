@@ -10,3 +10,4 @@ export * from "./sync";
 export * from "./commands";
 export * from "./project";
 export * from "./hash";
+export * from "./profile";

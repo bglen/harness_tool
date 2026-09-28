@@ -115,7 +115,8 @@
     "selected": {
       "qty": 10,
       "tier": "standard"
-    }
+    },
+    "customerFurnished": []
   },
   "revisions": [
     {

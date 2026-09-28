@@ -231,7 +231,7 @@ function readJson(rel: string): unknown {
   }
 }
 
-const profile = readJson("profile/machine-profile.json") as { version: string; rules: unknown[] } | null;
+const profile = readJson("profile/machine-profile.json") as { version: string; rules: unknown[]; capabilities: Record<string, unknown> } | null;
 const MachineProfileSchema = z.object({ version: z.string(), name: z.string(), capabilities: z.record(z.string(), z.any()), rules: z.array(RuleInstanceSchema) });
 if (profile) {
   const r = MachineProfileSchema.safeParse(profile);
@@ -325,7 +325,7 @@ writeFileSync(join(OUT, "inspections.json"), JSON.stringify(inspections));
 writeFileSync(join(OUT, "pricing.json"), JSON.stringify(pricing));
 writeFileSync(join(OUT, "library.json"), JSON.stringify({ rulesets: rulesets.map((r) => r!.ruleset), presets }));
 
-const examples = buildExamples(full, (profile as { capabilities: Record<string, unknown> }).capabilities);
+const examples = buildExamples(full, profile!.capabilities);
 writeFileSync(join(OUT, "examples.json"), JSON.stringify(examples.map((e) => ({ id: e.id, name: e.name, description: e.description }))));
 mkdirSync(join(ROOT, "data", "examples"), { recursive: true });
 for (const e of examples) {

@@ -859,7 +859,11 @@ export const updateLayer = def<{ id: string; pn?: string; material?: string; par
   run(proj, p) {
     const l = H(proj).layers.find((x) => x.id === p.id);
     if (!l) return;
-    if (p.pn) (l.pn = p.pn), (l.pinned = true);
+    if (p.pn) {
+      l.pn = p.pn;
+      l.pinned = true;
+      for (const e of l.extents) delete e.pn;
+    }
     if (p.material) (l.material = p.material), (l.pinned = false);
     if (p.params) l.params = { ...l.params, ...p.params };
     if (p.pinned !== undefined) l.pinned = p.pinned;
@@ -1273,6 +1277,16 @@ export const setQuoteSelection = def<{ qty?: number; tier?: string; quantities?:
     if (p.quantities) proj.quote.quantities = [...new Set(p.quantities)].sort((a, b) => a - b);
     if (p.qty !== undefined) proj.quote.selected.qty = p.qty;
     if (p.tier) proj.quote.selected.tier = p.tier;
+  },
+});
+
+export const setCustomerFurnished = def<{ pn: string; furnished: boolean }>("setCustomerFurnished", {
+  label: (p) => (p.furnished ? `Customer-furnished: ${p.pn}` : `We supply: ${p.pn}`),
+  allowFrozen: true,
+  run(proj, p) {
+    const list = proj.quote.customerFurnished.filter((x) => x !== p.pn);
+    if (p.furnished) list.push(p.pn);
+    proj.quote.customerFurnished = list;
   },
 });
 
