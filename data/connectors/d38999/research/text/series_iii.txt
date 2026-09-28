@@ -1,0 +1,948 @@
+
+=== PDF PAGE 86 ===
+                                                                           MIL-                   DTL-38999N
+                                                                          w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                     PLUG
+
+
+                          FIGURE 3.  Connector intermateability dimensions (series III)                             - Continued.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                     86
+                                          Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 87 ===
+                                                                            MIL-                   DTL-38999N
+                                                                           w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                           FIGURE 3.  Connector intermateability dimensions (series III)                             - Continued.
+
+
+
+
+
+                                                                                      87
+                                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                       Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 88 ===
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       MIL-                   DTL-38999N
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                   A                                                                                                                                                                                   C                                                                                                                                                                                  D                                                                                                                                                                                   E                                                                                                                                                                                    F
+                                                                                                            Shell                                                                                                                                                                   Gasket                                                                                                                                                   (see note 3)                                                                                                                                                                                                    Socket                                                                                                                                                                                                   dia                                                                                                                                                                                 dia
+                                                                                                                  size                                                                                                                                                           location                                                                                                                                                                                                                                                                                                                                                                            insert                                                                                                                                                                                    max
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        location
+
+                                                                                                                                 9                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     14.55                                                                                                                                                               14.42 14.14
+
+
+                                                                                                                          11                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 17.73                                                                                                                                                               17.60
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           17.32
+
+                                                                                                                          13                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 20.90                                                                                                                                                               20.77
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           20.49
+
+                                                                                                                          15                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 24.08                                                                                                                                                               23.95
+                                                                                                                                                                                                                                                                                            14.73                                                                                                                                                                                      3.25                                                                                                                                                                                0.94                                                                                                                                                                                                                                                                                                                                                            23.67
+
+                                                                                                                          17                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 28.52                                                                                                                                                               28.30 14.50 max 0.64 27.97
+
+
+                                                                                                                          19                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 30.12                                                                                                                                                               29.89 29.56
+
+
+                                                                                                                          21                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 33.30                                                                                                                                                               33.07 32.74
+
+
+                                                                                                                          23                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 36.47                                                                                                                                                               36.24
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           35.91
+
+                                                                                                                          25                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 39.65                                                                                                                                                               39.42
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           39.02
+
+
+                                                                                                                                                                              FIGURE 3.  Connector intermateability dimensions (series III)                             - Continued.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        88
+                                                                                                                                                                                                                                                                                     Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                                                                                                                                                                                                                                           Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 89 ===
+                                                                                                                                                                                                                       MIL-                   DTL-38999N
+                                                                                                                                                                                                                    w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                  FF                                                                 G                                                                H                                                            H                                                       J                                                      J
+                                                              Shell                                                                               dia                                                             dia                                                              dia                                                         dia                                                    dia                                                    dia
+                                                                 size                                                                             min                                                         +.13                                                      (except                                                   (classes                                                  (except                                             (classes
+                                                                                                                                                                                                                -.25                                                   classes                                                           J & M                                             classes         J & M
+                                                                                                                                                                                                                                                                          J & M)                                                           only)                                              J & M)                                                     only)
+
+                                                                        9                                                                                                                                                                                   11.48                                                                                                                                                                            7.24                                                                                                                          11.36 11.43 12.63 12.70
+                                                                                                                                                                                                                                                                            11.20                                                        11.20                                                  12.34                                                  12.34
+                                                                     11                                                                                                                                                                         14.73                                                                                                                                                                  10.49                                                                                                               14.61 14.68 15.88 15.95
+                                                                                                                                                                                                                                                                            14.45                                                        14.45                                                  15.60                                                  15.60
+                                                                     13                                                                                                                                                                         17.58                                                                                                                          13.39                                                                                                               17.45 17.52 19.66 19.73
+                                                                                                                                                                                                                                                                            17.30                                                        17.30                                                  19.38                                                  19.38
+                                                                     15                                                                                                                                                                         20.75                                                                                                                          16.56                                                                                                               20.63 20.70 22.84 22.91
+                                                                                                                                                                                                                                                                            20.44                                                        20.44                                                  22.56                                                  22.56
+                                                                     17                                                                                                                                                                         23.92                                                                                                                          19.74                                                                                                               23.80 23.87 26.01 26.08
+                                                                                                                                                                                                                                                                            23.64                                                        23.64                                                  25.73                                                  25.73
+                                                                     19                                                                                                                                                                         26.59                                                                                                                          22.00                                                                                                               26.47 26.54 28.63 28.70
+                                                                                                                                                                                                                                                                            26.31                                                        26.31                                                  28.40                                                  28.40
+                                                                     21                                                                                                                                                                         29.77                                                                                                                          25.17                                                                                                               29.64 29.71 31.85 31.92
+                                                                                                                                                                                                                                                                            29.49                                                        29.49                                                  31.57                                                  31.57
+                                                                     23                                                                                                                                                                         32.94                                                                                                                          28.35                                                                                                               32.82 32.89 35.03 35.10
+                                                                                                                                                                                                                                                                            32.66                                                        32.66                                                  34.75                                                  34.75
+                                                                     25                                                                                                                                                                         36.12                                                                                                                          31.52                                                                                                               35.99 36.06 38.20 38.27
+                                                                                                                                                                                                                                                                            35.84                                                        35.84                                                  37.92                                                  37.92
+
+
+                                                                            FIGURE 3.  Connector intermateability dimensions (series III)                             - Continued.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                                                                                   89
+                                                                                                                          Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                                                                                              Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 90 ===
+                                                                                                                                              MIL-                   DTL-38999N
+                                                                                                                                            w/AMENDMENT 2
+
+
+
+               Shell                                           K                                        M                                          N                                         P                                         R                                         S                                         T
+                 size                                      max                                         pin                                      pin                                       pin                                       dia                                       pin                                       dia
+                                                                                                contact                                     insert                                 contact                                        max                                     insert                                      +.25
+                                                                                               location                                  location                                  location                                                                            location                                        -.03
+                      9                                 11.84                                                                                                                                                                   15.88                                                                               16.51
+                   11                                   15.01                                                                                                                                                                   19.05                                                                               19.69
+                   13                                   19.08                                                                                                                                                                   22.23                                                                               22.86
+                   15                                   22.25                                     10.54                                     15.46                                       6.15                                    25.40                                       0.65                                    26.04
+                   17                                   25.43                                       9.50                                    15.04                                       5.11                                    30.16                                       0.24                                    30.89
+                   19                                   28.60                                                                                                                                                                   31.75                                                                               32.49
+                   21                                   31.78                                                                                                                                                                   34.73                                                                               35.66
+                   23                                   34.95                                                                                                                                                                   38.10                                                                               38.84
+                   25                                   38.13                                                                                                                                                                   41.28                                                                               42.01
+
+    Shell                             U                           U                       U'                            V                               W                                  W                                 W'                                  X                                Y                               Z
+     size                           dia                         dia                     dia                          dia              dia                                                dia                                dia             dia                                              (see                         socket
+                           min/max                              +.13                        min                    over          between                                        between                                    min                               min                         note 3)                           insert
+                                                                 -.03                                              keys                             keys                               keys                           front of                                                                                          location
+                                                                                                                                               (except                           (classes                                 keys
+                                                                                                                                               classes                               J & M
+                                                                                                                                                 J & M)                               only)
+          9                                                                                    9.969.83      8.51 12.27                           11.13                              11.13                              10.59                                                                                7.92
+                                  9.55                                                                           11.99                            10.97                              10.85
+        11                                                                      13.19 13.06   11.74              15.52                            14.38                              14.38                              13.84                                                                      10.92
+                                12.61                                                                            15.24                            14.22                              14.10
+        13                      16.08                         15.95                   14.63                      19.31                            17.22                              17.22                              16.68                                                                      13.81
+                                15.45                                                                            19.02                            17.07                              16.95
+        15                      19.26                         19.13                   17.81                      22.48                            20.40                              20.40                              19.86                                                                      16.99                                                              12.45 15.06
+                                18.63                                                                            22.20                            20.24                              20.12                                                                                                    min                          14.76
+        17                                                                      22.43 22.30  20.98               25.66                            23.57                              23.57                              23.03                                                                      20.16
+                                21.80                                                                            25.37                            23.42                              23.30
+        19                      24.82                         24.69   23.57                                      28.32                            26.24                              26.24                              25.70                                                                      22.42
+                                24.47                                                                            28.04                            26.09                              25.97
+        21                                                                      27.99 27.86  26.74               31.50                            29.42                              29.42                              28.87                                                                      25.60
+                                27.64                                                                            31.22                            29.26                              29.14
+        23                                                                      31.17 31.04 29.92                34.67                            32.59                              32.59                              32.05                                                                      28.77
+                                30.82                                                                            34.39                            32.44                              32.32
+        25                      34.34                         34.21                   33.09                      37.85                            35.77                              35.77                              35.22                                                                      31.92
+                                33.99                                                                            37.57                            35.61                              35.49
+
+
+                                                  FIGURE 3.  Connector intermateability dimensions (series III)                             - Continued.
+
+
+
+
+                                                                                                                                                                 90
+                                                                                Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                                                         Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 91 ===
+                                                                                                                                                             MIL-                   DTL-38999N
+                                                                                                                                                           w/AMENDMENT 2
+
+
+
+
+
+
+
+
+                                                                                                                                                                           BB thread
+                                                                                                                                                           (plated or finished)
+                                                                                                                                                      (see notes 10 and 17)
+                                                                                                                                                                                                                                            External thread
+
+                                                                             Designation                                                                                                                                                         limits of size
+              Shell                                                                                                                                                                                                                                     class 2A
+                size
+                                      Thread                         Pitch                    Lead                     Allowance                                       Major diameter                                                          Pitch diameter                                                      Minor diameter
+                                            size                                                                                                                                       Limits                                                                 Limits                                                               Limits
+                                                                                                                     (see
+                                                                                                                           note 18)                                          tolerance is                                                           tolerance is
+                                                                                                                                                                                        .0080                                                                  .0080
+
+                                                                                                                                                                        max                                 min                                max                                  min                               max                               min
+                     9                   .6250                                                                                                                        .6235                                             .6155                                                     .5975                                                    . 5895                                                  .5675                                           .5535
+                   11                    .7500                                                                                                                        .7485                                             .7405                                                     .7225                                                    . 7145                                             .6925                                       .6785
+                   13                    .8750                             .1                       .3                          .0015                                 .8735                                             .8655                                                     .8475                                                     .8395                                             .8175                                       .8035
+
+                   15                 1.0000                                                                                                                          .9985                                             .9905                                                     .9725                                                     .9645                                                  .9425                                           .9285
+
+                                                                                                                       Allowance
+                                                                                                                                                                       Major diameter                                                          Pitch diameter                                                      Minor diameter
+              Shell                   Thread                         Pitch                    Lead                   (see                                                              Limits                                                                 Limits                                                               Limits
+                size                        size                                                                           note 18)
+                                                                                                                                                                             tolerance is                                                           tolerance is
+                                                                                                                                                                                        .0120                                                                  .0100
+                                                                                                                                                                        max                                 min                                max                                  min                               max                               min
+
+                   17                 1.1875                                                                                                                       1.1855                             1.1735                              1.1515                               1.1415                            1.1135                           1.0955
+                   19                 1.2500                                                                                                                       1.2480                                   1.2360                                          1.2140                                          1.2040                                   1.1760                           1.1580
+                   21                 1.3750                               .1                       .3                          .0020                              1.3730                                   1.3610                                          1.3390                                          1.3290                                   1.3010                           1.2830
+
+                   23                                                1.500                                                                                                                                                                                                                                                                                                                                                                                                                                                                1.4980                                   1.4860                                          1.4640                                          1.4540                                   1.4260                           1.4080
+                   25                                                1.625                                                                                                                                                                                                                                                                                                                                                                                                                                                                1.6230                                   1.6110                                          1.5890                                          1.5790                                   1.5510                           1.5330
+
+
+                                                       FIGURE 3.  Connector intermateability dimensions (series III)                             – Continued.
+
+
+
+
+
+
+
+
+
+                                                                                                                                                                                  91
+                                                                                         Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                                                                 Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 92 ===
+                                                                  MIL-                   DTL-38999N
+                                                                 w/AMENDMENT 2
+
+
+
+
+
+
+
+
+                                                                        DD thread
+                                                                          (plated)
+                                                               (see notes                     10 and 17)
+                                                                                                  Internal thread
+                                Designation                                                         limits of size
+        Shell                                                                                          class 2B
+         size
+                    Thread           Pitch           Lead            Minor diameter                 Pitch diameter               Major diameter
+                       size                                                                                         Limits Limits       Limits
+
+                                                                       tolerance is                    tolerance is
+                                                                            .0100                          .0100
+
+                                                                      min            max             min            max            min          max
+           9          .6250                                          .5792           .5892          .5990          .6090          .6290        .6450
+
+          11          .7500             .1             .3            .7042           .7142          .7240          .7340          .7540        .7700
+
+          13          .8750                                          .8292           .8392          .8490          .8590          .8790        .8950
+          15         1.0000                                          .9542           .9642          .9740          .9840        1.0040        1.0200
+                                                                     Minor diameter                 Pitch diameter               Major diameter
+        Shell       Thread           Pitch           Lead
+         size          size                                                                                         Limits Limits       Limits
+
+                                                                       tolerance is                    tolerance is
+                                                                            .0120                          .0120
+
+                                                                      min            max             min            max            min          max
+          17         1.1875                                        1.1274          1.1394         1.1535          1.1655        1.1915        1.2115
+          19                            .1             .3
+                     1.2500                                        1.1900          1.2020         1.2160          1.2280        1.2540        1.2740
+          21         1.3750                                        1.3150          1.3270         1.3410          1.3530        1.3790        1.3990
+          23
+                     1.5000                                        1.4400          1.4520         1.4660          1.4780        1.5040        1.5240
+          25         1.6250                                        1.5650          1.5770         1.5910          1.6030        1.6290        1.6490
+
+
+                       FIGURE 3.  Connector intermateability dimensions (series III)                             – Continued.
+
+
+
+
+
+
+
+
+
+
+                                                                           92
+                                     Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                  Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 93 ===
+                                                                             MIL-                   DTL-38999N
+                                                                            w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+                 NOTES:
+              1                             .    Dimensions are in millimeters (except coupling threads).
+              2                             .                                 Inch equivalents are given for general information only.
+              3                             .                                 A point at which a gauge pin, having the same basic diameter as the mating contact and a
+                        square face, touches socket contact spring.
+                                  4.                                 Details "A" (socket entry)  and "B" (pin barrier)                         on figure 14 apply to both plugs and
+                        receptacles.
+              5                             .                                 "A" initial contact with static seal.
+              6                             .                                 Insert front surface shall be flat within 0.13 mm TIR.
+              7                             .                                 Diameters “H” and “G” shall be concentric within 0                             .13 mm TIR at MMC.
+              8                             .                                 Diameter “W” with respect to diameter V shall be concentric at MMC.
+              9                             .    Dimension “K” is for clearance of mounting screw heads.
+              1                   0.   Thread approach modified to eliminate cross-threading.
+              1                   1.   Receptacle coupling threads may have modified minor diameters.
+              1                   2.   Flycuts are an optional design for composite.
+              1                   3.   The "E" dimension does not apply.
+              1                   4.   Witness marks as result of threading are permissible on "F" diameter.
+              1                   5.   Diameter “W” (dia between keys) is for metallic and composite plugs, diameter “W’ (W
+                        prime min –                              dia front of keys)” is for metallic and composite plugs, diameter “U” is for
+                        metallic plugs, and diameter “U’ (U prime min)” is for composite plugs.
+              1                   6.   Red band location is critical.  Dimensional verification of red band location is performed in
+                        Group A Inspection.
+              17.                       Threads are modified 60°                                                 stub configuration.
+              18.                       Gauges for plated threads:  Maximum gauging limits of class 2A threads which are plated,
+                        are increased by the allowance.  Unplated threads, for example class K, may be checked
+                        with standard after plate gauges.
+                19.   Radius shall be 0.4 mm (.016 in) minimum, or optional chamfer shall be 0.18                            mm (.007 in)
+                        X 45° ± 5° angle minimum.  When the receptacle is mated to the plug, the radius or
+                        chamfer shall neither damage the plug's EMI band                                      nor impede EMI sealing.
+                20.                     For shell size code used for part numbering, see table I.
+
+
+                           FIGURE 3.  Connector intermateability dimensions (series III)                             – Continued.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                                       93
+                                            Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                       Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 94 ===
+                                                                    MIL-                   DTL-38999N
+                                                                   w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                      NOTE:  Detail XX applicable to EMI grounding plug only.
+
+
+                                                                         mm               Inches
+                                                                        0.05               .002
+                                                                        0.13               .005
+                                                                        3.38               .113
+                                                                       13.34               .525
+                                                                       15.82               .623
+
+
+
+                                  FIGURE 4.  Connector intermateability dimensions (series IV)                            .
+
+
+
+
+
+
+
+
+
+                                                                              94
+                                       Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                   Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 103 ===
+                                                                       MIL-                   DTL-38999N
+                                                                      w/AMENDMENT 2
+
+
+
+
+
+
+                                                                                                 Minor key/keyway rotations
+           Shell                    Key and keyway
+            size                       arrangement                            AR° or                  BR° or                 CR°                                                          or  DR°                                                          or
+                                   identification letter                    AP° BSC                 BP° BSC                CP° BSC                 DP° BSC
+                                                N                               105                     140                     215                    265
+                                                A                               102                     132                     248                    320
+              9                                 B                                80                     118                     230                    312
+                                                C                                35                     140                     205                    275
+                                                D                                64                     155                     234                    304
+                                                E                                91                     131                     197                    240
+                                                N                                95                     141                     208                    236
+             11,                                A                               113                     156                     182                    292
+             13,                                B                                90                     145                     195                    252
+            and                                 C                                53                     156                     220                    255
+             15                                 D                               119                     146                     176                    298
+
+                                                E                                51                     141                     184                    242
+                                                N                                80                     142                     196                    293
+             17                                 A                               135                     170                     200                    310
+            and                                 B                                49                     169                     200                    244
+             19                                 C                                66                     140                     200                    257
+
+                                                D                                62                     145                     180                    280
+                                                E                                79                     153                     197                    272
+                                                N                                80                     142                     196                    293
+             21,                                A                               135                     170                     200                    310
+             23,                                B                                49                     169                     200                    244
+            and                                 C                                66                     140                     200                    257
+             25                                 D                                62                     145                     180                    280
+                                                E                                79                     153                     197                    272
+   NOTES:
+   1.  Dimensions are in millimeters.
+   2.  Inch equivalents are given for information only.
+   3.  All angles are BSC.
+   4.  The insert arrangement does not rotate with main                   key/keyway.
+   5.         For alternate rotations A through E, the main key stays fixed, and the minor keys rotate.
+
+
+
+
+                                     FIGURE 6                   Connector intermateability dimensions.
+                                                                                                                                                                                                                              Main key / keyway polarization (series III) - Continued.
+
+
+
+
+
+
+
+
+                                                                                103
+                                        Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                    Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 120 ===
+                                                                MIL-                   DTL-38999N
+                                                               w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+           Inches          mm         Inches          mm         Inches          mm         Inches          mm          Inches         mm
+
+             .001         0.03          .219         5.56          .641         16.28         .899         22.83        1.219         30.96
+             .005         0.13          .241          6.12         .666         16.92          .942        23.93        1.235         31.37
+             .006         0.15          .299          7.59         .673         17.09          .969        24.61        1.250         31.75
+             .008         0.20          .344          8.74         .711         18.06          .985        25.02        1.272         32.31
+             .010         0.25          .387          9.83         .719         18.26        1.016         25.81        1.274         32.36
+             .016         0.41          .427        10.85          .754         19.15        1.022         25.96        1.317         33.45
+             .020         0.51          .434        11.02          .766         19.46        1.024         26.01        1.344         34.14
+             .030         0.76          .472        11.99          .791         20.09        1.067         27.10        1.360         34.54
+             .031         0.79          .515        13.08          .798         20.27        1.094         27.79        1.375         34.92
+             .050         1.27          .541        13.74          .836         21.23        1.110         28.19        1.399         35.53
+             .090         2.29          .548        13.92          .844         21.44        1.125         28.58        1.469         37.31
+             .109         2.77          .578        14.68          .879         22.33        1.147         29.13        1.500         38.10
+             .120         3.05          .586        14.88          .891         22.63        1.149         29.18        1.594         40.49
+             .135         3.43          .594        15.09          .897         22.78        1.192         30.28        1.625         41.28
+             .156         3.96          .628        15.95
+
+
+         NOTES:
+         1.  Dimensions are in inches.
+         2.  Metric equivalents are given                                        for information only.
+         3.  Thread may have modified major diameters.
+         4.  For dimensions LE, LP and LT, see applicable MS sheet form standard.
+         5.  Grommet may taper to shell inner diameter.
+        6.  The centerline of specified                                                 projection must be located on vertical centerline within                             2° of -GG-
+         (see main key                                                 -keyway polarization detail on                    figure 5).
+        7.         Class E kitted with E-nut.  Class E view shown with E                   -nut installed.  Class P, potted connectors kitted with
+             ring and potting form.  P view shown with potting form installed.  Class                   E and class P connectors include
+             “VV” accessory threads.   Class E connectors include “NN” projections.  Class P connectors do not require
+             “NN” projections.
+        8.         Box mount connectors do not include accessory threads.
+
+
+
+                    FIGURE 9.  Connector accessory interface dimensions (series II)                             - Continued.
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                         120
+                                    Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                 Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 121 ===
+                                                                     MIL-                   DTL-38999N
+                                                                     w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                         FIGURE 10.   Connector accessory interface dimensions (series III and IV).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                                               121
+                                       Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                    Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 122 ===
+                                                                          MIL-                   DTL-38999N
+                                                                         w/AMENDMENT 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                         FIGURE 10.  Connector accessory interface dimensions (series III and IV)                             - Continued.
+
+
+
+
+
+
+
+
+                                                                                    122
+                                          Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 123 ===
+                                                                                                                                            MIL-                   DTL-38999N
+                                                                                                                                          w/AMENDMENT 2
+
+
+
+
+
+
+
+                          Shell
+                           size                              Shell                                     A                                          HH                                  NN                                    PP                                                           V V
+                          code                                size                                 max                                          +.00                                                                      max                                                       thread
+               (see note 5)                                                                                                                      -.15
+                               A                                                                                                                                            9                                                                          7.59 (.299)                                    10.57 (.416)                                                      12                                                                        8.80 (.346)                                                    M12x1.0-                   6g 0.100R
+
+                               B                                                                                                                                      11                                                           10.85 (.427)                          13.56 (.534)                                                      16                                                              12.07 (.475)                                          M15x1.0-                   6g 0.100R
+
+                               C                                                                                                                                     13                                                           13.74 (.541)                          16.58 (.653)                                                      20                                                              14.96 (.589)                                          M18x1.0-                   6g 0.100R
+                               D                                                                                                                                     15                                                           16.92 (.666)                          20.57 (.810)                                                      24                                                              18.14 (.714)                                          M22x1.0-                   6g 0.100R
+
+                               E                                                                                                                                      17                                                           20.09 (.791)                          23.57 (.928)                                                      28                                                              21.31 (.839)                                          M25x1.0-                   6g 0.100R
+
+                                F                                                                                                                                       19                                                           22.78 (.897) 26.57 (1.046) 32                                                              24.00 (.945)                                          M28x1.0-                   6g 0.100R
+                               G                                                                                                                                    21 25.96 (1.022) 29.57 (1.164) 36       27.18 (1.070)                                     M31x1.0-                  6g 0.100R
+
+                               H                                                                                                                                     23 29.13 (1.147) 32.56 (1.282) 40      30.35 (1.194)                                     M34x1.0-                  6g 0.100R
+
+                                J                                                                                                                                         25 32.31 (1.272) 35.56 (1.400) 44 33.53 (1.320)                                     M37x1.0-                  6g 0.100R
+
+
+ NOTES:
+ 1.                                                                 Dimensions are in millimeters (mm).
+ 2.                                                                  Inch equivalents are in given                              in parentheses.
+ 3.                                                                  Threads are to be inspected with a 6h go-                                      gauge and a 6g no-                   go-                                       gauge.
+ 4                                                 .                Grommet may taper to shell inner diameter.
+ 5                                                 .                For shell size code used for part numbering, see table I        .
+           6.              The centerline of specified                                                  projection must be located on vertical centerline within 2°                             of -G-
+           (see key/keyway polarization detail of figure                                                           6 for series III and figure                              7 for series IV).
+           7.              For size 8 and 10 contact arrangements, 5.95 maximum.
+           8.              Angle shall be 30° ± 2° for classes J and M.
+           9.               The                                        7.112 mm (.280 inch) minimum shall be to the root of the thread (in accordance with                    FED-STD-H28/2,
+                      as specified in the requirements for standard diameter, incomplete formed threads, full shank fastener).
+                      Minimum runout / clearance as follows:  Standard runout - 7.11 mm (.280 inch)                    minimum full thread                                        (MFT)
+                      with .5P min runout.  Blunt stop -                                                  7.11                    mm min (.280 inches MFT) with .18P additional clearance.
+         10.     For classes J and M only, optional 45° chamfer and blunt start permissible at transition area between HH
+                      diameter and start of first thread.
+
+
+
+
+                                               FIGURE 10.  Connector accessory interface dimensions (series III and IV)                             - Continued.
+
+
+
+
+
+
+
+
+                                                                                                                                                              123
+                                                                               Source: https://assist.dla.mil -- Downloaded: 2026-09-26T17:53Z
+                                                                        Check the source to verify that this is the current version before use.

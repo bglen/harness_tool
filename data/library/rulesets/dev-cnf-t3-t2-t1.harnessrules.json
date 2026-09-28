@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "id": "lib-dev-cnf-tiers",
+  "name": "Dev / Critical non-flight / Flight T3 / T2 / T1",
+  "prefix": "TIER",
+  "version": "1.0.0",
+  "author": "Harness Studio",
+  "description": "Five build classes with flight criticality tiers (T1 most critical). Example values; replace with your company's definitions.",
+  "changelog": [{ "version": "1.0.0", "date": "2026-09-27", "notes": "Initial template (example values)" }],
+  "enforced": false,
+  "rules": [
+    { "id": "TIER-001", "type": "spare_pins", "category": "Design", "severity": "warning", "title": "Spare cavities per connector", "description": "Minimum share of unused cavities per connector.", "rationale": "Spares allow late changes without a new connector.", "params": { "minPct": 0 }, "paramsByPedigree": { "cnf": { "minPct": 5 }, "t3": { "minPct": 5 }, "t2": { "minPct": 10 }, "t1": { "minPct": 10 } }, "severityByPedigree": { "dev": "off", "cnf": "info", "t3": "warning", "t2": "error", "t1": "error" } },
+    { "id": "TIER-002", "type": "gauge_vs_current", "category": "Electrical", "severity": "error", "title": "Wire derating by tier", "description": "Wire current rating × derating factor must exceed the net current.", "rationale": "Higher tiers derate harder.", "params": { "deratingFactor": 0.8 }, "paramsByPedigree": { "cnf": { "deratingFactor": 0.7 }, "t3": { "deratingFactor": 0.6 }, "t2": { "deratingFactor": 0.55 }, "t1": { "deratingFactor": 0.5 } } },
+    { "id": "TIER-003", "type": "required_labels", "category": "Documentation", "severity": "warning", "title": "Every connector end labeled", "description": "Each connector carries a refDes label.", "rationale": "Identification during installation and maintenance.", "params": { "target": "connector" }, "severityByPedigree": { "dev": "off", "t2": "error", "t1": "error" } },
+    { "id": "TIER-004", "type": "required_labels", "category": "Documentation", "severity": "warning", "title": "Every wire labeled at both ends", "description": "Each wire carries its ID near both ends.", "rationale": "Required for maintainability at the highest tier.", "params": { "target": "wire" }, "severityByPedigree": { "dev": "off", "cnf": "off", "t3": "off", "t2": "info", "t1": "error" } },
+    { "id": "TIER-005", "type": "allowed_parts", "category": "Parts", "severity": "info", "title": "No cadmium finishes", "description": "Cadmium-plated shells (classes W, J) are not allowed.", "rationale": "Cadmium is restricted for many programs.", "params": { "bannedFinishes": ["W", "J"] }, "severityByPedigree": { "t2": "error", "t1": "error" } }
+  ],
+  "pedigreeScheme": {
+    "id": "dev-cnf-tiers",
+    "name": "Dev / Critical non-flight / Flight T3 / T2 / T1",
+    "version": "1.0.0",
+    "pedigrees": [
+      {
+        "id": "dev", "name": "Development", "code": "DEV", "rank": 0, "color": 0,
+        "description": "Engineering development units. Not for flight.",
+        "workmanship": "IPC/WHMA-A-620 Class 2",
+        "inspections": [{ "typeId": "continuity", "sampling": "100%", "params": { "maxOhm": 1 } }, { "typeId": "visual", "sampling": "100%", "params": { "magnification": "4x", "acceptanceClass": "Class 2" } }],
+        "documentation": ["Certificate of Conformance (CoC)"],
+        "markings": [{ "text": "NOT FOR FLIGHT", "type": "tag", "color": "red" }]
+      },
+      {
+        "id": "cnf", "name": "Critical non-flight", "code": "CNF", "rank": 1, "color": 2, "extends": "dev",
+        "description": "GSE, test sets and other critical non-flight hardware.",
+        "workmanship": "IPC/WHMA-A-620 Class 3",
+        "inspections": [{ "typeId": "hipot", "sampling": "100%", "params": { "voltage": 1000, "mode": "DC", "dwellS": 1, "maxLeakageMa": 1, "pairs": "all-to-all" } }, { "typeId": "ir", "sampling": "100%", "params": { "voltage": 500, "minMohm": 100 } }, { "typeId": "pull", "sampling": "Per lot (n=5)", "params": {} }],
+        "documentation": ["Certificate of Conformance (CoC)", "Test data package"],
+        "partsPolicy": { "qplOnly": true }
+      },
+      {
+        "id": "t3", "name": "Flight T3", "code": "T3", "rank": 2, "color": 3, "extends": "cnf",
+        "description": "Flight hardware, lowest criticality.",
+        "workmanship": "IPC/WHMA-A-620 Class 3 with space addendum",
+        "inspections": [{ "typeId": "visual", "sampling": "100%", "params": { "magnification": "10x", "acceptanceClass": "Class 3 space" } }, { "typeId": "dimensional", "sampling": "First article", "params": {} }, { "typeId": "bond", "sampling": "First article", "params": { "maxMohm": 2.5 } }],
+        "documentation": ["Certificate of Conformance (CoC)", "Material certifications", "Lot traceability", "Test data package"],
+        "markings": [{ "text": "FLIGHT {harnessPN}-{rev}", "type": "label" }],
+        "process": { "minBraidCoverage": 85, "bendRadiusMultiple": 8 }
+      },
+      {
+        "id": "t2", "name": "Flight T2", "code": "T2", "rank": 3, "color": 4, "extends": "t3",
+        "description": "Flight hardware, mission critical.",
+        "inspections": [{ "typeId": "retention", "sampling": "100%", "params": { "forceN": 44 } }, { "typeId": "xray", "sampling": "10%", "params": { "targets": "contact seating" } }, { "typeId": "bond", "sampling": "100%", "params": { "maxMohm": 2.5 } }, { "typeId": "dimensional", "sampling": "100%", "params": {} }],
+        "documentation": ["Certificate of Conformance (CoC)", "AS9102 First Article Inspection", "Material certifications", "Serial traceability", "Test data package"],
+        "markings": [{ "text": "FLIGHT {harnessPN}-{rev} S/N {serial}", "type": "label" }],
+        "partsPolicy": { "qplOnly": true, "noAlternates": true, "authorizedDistributionOnly": true },
+        "process": { "serializedLabels": true, "doubleBandClamps": true, "minBraidCoverage": 90, "bendRadiusMultiple": 10 }
+      },
+      {
+        "id": "t1", "name": "Flight T1", "code": "T1", "rank": 4, "color": 5, "extends": "t2",
+        "description": "Flight hardware, safety critical.",
+        "inspections": [{ "typeId": "pull", "sampling": "100%", "params": {} }, { "typeId": "xray", "sampling": "100%", "params": { "targets": "all" } }, { "typeId": "xsection", "sampling": "Per setup", "params": {} }],
+        "partsPolicy": { "qplOnly": true, "noAlternates": true, "authorizedDistributionOnly": true, "dateCodeMaxYears": 5, "bannedFinishes": ["W", "J"] },
+        "process": { "noSplices": true, "noManualRework": true, "requireBoots": true, "minBraidCoverage": 95 }
+      }
+    ]
+  }
+}

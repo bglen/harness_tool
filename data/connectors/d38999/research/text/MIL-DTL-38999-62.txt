@@ -1,0 +1,291 @@
+
+=== PDF PAGE 1 ===
+                                                       METRIC
+                                                                   MIL-DTL-38999/62
+                                                    w/AMENDMENT 2
+                                                               2 July 2024
+                                                     SUPERSEDING
+                                                                   MIL-DTL-38999/62
+                                                    w/AMENDMENT 1
+                                                              10 December 2015
+                           DETAIL SPECIFICATION SHEET
+
+          SEALING BOOT, SIZE 8, PIN OR SOCKET, SHIELDED CRIMP CONTACTS,
+                    ELECTRICAL CONNECTOR, CIRCULAR, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                                                   STYLES
+
+
+
+
+
+                 FIGURE 1. Sealing boot, size 8, shielded crimp contacts.
+
+
+
+
+
+AMSC N/A                                                      FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:46Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                     MIL-DTL-38999/62
+                            w/AMENDMENT 2
+
+
+NOTES:
+    1.  Dimensions are in millimeters. Inch equivalents are provided for information only.
+    2.  Sealing boot styles “A” (TWINAX) and “B” (COAX) are for use with qualified size 8 twinax contacts,
+         qualified size 8 coax contacts, and MIL-DTL-17 cable, or with qualified dummy contacts in
+       accordance with SAE-AS85049/80, and shall be used to effect environmental sealing in MIL-DTL-
+      38999 connectors with applicable insert arrangements specified in MIL-STD-1560, including 17-3,
+        19-19, 21-76, 25-9, 25-10, 25-21, 25-47 and 25-91.
+    3.  The left end of the sealing boot is intended to be installed over the contact. The right end of the
+        sealing boot seals to the wire or cable.
+    4.  Style A seals on TWINAX cable M17/176-00002. Style B seals on COAX cable M17/95-RG180.
+
+             FIGURE 1. Sealing boot, size 8, shielded crimp contacts - Continued.
+
+
+REQUIREMENTS:
+
+   Dimensions and configurations: See figure 1.
+
+   Wire seal shall meet the wire sealing requirements specified in MIL-DTL-38999.
+
+   Materials.
+      Grommet (sealing boot grommet for sealing to cable):   Fluorosilicone elastomer.
+       Contact seal (contact to connector sealing):   Rigid thermoplastic or other suitable
+                                                               rigid dielectric material.
+
+   Dimensioning and tolerancing shall be in accordance with ASME Y14.5.
+
+   Workmanship. Break all sharp edges. Sealing boot shall be free from flash and burrs.
+
+   Part identification marking. The applicable, single-digit style code, boot style “A” (TWINAX style) or “B”
+  (COAX style), shall be integrally molded-in or shall be permanently etched or laser marked on the boot
+   as specified in figure 1.
+
+   Insert Arrangements: Used with MIL-STD-1560 insert arrangements which require size 8 twinax
+   contacts in accordance with SAE-AS39029/113 and /114, or size 8 coax contacts in accordance with
+  SAE-AS39029/59 and /60, and installed with the applicable M17/176-00002 or M17/95-RG180 cables.
+   Sealing boot may also be used to seal a size 8 dummy contact in accordance with SAE-AS85049/80.
+
+   Note: A heat shrink seal shall not be used with this sealing boot.
+
+QUALIFICATION:
+
+  The combination of the connector insert arrangement and associated sealing boot comprise a system
+   for environmental sealing. In order to ensure interoperability, interchangeability and reliable quality,
+   only QPL-38999 manufacturers seeking to qualify connectors with insert arrangements that require a
+   MIL-DTL-38999/62 sealing boot shall be eligible to qualify, provided that the prospective sealing boot
+   manufacturer has previously qualified the connectors with the same class, finish and shell
+   configuration used for qualification of the QPL-38999 connector with its associated sealing boot.
+
+   Qualification inspection, test samples and sample size. Qualification of size 8 twinax sealing boots
+   shall initially be performed concurrently with qualification of MIL-DTL-38999 connectors with insert
+   arrangements 25-10 and 25-21. Qualification of size 8 coax sealing boots shall be performed
+                                         2
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:46Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                  MIL-DTL-38999/62
+                          w/AMENDMENT 2
+
+concurrently with qualification of MIL-DTL-38999 with insert arrangement 25-47, which uses size 8
+coax sealing boots. Applicable QPL-39029 contacts and QPL-17 cable shall be used.
+
+Once a first manufacturer is listed on QPL-38999 for insert arrangement 25-10 or 25-21, then other
+eligible QPL-38999 manufacturers that do not seek to qualify insert arrangements 25-10 or 25-21, but
+that seek to qualify connector/sealing boot systems with for other insert arrangements requiring that
+boot, including 17-3, 19-19, 21-76, 25-9 or 25-91, may seek qualification of the connector/sealing boot
+system using qualified MIL-DTL-38999 connectors with insert arrangements 25-10 or 25-21, as
+applicable, as well as the sealing boot arrangements that they wish to qualify. However, if
+connector/sealing boot systems with insert arrangements 25-10 or 25-21 fail, then the other
+connector/sealing boot system insert arrangements fail. Any eligible manufacturer seeking
+qualification of size 8 coax sealing boots shall use qualified MIL-DTL-38999 connectors with insert
+arrangement 25-47.
+
+For eligible manufacturers who meet the above requirements, initial qualification and group C testing
+for the connector/sealing boot system shall be in accordance with MIL-DTL-38999, test groups 1, 2
+and 5, except group 5 shall be required for initial qualification only. For each insert arrangement to be
+qualified, two crimp type mated plugs and receptacles shall be provided for testing with the associated
+sealing boots. For group C periodic testing, for each qualified insert arrangement, two qualified, mated
+connector pairs and associated sealing boots shall be provided, except for size 25. For size 25, only
+two qualified, mated pairs representing shell size 25-10 and 25-21 shall be provided.  If the
+manufacturer is not qualified for 25-10 or 25-21, then for group C, they shall be required to test two
+mated pairs and associated sealing boots for each size 25 insert arrangement the manufacturer has
+qualified. Eligible manufacturers that seek to qualify style A (twinax) sealing boots as a stand-alone
+accessory shall conduct test groups 1, 2 and 5 with two qualified manufacturer’s shell size 25
+connectors, insert arrangement 25-10. For all qualification testing, contact cavities shall be fully
+populated with contacts, except one size 8 contact cavity shall be populated with a qualified SAE-
+AS85049/80 dummy contact and sealed with a sealing boot. For qualification of style B (coax) sealing
+boots, two mated pairs, shell size 25, insert arrangement size 25-47, shall be required for qualification.
+
+Group A:  Sampling inspection shall consist of visual and mechanical inspection. Sampling for group
+A inspection as specified in table I.  Group B:  Not applicable.
+
+                      TABLE I. Group A sampling plan.
+                             Lot size               Sampling size
+                         1 to 13               100 percent
+                        14 to 150               13 units
+                        151 to 280               20 units
+                        281 to 500               29 units
+                       501 to 1,200              34 units
+                         1,201 to 3,200             42 units
+                          3,201 and up              54 units
+
+
+
+
+
+                                       3
+
+
+
+                        Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:46Z
+                   Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                  MIL-DTL-38999/62
+                          w/AMENDMENT 2
+
+ Part or Identifying Number (PIN) example:
+
+                                    D38999/62 -  A
+
+             Specification sheet number
+
+             Style
+                    ( A = TWINAX boot. B = COAX boot.)
+
+Application notes.
+(These application notes contain information of a general or explanatory nature and are provided for
+information only.)
+
+  The sealing boot is primarily designed for use with a shielded size 8, wired contact in connector
+   applications. The sealing boot may also be used with a size 8 dummy contact.
+
+   Sealing boot installation. Sealing boots are installed onto the cable first, and then the contact is
+   crimped to the cable. The contact is then inserted into the connector’s size 8 grommet cavity until it
+   locks into position. The contact/sealing boot assembly is then press fit into the size 8 grommet
+   cavity.
+
+  Use of accessories and mitigation of contact splaying. Recommend that methods to prevent
+   contact splaying be considered during new design. The wire harness design must keep the twinax
+   or coax pin in axial alignment. Depending on the insert arrangement and the wiring harness design,
+   the maximum protrusion of the sealing boot from the rear of the grommet may potentially interfere
+   with a straight backshell with saddle bars installed onto the rear of the connector. Both sealing boot
+   styles are designed for use with an SAE-AS85049/38 strain relief backshell. A 90 degree backshell
+   should be avoided.  Note: SAE-AS85049/147, which is a straight, extended backshell developed for
+   use with MIL-DTL-38999 connectors that require sealing boots, does not have any qualified
+   manufacturing source at the time of publication of this document, but should be considered when
+   sources become available.  Commercially available wire supports, also called wire “combs”,
+   “spiders” or “wire support bushings”, are also potential design options for mitigating contact splaying.
+   More design precautions/recommendations are referenced in MIL-HDBK-1760, which refers to the
+   splaying problem with the keyword “skewing”.
+
+Recommended grommet cavity dimensions. Figure 2 is not mandatory, but is provided as guidance.
+
+
+
+
+
+                                       4
+
+
+
+                        Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:46Z
+                   Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                     MIL-DTL-38999/62
+                            w/AMENDMENT 2
+
+
+
+
+
+              FIGURE 2.  Recommended grommet cavity dimensions, sealing boot,
+                                size 8, shielded crimp contacts, configuration.
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+  MIL-DTL-17
+  MIL-HDBK-1760
+  MIL-STD-1560
+ ASME Y14.5
+  SAE-AS39029/59
+  SAE-AS39029/60
+  SAE-AS39029/113
+  SAE-AS39029/114
+  SAE-AS85049/38
+  SAE-AS85049/80
+  SAE-AS85049/147
+
+
+
+
+
+                                         5
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:46Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 6 ===
+                                     MIL-DTL-38999/62
+                            w/AMENDMENT 2
+
+                          CONCLUDING MATERIAL
+
+
+Custodians:                                                              Preparing activity:
+  Army - CR                                               DLA - CC
+  Navy - AS
+  Air Force - 85                                                                 (Project 5935-2024-152)
+ DLA - CC
+
+Review activities:
+ Army - MI
+ Navy - EC, MC, OS
+  Air Force - 19
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         6
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:46Z
+                      Check the source to verify that this is the current version before use.

@@ -1,0 +1,228 @@
+
+=== PDF PAGE 1 ===
+                                                                METRIC
+                                                                          MIL-DTL-38999/60A
+                                                                       20 September 2019
+                                                            SUPERSEDING
+                                                                            MIL-DTL-38999/60
+                                                                       15 December 2004
+
+                            DETAIL SPECIFICATION SHEET
+
+         CONNECTORS, ELECTRICAL, PLUG, CIRCULAR, THREADED, STRAIGHT,
+               REMOVABLE CRIMP CONTACTS, FIBER OPTIC TERMINI,
+                  TIGHT TOLERANCE, SERIES III, SHELL SIZE 25, METRIC
+        Inactive for new design after 20 September 2019. This document is stabilized for a
+       period of 10 years from the date of this revision. No QPL sources exist as of the date
+        of this revision. Technical change proposals will only be considered when a potential
+       source requests authorization to qualify to this document.
+
+                      This specification is approved for use by all Departments and
+                             Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                          shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                            FIGURE 1. Plug, fiber optic.
+
+
+AMSC N/A                                                        FSC 5935
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                            MIL-DTL-38999/60A
+
+
+
+
+
+                                 Dimensions
+  Shell        Shell size      B dia                   S
+                          + .2       K max                  Z max
+   size         code                                          dia max                                              - .0
+   25            J            44.3           44.9          48.0           31.0
+
+
+ mm      Inches   mm      Inches   mm      Inches   mm      Inches
+ 0.065     .0025       0.4      .0157       6.2       .244       44.9      1.767
+ 0.076      .003      0.406     .0159       6.5       .255       48.0       1.89
+ 0.127      .005       1.32       .052       31.0       1.22
+ 0.200      .008       2.54         .1      35.763     1.407
+ 0.254       .01        4.7       .185       44.3      1.744
+
+NOTE: Dimensions are in millimeters. Inch-pound equivalents are given
+         for information only.
+
+
+                 FIGURE 1. Plug, fiber optic - Continued.
+
+
+
+
+                                   2
+
+
+
+
+
+                 Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+             Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                    MIL-DTL-38999/60A
+
+
+REQUIREMENTS:
+
+  Dimensions and configuration: See figure 1.
+
+  Interface dimensions shall conform to MIL-DTL-38999.
+
+  The connectors described by this slash sheet shall meet all applicable requirements of MIL-DTL-38999.
+
+  The connectors described by this slash sheet are non-plated stainless steel connectors.
+
+  This connector mates with MIL-DTL-38999/61.
+
+  Insert arrangements shall be in accordance with MIL-STD-1560.
+
+  Connector accessories shall be in accordance with SAE-AS85049.
+
+  Fiber optic termini shall be in accordance with MIL-PRF-29504/4 and MIL-PRF-29504/5.
+
+  Electrical contacts shall be in accordance with SAE-AS39029.
+
+  Shell size 25 keying dimensions shall be in accordance with figure 1.
+
+  Coupling torque shall be in accordance with MIL-DTL-38999 for series III, except that it shall not exceed
+  130 pound-force inch (14.69 Newton-meters) when all size 16 cavities are filled with MIL-PRF-29504/4
+  and MIL-PRF-29504/5 termini.
+
+  Firewall barrier requirements are not applicable for these connectors.
+
+  QUALIFICATION:
+
+  The connectors described by this slash sheet shall meet the applicable qualification
+  requirements of MIL-DTL-38999, series III, except all size 16 cavities shall be filled with fiber optic
+  termini.
+
+  For groups A and B conformance inspections, the high precision dimensions shall be inspected 100% or
+  verified during in-process inspections.
+
+  The connectors described by this slash sheet shall be supplied without electrical contacts or fiber optic
+  termini. The design shall specify the contacts and termini separately.
+
+  Connectors where a pin contact is specified in the Part or Identifying Number (PIN) (for example:
+  M38999/60KJ29AN or M38999/60KJ29PN) should be supplied with a pin contact insert (see figure 1).
+  Also, connectors where a socket contact is specified in the PIN (for example: M38999/60KJ29BN or
+  M38999/60KJ29SN) should be supplied with a socket contact insert (see figure 1).
+
+
+
+
+
+                                          3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                  MIL-DTL-38999/60A
+
+
+PIN example (M38999/60KJ29BN):
+
+                          M38999/      60    K     J     29     B    N
+
+
+M prefix
+
+Specification sheet number
+
+Class
+
+Shell size code
+
+Insert arrangement
+
+Contact style
+
+Polarizing positions
+ N is required for normal position
+
+Changes from previous issue. The margins of this specification are marked with vertical lines to indicate
+where changes from the previous issue were made. This was done as a convenience only and the
+Government assumes no liability whatsoever for any inaccuracies in these notations. Bidders and
+contractors are cautioned to evaluate the requirements of this document based on the entire content
+irrespective of the marginal notations and relationship to the previous issue.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+  MIL-DTL-38999/61
+  MIL-STD-1560
+  MIL-PRF-29504/4
+  MIL-PRF-29504/5
+  SAE-AS39029
+  SAE-AS85049
+
+
+
+
+
+                                         4
+
+
+
+
+
+                         Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                    Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                    MIL-DTL-38999/60A
+
+
+                          CONCLUDING MATERIAL
+
+Custodians:                                                               Preparing activity:
+  Army – CR                                                DLA – CC
+  Navy – AS
+  Air Force – 85                                                                 (Project 5935-2019-117)
+ DLA – CC
+
+Review activities:
+  Army – AR, MI
+  Navy – EC, MC, OS
+  Air Force – 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document. Since
+organizations and responsibilities can change, you should verify the currency of the information above using
+the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                          5
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.

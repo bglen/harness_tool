@@ -1,0 +1,15 @@
+code,gender,description,hermetic_only,source,page
+P,pin,standard,false,MIL-DTL-38999N 1.4.2,7
+S,socket,standard,false,MIL-DTL-38999N 1.4.2,7
+H,pin,1500-cycle,false,MIL-DTL-38999N 1.4.2,7
+J,socket,1500-cycle,false,MIL-DTL-38999N 1.4.2,7
+X,pin,eyelet,true,MIL-DTL-38999N 1.4.2,7
+Z,socket,eyelet,true,MIL-DTL-38999N 1.4.2,7
+C,pin,feed-through,true,MIL-DTL-38999N 1.4.2,7
+D,socket,feed-through,true,MIL-DTL-38999N 1.4.2,7
+R,pin,rhodium plating,false,MIL-DTL-38999N 1.4.2,7
+M,socket,rhodium plating,false,MIL-DTL-38999N 1.4.2,7
+G,pin,heavy gold plating,false,MIL-DTL-38999N 1.4.2,7
+U,socket,heavy gold plating,false,MIL-DTL-38999N 1.4.2,7
+A,pin,insert less standard contacts for nonstandard complement,false,MIL-DTL-38999N 1.4.2,7
+B,socket,insert less standard contacts for nonstandard complement,false,MIL-DTL-38999N 1.4.2,7

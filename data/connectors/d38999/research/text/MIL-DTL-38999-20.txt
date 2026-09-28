@@ -1,0 +1,205 @@
+
+=== PDF PAGE 1 ===
+                                                         METRIC
+                                                                   MIL-DTL-38999/20H
+                                                                        w/ AMENDMENT 1
+                                                                 11 August 2022
+                                                      SUPERSEDING
+                                                                   MIL-DTL-38999/20H
+                                                                 27 July 2021
+
+                            DETAIL SPECIFICATION SHEET
+
+               CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE,
+              THREADED, WALL MOUNTING FLANGE, REMOVABLE CRIMP
+                         CONTACTS, SERIES III, METRIC
+
+                This specification is approved for use by all Departments and Agencies of
+                                      the Department of Defense.
+
+             The requirements for acquiring the product described herein shall consist
+                                of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                             FIGURE 1. Receptacle.
+
+
+
+
+
+AMSC NA                                                         FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                 MIL-DTL-38999/20H
+                                    w/ AMENDMENT 1
+
+        Shell    MShell                    P       PP        R1         R2         S
+         size    max, (see size                       ± 0.20      ± 0.20     (see note 3)   (see note 4)     ± 0.3       code     note 5)
+  9    A                  3.25 (.128)  5.49 (.216)  18.26 (.719)   15.09 (.594)   23.8 (.937)
+ 11    B                  3.25 (.128)  4.93 (.194)  20.62 (.812)   18.26 (.719)   26.2 (1.031)
+ 13    C        5.80      3.25 (.128)  4.93 (.194)  23.01 (.906)   20.62 (.812)   28.6 (1.126)
+ 15    D        (.228)     3.25 (.128)  4.39 (.173)  24.61 (.969)   23.01 (.906)   31.0 (1.220)
+ 17    E                  3.25 (.128)  4.93 (.194)  26.97 (1.062)  24.61 (.969)   33.3 (1.311)
+ 19    F                  3.25 (.128)  4.93 (.194)  29.36 (1.156)  26.97 (1.062)  36.5 (1.437)
+ 21   G                  3.25 (.128)  4.93 (.194)  31.75 (1.250)  29.36(1.156)  39.7 (1.563)
+                  5.00
+ 23    H                  3.91 (.154)  6.15 (.242)  34.93 (1.375)  31.75 (1.250)  42.9 (1.689)
+                    (.197)
+ 25      J                  3.91 (.154)  6.15 (.242)  38.10 (1.500)  34.93 (1.375)  46.0 (1.811)
+
+  Shell   Shell   V       V’   W     W’       Z           Z’ max     External bending
+  size    size  + 0.00  + 1.4                  max                moment, minimum,                                                                             classes J and M       code
+                      - 1.25     - 0.0                                              (N–m)
+   9    A    20.83   19.5    2.5/2.1  3.65/2.1  31.5 (1.240)  32.0 (1.260)        8.865
+  11    B    20.83   19.5    2.5/2.1  3.65/2.1  31.5 (1.240)  32.0 (1.260)       29.492
+  13   C    20.83   19.5    2.5/2.1  3.65/2.1  31.5 (1.240)  32.0 (1.260)       34.485
+  15   D    20.83   19.5    2.5/2.1  3.65/2.1  31.5 (1.240)  32.0 (1.260)       40.566
+  17    E    20.83   19.5    2.5/2.1  3.65/2.1  31.5 (1.240)  32.0 (1.260)       50.781
+  19    F    20.83   19.5    2.5/2.1  3.65/2.1  31.5 (1.240)  32.0 (1.260)       51.450
+  21   G    20.07   18.7    3.2/2.1  4.35/2.1  31.5 (1.240)  32.0 (1.260)       80.941
+  23   H    20.07   18.7    3.2/2.1  4.35/2.1  31.5 (1.240)  32.0 (1.260)       69.810
+  25     J    20.07   18.7    3.2/2.1  4.35/2.1  31.5 (1.240)  32.0 (1.260)       91.310
+
+ NOTES:
+   1.    Dimensions are in millimeters.
+   2.    Inch equivalents are given for information only.
+   3.    Front or rear panel mounting.
+   4.    Front panel mounting only.
+   5. Front or rear panel thickness. To ensure full mating of the plug or the backshell, it is
+  recommended that the front or rear mounting panel thickness not exceed the M values specified in
+  the table.
+   6. The specified red band location is measured from the front edge of the shell to the back edge of
+  the red band.
+   7. Dimensions V’, W’, and Z’ are for classes J and M, only. Dimensions V, W, and Z are for all other
+  classes.
+                      FIGURE 1. Receptacle – Continued.
+                                       2
+
+
+
+
+
+                        Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+                   Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/20H
+                                      w/ AMENDMENT 1
+
+REQUIREMENTS:
+
+  Dimensions and configuration: See figure 1. Interface dimensions shall be in accordance with
+  MIL-DTL-38999.
+
+  This connector mates with MIL-DTL-38999/26.
+
+  For insert arrangements: See MIL-STD-1560.
+
+  Connector accessories: See SAE-AS85049.
+
+  Part or Identifying Number (PIN) example:
+
+       D38999/       20   W   A     35     P    N
+
+          D38999/  DoD number prefix
+          20          Specification sheet number
+      W         Class
+        A           Shell size code
+          35          Insert arrangement
+        P          Contact style
+       N           Polarizing positions (N is required for normal position)
+
+  Restrictions: Class F is not for Navy use and is inactive for Air Force new design use.
+
+ NOTE: The term PIN is equivalent to the term (part number, identification number, and type
+  designator) which was previously used in this specification.
+
+  Qualification required: The activity responsible for the qualified product list for this specification sheet is
+ DLA Land and Maritime-VQ, 3990 East Broad Street, Columbus, Ohio, 43218-3990.
+
+Note: Bending moment torque (class J and M). Bending moment requirements were determined through
+finite element analysis (FEA) and testing parts to yield strength. Material yield strength was characterized
+by a normal distribution with                      and                   A yield stress
+divided by yield torque ratio       and a real world torque variation    were determined and given in                                                         𝜇𝜇𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚,𝑦𝑦𝑖𝑖𝑖𝑖𝑖𝑖𝑖𝑖= 275.79𝑀𝑀𝑀𝑀𝑀𝑀          𝜎𝜎𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚,𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦= 13.78 𝑀𝑀𝑀𝑀𝑀𝑀.Table I. Requirements           were set at 3 standard deviations from the mean as given below:                                                        (𝛼𝛼𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦)                                                       (𝜎𝜎𝑟𝑟)                                               (𝜏𝜏𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟)
+                                                                                               𝜇𝜇𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚,𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦                                                𝜏𝜏𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟𝑟=        −3 ∗ඨ𝜎𝜎𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚𝑚,𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦2 + 𝜎𝜎𝑟𝑟2                                                                                                         𝛼𝛼𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦                                𝛼𝛼𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦2
+
+
+
+
+
+                                          3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/20H
+                                      w/ AMENDMENT 1
+
+                     TABLE I. Bending moment torque parameters
+                               Shell Size                           9              𝛼𝛼𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦𝑦൬𝑀𝑀𝑀𝑀𝑀𝑀25.362           𝜎𝜎𝑟𝑟(𝑁𝑁∗𝑚𝑚)0.391                                             𝑁𝑁∗𝑚𝑚൰                          11           7.540           1.494
+                          13           6.610           1.213
+                          15           4.620           5.636
+                          17           4.386           2.527
+                          19           4.165           3.642
+                          21           2.686           5.116
+                          23           2.669           9.902
+                          25           2.270           8.022
+
+Amendment notations. The margins of  this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+     MIL-STD-1560
+     MIL-DTL-38999/26
+    SAE-AS85049
+
+
+                         CONCLUDING MATERIAL
+
+
+  Custodians:                                                         Preparing activity:
+   Army – CR                                            DLA - CC
+   Navy - AS
+    Air Force – 85                                                           (Project 5935-2022-178)
+   DLA - CC
+
+  Review activities:
+   Army - AR, MI
+   Navy - EC, MC, OS
+    Air Force - 19
+
+
+ NOTE: The activities listed above were interested in this document as of the date of this document.
+  Since organizations and responsibilities can change, you should verify the currency of the information
+  above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+                                         4
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+                      Check the source to verify that this is the current version before use.

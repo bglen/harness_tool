@@ -1,0 +1,259 @@
+
+=== PDF PAGE 1 ===
+                                                          METRIC
+                                                                     MIL-DTL-38999/23C
+                                                      w/AMENDMENT 2
+                                                                 11 August 2022
+                                                        SUPERSEDING
+                                                                     MIL-DTL-38999/23C
+                                                      w/AMENDMENT 1
+                                                                  5 August 2016
+
+                           DETAIL SPECIFICATION SHEET
+
+          CONNECTORS, ELECTRICAL, CIRCULAR, THREADED, RECEPTACLE,
+            JAM-NUT MOUNTING, HERMETIC, HERMETIC SOLDER CONTACTS,
+                              SERIES III, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                The requirements for acquiring the connectors described herein
+                        shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                      FIGURE 1. Receptacle, classes N and Y.
+
+AMSC N/A                                                      FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                              MIL-DTL-38999/23C
+                        w/AMENDMENT 2
+
+
+
+
+
+Shell   Shell   A     B      C     D    E     F        G
+ size    size     dia        flat        dia     + .13    dia     dia           thread
+       code    ± .3   + .10     + .1        - .03   ± .3   max
+                                   - .15         - .2
+  9    A     30.2    16.53  17.4 (.685)  2.39   15.3   15.9    M17X1-6g 0.100R
+               (1.189)   (.651)               (.094)  (.602)  (.626)
+ 11    B     34.9    19.07  20.6 (.811)  2.39   18.4   18.8    M20X1-6g 0.100R
+               (1.374)   (.751)               (.094)  (.724)  (.740)
+ 13    C     38.1    23.82  25.4 (1.000)  2.39   21.6   23.8    M25X1-6g 0.100R
+               (1.500)   (.938)               (.094)  (.850)  (.937)
+ 15    D     41.3    26.97     28.5     2.39   24.8   26.8    M28X1-6g 0.100R
+               (1.626)  (1.062)    (1.122)   (.094)  (.976)  (1.055)
+ 17    E     44.5    30.15  See note 6  2.39   28.0   30.8    M32X1-6g 0.100R
+               (1.752)  (1.187)               (.094) (1.102) (1.213)      (see note 2)
+ 19    F     49.2    33.32  See note 6  3.58   31.2   33.8    M35X1-6g 0.100R
+               (1.937)  (1.312)               (.141) (1.228) (1.331)
+ 21   G     52.4    36.50  See note 6  3.58   34.3   36.8    M38X1-6g 0.100R
+               (2.063)  (1.437)               (.141) (1.350) (1.449)
+ 23    H     55.6    39.67     41.2     3.58   37.5   39.8    M41X1-6g 0.100R
+               (2.189)  (1.562)    (1.622)    (.141) (1.476) (1.567)
+ 25     J     58.7    42.85     44.4     3.58   40.7   42.8    M44X1-6g 0.100R
+               (2.311)  (1.687)    (1.748)   (.141) (1.602) (1.685)
+
+
+
+
+                                    2
+
+
+
+
+
+                    Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                      MIL-DTL-38999/23C
+                  w/AMENDMENT 2
+
+       FIGURE 1. Receptacle, classes N and Y- Continued.
+
+Shell      Shell     H         J         K max          L
+size       size     ± .13     + .0       with       with     max
+         code                        - .71       pin      socket
+
+ 9       A        1.14       1.5        5.3        5.9        9.1
+                      (.045)     (.059)     (.209)     (.232)     (.358)
+ 11      B        1.14       1.5        5.3        5.9        9.1
+                      (.045)     (.059)     (.209)     (.232)     (.358)
+ 13      C       1.14       1.5        5.1        5.7        9.1
+                      (.045)                                  (.059)     (.201)     (.224)      (.358)
+ 15      D       1.14       1.5        5.1        5.7        9.1
+                      (.045)                                  (.059)     (.201)     (.224)     (.358)
+ 17      E        1.14           ---        5.1        5.7        9.1
+                      (.045)                                              (.201)     (.224)     (.358)
+ 19       F        1.91           ---        5.1        5.7        9.7
+                      (.075)                                              (.201)     (.224)      (.382)
+ 21     G       1.91           ---        5.1        5.7        9.7
+                      (.075)                                             (.201)     (.224)      (.382)
+ 23      H       1.91       1.5        5.1        5.7        9.7
+                      (.075)                                  (.059)     (.201)     (.224)     (.382)
+ 25        J        1.91       1.5        5.1        5.7        9.7
+                      (.075)                                  (.059)      (.201)     (.224)     (.382)
+
+
+
+
+       FIGURE 1. Receptacle, classes N and Y - Continued.
+
+
+
+
+
+                            3
+
+
+
+
+
+          Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/23C
+                            w/AMENDMENT 2
+
+
+
+     Shell     Shell   M     P     S    W      Z                O-ring
+     size      size      dia      +.4      ±.4      +.3    max        part number M25988/3
+            code    +.3, -.0      -.1                                                              -.1                      (see note 5)
+     9     A      16.3     14.1     27.0      2.6     29.2               -019
+                        (.642)    (.555)   (1.063)   (.102)   (1.150)
+     11     B      19.4     14.1     31.8      2.6     29.2               -022
+                        (.764)    (.555)   (1.252)   (.102)   (1.150)
+     13     C      22.7     14.3     34.9      2.6     29.3               -024
+                        (.894)    (.563)   (1.374)   (.102)   (1.154)
+     15     D      25.9     14.3     38.1      2.6     29.3               -026
+                      (1.020)   (.563)   (1.500)   (.102)   (1.154)
+     17     E      29.0     14.3     41.3      2.6     29.3               -028
+                      (1.142)   (.563)   (1.626)   (.102)   (1.154)
+     19      F      32.2     14.3     46.0      3.4     30.1               -128
+                      (1.268)   (.563)   (1.811)   (.134)   (1.185)
+     21    G      35.4     14.3     49.2      3.4     30.1               -130
+                      (1.394)   (.563)   (1.937)   (.134)   (1.185)
+     23     H      38.6     14.3     52.4      3.4     30.1               -132
+                      (1.520)   (.563)   (2.063)   (.134)   (1.185)
+                                        55.6      3.4     30.1     25       J      41.7     14.3                                        -134                                         (2.189)   (.134)   (1.185)                      (1.642)   (.563)
+
+NOTES:
+   1.   Dimensions are in millimeters.
+   2.   Modified major diameter: 31.95 - 31.80 mm.
+   3.   Panel thickness: 3.2 - 1.58 mm.
+   4.   Polarizing position N is shown.
+   5.   O-rings: O-ring shall be in accordance with MIL-DTL-25988/3.
+   6.  C and J dimensions define feature required for proper fit in type E panel.
+   7.  F diameter defines thread start.
+   8.   This dimension applies to shell sizes 17, 19, and 21 only (C diameter and G diameter are the
+       same).
+   9.   Inch equivalents are given for general information only.
+   10. The specified red band location is measured from the front edge of the shell to the back edge of
+        the red band.
+
+                  FIGURE 1. Receptacle, classes N and Y  - Continued.
+
+
+
+
+
+                                         4
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                   MIL-DTL-38999/23C
+                            w/AMENDMENT 2
+
+
+REQUIREMENTS:
+
+  Dimensions and configurations: See figure 1. Interface dimensions shall conform to MIL-DTL-38999.
+
+  This connector mates with MIL-DTL-38999/26.
+
+  O-ring and hex nut shall be provided with jam-nut receptacles.
+
+  For insert arrangements: See MIL-STD-1560.
+
+  Connector accessories: See SAE-AS85049.
+
+  Part or Identifying Number (PIN) example:
+
+       D38999/       23    Y   A     35     P    N
+
+          D38999/  DoD number prefix
+          23          Specification sheet number
+        Y         Class
+        A           Shell size code
+          35          Insert arrangement
+        P         Contact style
+       N           Polarizing positions (N is required for normal position)
+
+  Eyelet contact termination: See MIL-DTL-38999.
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+   MIL-DTL-38999/28
+   MIL-DTL-38999/26
+   MIL-DTL-25988/3
+   MIL-STD-1560
+   SAE-AS85049
+
+
+                          CONCLUDING MATERIAL
+
+Custodians:                                                             Preparing activity:
+  Army – CR                                             DLA - CC
+  Navy - AS
+   Air Force - 85                                                               (Project 5935-2022-181)
+  DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+   Air Force – 19
+
+
+
+                                         5
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 6 ===
+                                   MIL-DTL-38999/23C
+                            w/AMENDMENT 2
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         6
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.

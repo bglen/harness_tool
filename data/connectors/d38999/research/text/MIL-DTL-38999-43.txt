@@ -1,0 +1,261 @@
+
+=== PDF PAGE 1 ===
+                                                       METRIC
+
+                                                                  MIL-DTL-38999/43B
+                                                    w/AMENDMENT 1
+                                                               2 July 2024
+                                                     SUPERSEDING
+                                                                  MIL-DTL-38999/43B
+                                                               8 September 2010
+
+                           DETAIL SPECIFICATION SHEET
+
+               CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE,
+               JAM NUT MOUNTING, HERMETIC, BREECH COUPLING,
+                HERMETIC SOLDER CONTACTS, SERIES IV, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                                                    mm   Inches
+                                                                                        36.8   1.44
+                                                                                            8.5    .334
+                                                                                            5.9    .232
+                                                                                            3.2    .125
+                                                                                            1.5    .059
+                                                                                            1.3    .051
+                                                                                                       .2    .007
+
+
+
+
+
+                      FIGURE 1. Receptacle, classes N and Y.
+
+AMSC N/A                                                      FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                   MIL-DTL-38999/43B
+                w/AMENDMENT 1
+
+
+Shell       Shell      A      B    C dia    E      F
+ size     size code                     flat     boss      dia      dia
+                      35.2     19.17   20.70    18.6     19.8
+ 11      B        (1.38)    (.754)    (.814)    (.732)   (.779)
+                      34.6    18.92   20.40    18.2     19.3
+                        (1.36)                                  (.744)    (.803)    (.716)   (.759)
+                      38.4    23.92   25.50    21.8     23.1
+ 13      C        (1.51)    (.941)    (1.00)    (.858)   (.909)
+                      37.8    23.67   25.20    21.3     22.6
+                      (1.488)    (.931)    (.992)    (.838)   (.889)
+                      41.6    27.07   28.60    25.0     26.3
+ 15      D        (1.63)    (1.06)    (.992)    (.984)   (1.03)
+                      41.0    26.82   28.30    24.6     25.8
+                                  (1.05)                        (1.64)              (1.11)    (.968)   (1.01)
+                      44.8    30.25   31.98    28.2     29.4
+ 17      E        (1.76)    (1.19)    (1.25)    (1.11)   (1.15)
+                      44.2    30.00   MAX     27.7     28.9
+                        (1.74)    (1.18)              (1.09)   (1.13)
+                      49.5    33.44   35.15    31.4     32.6
+ 19       F         (1.94)    (1.31)    (1.38)    (1.23)   (1.28)
+                      48.9    33.17   MAX     31.0     32.1
+                        (1.92)    (1.30)              (1.32)   (1.26)
+                      52.7    36.62   38.28    34.5     35.8
+ 21     G        (2.07)    (1.44)   (1.507)   (1.35)   (1.27)
+                      52.1    36.35   MAX     34.1     35.3
+                        (2.05)    (1.43)              (1.34)   (1.38)
+
+                      55.9    39.75   41.30    37.7     39.0
+ 23      H        (2.20)    (1.56)    (1.62)    (1.48)   (1.53)
+                      55.3    39.52   41.00    37.3     38.5
+                        (2.17)    (1.55)    (1.61)    (1.46)   (1.51)
+                      59.1    42.98   44.50    40.9     42.1
+ 25         J         (2.32)    (1.55)    (1.61)    (1.61)   (1.61)
+                      58.4    42.70   44.20    40.5     41.6
+                        (2.29)    (1.68)    (1.74)    (1.59)   (1.63)
+
+
+    FIGURE 1. Receptacle, classes N and Y – Continued.
+
+
+                         2
+
+
+
+
+
+      Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+   Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                             MIL-DTL-38999/43B
+                       w/AMENDMENT 1
+
+  Shell       Shell       G thread        S     V   W        O-ring
+  size     size code                                            ref
+                                             32.2
+  11      B      M20X1- 6g 0.100R    (1.27)               AS 3582-
+                                             31.3              3.0       022
+                                                 (1.23)             (.118)
+                                                                2.4
+                                             35.4     28.4    (.094)
+  13      C      M25X1- 6g 0.100R    (1.39)    (1.11)         AS 3582-
+                                             34.5     27.5              024
+                                                 (1.35)    (1.08)
+                                             38.6
+  15      D      M28X1- 6g 0.100R    (1.51)               AS 3582-
+                                             37.7                     026
+                                                 (1.48)
+                   M32X1- 6g 0.100R     41.7
+  17      E          see note 2         (1.64)               AS 3582-
+                                             40.8                     028
+                                                 (1.60)
+                                             46.5
+  19       F      M35X1- 6g 0.100R    (1.83)             3.8    AS 3582-
+                                             45.6              (.149)      128
+                                                 (1.79)             3.2
+                                             49.7              (.125)
+  21     G      M38X1- 6g 0.100R    (1.95)               AS 3582-
+                                             48.8                     130
+                                                 (1.92)
+                                             52.8
+  23      H      M41X1- 6g 0.100R    (2.07)               AS 3582-
+                                             51.9                     132
+                                                 (2.04)
+                                             56.0
+  25         J      M44X1- 6g 0.100R    (2.20)               AS 3582-
+                                             55.1                     134
+                                                 (2.16)
+NOTES:
+   1. Dimensions are in millimeters.
+   2. Modified major DIA 31.80-31.95.
+   3. Inch-pound conversion are provided in parentheses for information only.
+
+            FIGURE 1. Receptacle, classes N, and Y – Continued.
+
+                                  3
+
+
+
+
+
+                  Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+              Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/43B
+                            w/AMENDMENT 1
+
+REQUIREMENTS:
+
+  Dimensions and configurations: See figure 1.
+
+  Interface dimensions shall conform to MIL-DTL-38999.
+
+  This connector mates with MIL-DTL-38999/46 and /47.
+
+  Main key color: Blue.
+
+  For insert arrangements: See MIL-STD-1560.
+
+  Part or Identifying Number (PIN) example:
+
+                      D38999/    43   N    B     35    P    N
+
+
+ DOD no. prefix
+
+  Specification sheet no.
+
+  Class
+
+  Shell size code
+
+  Insert arrangement
+
+  Contact style
+   P – Pin, Solder cup.
+   X – Pin, Eyelet.
+
+
+  Polarizing position:
+  N is required for normal position.
+
+For contact termination: See MIL-DTL-38999.
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents: In addition to MIL-DTL-38999, this document references the following:
+
+MIL-DTL-38999/46
+MIL-DTL-38999/47
+MIL-STD-1560
+SAE-AS3582
+
+
+
+                                        4
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                   MIL-DTL-38999/43B
+                            w/AMENDMENT 1
+
+                          CONCLUDING MATERIAL
+
+
+Custodians:                                                                Preparing activity:
+  Army – CR                                                DLA - CC
+  Navy - AS
+  Air Force – 85                                                                  (Project 5935-2024-144)
+ DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+  Air Force - 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mill.
+
+
+
+
+
+                                        5
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.

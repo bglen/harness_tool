@@ -1,0 +1,51 @@
+parameter,nominal,minimum,maximum,unit,source,page,note
+gasket_location,,14.50,14.73,mm,MIL-DTL-38999N Figure 3 A,88,from receptacle datum B
+receptacle_socket_face,,0.64,0.94,mm,MIL-DTL-38999N Figure 3 D,88,behind datum B
+receptacle_pin_face,,15.04,15.46,mm,MIL-DTL-38999N Figure 3 N,90,behind datum B
+plug_pin_face,,0.24,0.65,mm,MIL-DTL-38999N Figure 3 S,90,behind datum B
+plug_socket_face,,14.76,15.06,mm,MIL-DTL-38999N Figure 3 Z,90,behind datum B
+receptacle_pin_tip,,9.50,10.54,mm,MIL-DTL-38999N Figure 3 M,90,contact excluded from model
+plug_pin_tip,,5.11,6.15,mm,MIL-DTL-38999N Figure 3 P,90,contact excluded from model
+G_tolerance_minus,0.25,,,mm,MIL-DTL-38999N Figure 3,89,
+G_tolerance_plus,0.13,,,mm,MIL-DTL-38999N Figure 3,89,
+T_tolerance_minus,0.03,,,mm,MIL-DTL-38999N Figure 3,90,
+T_tolerance_plus,0.25,,,mm,MIL-DTL-38999N Figure 3,90,
+receptacle_main_keyway,3.20,3.17,3.33,mm,MIL-DTL-38999N Figure 6,102,
+receptacle_minor_keyway,1.60,1.57,1.73,mm,MIL-DTL-38999N Figure 6,102,
+plug_main_key,2.54,2.41,2.57,mm,MIL-DTL-38999N Figure 6,102,
+plug_minor_key,1.32,1.19,1.35,mm,MIL-DTL-38999N Figure 6,102,
+plug_key_length,,7.24,,mm,MIL-DTL-38999N Figure 3,86,minimum
+plug_key_start,,2.16,,mm,MIL-DTL-38999N Figure 3,86,minimum
+plug_interface_length,15.01,15.01,15.09,mm,MIL-DTL-38999N Figure 3,86,
+receptacle_coupling_thread_front,,8.33,9.91,mm,MIL-DTL-38999N Figure 3,85,front thread location behind datum B
+receptacle_interface_back,,,16.92,mm,MIL-DTL-38999N Figure 3,85,
+receptacle_full_thread_back,,11.79,,mm,MIL-DTL-38999N Figure 3,85,
+receptacle_emi_chamfer,,0.18,,mm,MIL-DTL-38999N Figure 3 note 19,93,optional instead of R0.4 min
+receptacle_emi_chamfer_angle,45,40,50,deg,MIL-DTL-38999N Figure 3 note 19,93,
+coupling_flank_angle,60,,,deg,MIL-DTL-38999N Figure 3 note 17,93,modified stub
+coupling_starts,3,,,count,MIL-DTL-38999N 1.2.1,2,pitch and lead independently tabulated
+rear_thread_length,,7.11,,mm,MIL-DTL-38999N Figure 10,121,minimum full thread
+rear_interface_length,,8.00,,mm,MIL-DTL-38999N Figure 10,121,minimum
+rear_sealing_length,2.54,2.54,2.79,mm,MIL-DTL-38999N Figure 10,121,
+grommet_projection,,,2.16,mm,MIL-DTL-38999N Figure 10,121,size 8 and 10 arrangements allow 5.95 max
+tooth_height,,0.59,0.79,mm,MIL-DTL-38999N Figure 10,121,
+tooth_angle,100,98,102,deg,MIL-DTL-38999N Figure 10,121,
+tooth_tip_radius,0.23,0.10,0.36,mm,MIL-DTL-38999N Figure 10,121,flat may vary
+tooth_root_radius,0.40,0.17,0.63,mm,MIL-DTL-38999N Figure 10,121,
+socket_entry_lip,,0,0.13,mm,MIL-DTL-38999N Figure 14,135,
+socket_entry_angle,45,43,47,deg,MIL-DTL-38999N Figure 14,135,
+pin_barrier_height,1.32,1.19,1.45,mm,MIL-DTL-38999N Figure 14,135,
+pin_barrier_straight,0.51,0.51,0.64,mm,MIL-DTL-38999N Figure 14,135,
+slash24_length,,,32.5,mm,MIL-DTL-38999-24 Figure 1,1,classes J and M 33.0 max
+slash24_flange_front,,,22.6,mm,MIL-DTL-38999-24 Figure 1,1,maximum to forward flange face
+slash24_threaded_mount_length,,7.8,,mm,MIL-DTL-38999-24 Figure 1,2,
+slash24_full_thread_to_flange,,,1.9,mm,MIL-DTL-38999-24 Figure 1,2,
+slash24_panel_thickness,,1.58,3.2,mm,MIL-DTL-38999-24 Figure 1 note 3,4,
+slash24_red_band_back,,12.4,12.95,mm,MIL-DTL-38999-24 Figure 1,1,
+slash26_front_lip,4.7,4.3,5.1,mm,MIL-DTL-38999-26 Figure 1,1,
+slash26_flat_width,,6.2,6.5,mm,MIL-DTL-38999-26 Figure 1,1,
+slash26_flat_count,,4,,count,MIL-DTL-38999-26 Figure 1,1,minimum
+slash26_flat_length_fraction,0.6666666666666666,,,ratio,MIL-DTL-38999-26 Figure 1 note 3,2,at least two thirds coupling nut length
+slash24_flat_end_clearance,,,0.15,mm,MIL-DTL-38999-24 Figure 1 Detail C,2,maximum distance from flange face to end of single mounting flat
+rear_transition_angle,45,43,47,deg,MIL-DTL-38999N Figure 10 Detail C,122,transition between accessory thread and sealing land
+emi_front_land,,0.76,0.89,mm,MIL-DTL-38999N Figure 3 Detail B,86,front axial step at spring strap

@@ -1,0 +1,9 @@
+table,column,minus,plus,unit,source,page,note
+slash24,A_nom,0.3,0.3,mm,MIL-DTL-38999-24 Figure 1,3,
+slash24,B_nom,0.15,0.10,mm,MIL-DTL-38999-24 Figure 1,3,
+slash24,C_nom,0.2,0.1,mm,MIL-DTL-38999-24 Figure 1,3,blank C means not applicable
+slash24,D_nom,0.03,0.13,mm,MIL-DTL-38999-24 Figure 1,3,
+slash24,E_nom,0.13,0.13,mm,MIL-DTL-38999-24 Figure 1,3,
+slash24,S_nom,0.4,0.4,mm,MIL-DTL-38999-24 Figure 1,4,
+series_iii_interface,G_nom,0.25,0.13,mm,MIL-DTL-38999N Figure 3,89,
+series_iii_interface,T_nom,0.03,0.25,mm,MIL-DTL-38999N Figure 3,90,

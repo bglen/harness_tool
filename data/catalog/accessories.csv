@@ -1,0 +1,80 @@
+# schema=1; dust caps, jam nuts, o-rings, gaskets, grounding rings, sealing plugs (seed; PN formats to verify)
+pn,kind,description,shell_sizes,for_kind,lanyard,contact_size,mass_g,status
+D38999/32WAR,dustCap,"Protective cover for plug, shell 9, with lanyard",9,plug,true,,10.5,seed
+D38999/32WAN,dustCap,"Protective cover for plug, shell 9",9,plug,false,,9.5,seed
+D38999/33WAR,dustCap,"Protective cover for receptacle, shell 9, with lanyard",9,receptacle,true,,10.5,seed
+D38999/33WAN,dustCap,"Protective cover for receptacle, shell 9",9,receptacle,false,,9.5,seed
+D38999/28W-1,jamNut,"Jam nut, M17 thread, shell 9",9,receptacle,false,,7,seed
+M25988/1-019,oRing,"O-ring (-019) for jam-nut receptacle, shell 9",9,receptacle,false,,0.5,seed
+HSG-FG-09,gasket,"Flange gasket, conductive, shell 9",9,receptacle,false,,1.5,seed
+HSG-GR-09,groundingRing,"Grounding ring, shell 9",9,any,false,,1,seed
+D38999/32WBR,dustCap,"Protective cover for plug, shell 11, with lanyard",11,plug,true,,11.5,seed
+D38999/32WBN,dustCap,"Protective cover for plug, shell 11",11,plug,false,,10.5,seed
+D38999/33WBR,dustCap,"Protective cover for receptacle, shell 11, with lanyard",11,receptacle,true,,11.5,seed
+D38999/33WBN,dustCap,"Protective cover for receptacle, shell 11",11,receptacle,false,,10.5,seed
+D38999/28W-2,jamNut,"Jam nut, M20 thread, shell 11",11,receptacle,false,,7.666666666666666,seed
+M25988/1-022,oRing,"O-ring (-022) for jam-nut receptacle, shell 11",11,receptacle,false,,0.5,seed
+HSG-FG-11,gasket,"Flange gasket, conductive, shell 11",11,receptacle,false,,1.5,seed
+HSG-GR-11,groundingRing,"Grounding ring, shell 11",11,any,false,,1,seed
+D38999/32WCR,dustCap,"Protective cover for plug, shell 13, with lanyard",13,plug,true,,12.5,seed
+D38999/32WCN,dustCap,"Protective cover for plug, shell 13",13,plug,false,,11.5,seed
+D38999/33WCR,dustCap,"Protective cover for receptacle, shell 13, with lanyard",13,receptacle,true,,12.5,seed
+D38999/33WCN,dustCap,"Protective cover for receptacle, shell 13",13,receptacle,false,,11.5,seed
+D38999/28W-3,jamNut,"Jam nut, M25 thread, shell 13",13,receptacle,false,,8.333333333333332,seed
+M25988/1-024,oRing,"O-ring (-024) for jam-nut receptacle, shell 13",13,receptacle,false,,0.5,seed
+HSG-FG-13,gasket,"Flange gasket, conductive, shell 13",13,receptacle,false,,1.5,seed
+HSG-GR-13,groundingRing,"Grounding ring, shell 13",13,any,false,,1,seed
+D38999/32WDR,dustCap,"Protective cover for plug, shell 15, with lanyard",15,plug,true,,13.5,seed
+D38999/32WDN,dustCap,"Protective cover for plug, shell 15",15,plug,false,,12.5,seed
+D38999/33WDR,dustCap,"Protective cover for receptacle, shell 15, with lanyard",15,receptacle,true,,13.5,seed
+D38999/33WDN,dustCap,"Protective cover for receptacle, shell 15",15,receptacle,false,,12.5,seed
+D38999/28W-4,jamNut,"Jam nut, M28 thread, shell 15",15,receptacle,false,,9,seed
+M25988/1-026,oRing,"O-ring (-026) for jam-nut receptacle, shell 15",15,receptacle,false,,0.5,seed
+HSG-FG-15,gasket,"Flange gasket, conductive, shell 15",15,receptacle,false,,1.5,seed
+HSG-GR-15,groundingRing,"Grounding ring, shell 15",15,any,false,,1,seed
+D38999/32WER,dustCap,"Protective cover for plug, shell 17, with lanyard",17,plug,true,,14.5,seed
+D38999/32WEN,dustCap,"Protective cover for plug, shell 17",17,plug,false,,13.5,seed
+D38999/33WER,dustCap,"Protective cover for receptacle, shell 17, with lanyard",17,receptacle,true,,14.5,seed
+D38999/33WEN,dustCap,"Protective cover for receptacle, shell 17",17,receptacle,false,,13.5,seed
+D38999/28W-6,jamNut,"Jam nut, M32 thread, shell 17",17,receptacle,false,,9.666666666666668,seed
+M25988/1-028,oRing,"O-ring (-028) for jam-nut receptacle, shell 17",17,receptacle,false,,0.5,seed
+HSG-FG-17,gasket,"Flange gasket, conductive, shell 17",17,receptacle,false,,1.5,seed
+HSG-GR-17,groundingRing,"Grounding ring, shell 17",17,any,false,,1,seed
+D38999/32WFR,dustCap,"Protective cover for plug, shell 19, with lanyard",19,plug,true,,15.5,seed
+D38999/32WFN,dustCap,"Protective cover for plug, shell 19",19,plug,false,,14.5,seed
+D38999/33WFR,dustCap,"Protective cover for receptacle, shell 19, with lanyard",19,receptacle,true,,15.5,seed
+D38999/33WFN,dustCap,"Protective cover for receptacle, shell 19",19,receptacle,false,,14.5,seed
+D38999/28W-8,jamNut,"Jam nut, M35 thread, shell 19",19,receptacle,false,,10.333333333333332,seed
+M25988/1-128,oRing,"O-ring (-128) for jam-nut receptacle, shell 19",19,receptacle,false,,0.5,seed
+HSG-FG-19,gasket,"Flange gasket, conductive, shell 19",19,receptacle,false,,1.5,seed
+HSG-GR-19,groundingRing,"Grounding ring, shell 19",19,any,false,,1,seed
+D38999/32WGR,dustCap,"Protective cover for plug, shell 21, with lanyard",21,plug,true,,16.5,seed
+D38999/32WGN,dustCap,"Protective cover for plug, shell 21",21,plug,false,,15.5,seed
+D38999/33WGR,dustCap,"Protective cover for receptacle, shell 21, with lanyard",21,receptacle,true,,16.5,seed
+D38999/33WGN,dustCap,"Protective cover for receptacle, shell 21",21,receptacle,false,,15.5,seed
+D38999/28W-9,jamNut,"Jam nut, M38 thread, shell 21",21,receptacle,false,,11,seed
+M25988/1-130,oRing,"O-ring (-130) for jam-nut receptacle, shell 21",21,receptacle,false,,0.5,seed
+HSG-FG-21,gasket,"Flange gasket, conductive, shell 21",21,receptacle,false,,1.5,seed
+HSG-GR-21,groundingRing,"Grounding ring, shell 21",21,any,false,,1,seed
+D38999/32WHR,dustCap,"Protective cover for plug, shell 23, with lanyard",23,plug,true,,17.5,seed
+D38999/32WHN,dustCap,"Protective cover for plug, shell 23",23,plug,false,,16.5,seed
+D38999/33WHR,dustCap,"Protective cover for receptacle, shell 23, with lanyard",23,receptacle,true,,17.5,seed
+D38999/33WHN,dustCap,"Protective cover for receptacle, shell 23",23,receptacle,false,,16.5,seed
+D38999/28W-10,jamNut,"Jam nut, M41 thread, shell 23",23,receptacle,false,,11.666666666666668,seed
+M25988/1-132,oRing,"O-ring (-132) for jam-nut receptacle, shell 23",23,receptacle,false,,0.5,seed
+HSG-FG-23,gasket,"Flange gasket, conductive, shell 23",23,receptacle,false,,1.5,seed
+HSG-GR-23,groundingRing,"Grounding ring, shell 23",23,any,false,,1,seed
+D38999/32WJR,dustCap,"Protective cover for plug, shell 25, with lanyard",25,plug,true,,18.5,seed
+D38999/32WJN,dustCap,"Protective cover for plug, shell 25",25,plug,false,,17.5,seed
+D38999/33WJR,dustCap,"Protective cover for receptacle, shell 25, with lanyard",25,receptacle,true,,18.5,seed
+D38999/33WJN,dustCap,"Protective cover for receptacle, shell 25",25,receptacle,false,,17.5,seed
+D38999/28W-11,jamNut,"Jam nut, M44 thread, shell 25",25,receptacle,false,,12.333333333333334,seed
+M25988/1-134,oRing,"O-ring (-134) for jam-nut receptacle, shell 25",25,receptacle,false,,0.5,seed
+HSG-FG-25,gasket,"Flange gasket, conductive, shell 25",25,receptacle,false,,1.5,seed
+HSG-GR-25,groundingRing,"Grounding ring, shell 25",25,any,false,,1,seed
+MS27488-22-2,sealingPlug,"Sealing plug, contact size 22D (black)",,any,false,22D,0.1,seed
+MS27488-22-2,sealingPlug,"Sealing plug, contact size 23 (black)",,any,false,23,0.1,seed
+MS27488-20-2,sealingPlug,"Sealing plug, contact size 20 (red)",,any,false,20,0.1,seed
+MS27488-16-2,sealingPlug,"Sealing plug, contact size 16 (blue)",,any,false,16,0.1,seed
+MS27488-12-2,sealingPlug,"Sealing plug, contact size 12 (yellow)",,any,false,12,0.1,seed
+MS27488-10-2,sealingPlug,"Sealing plug, contact size 10 (white)",,any,false,10,0.1,seed

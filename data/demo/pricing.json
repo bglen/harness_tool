@@ -1,0 +1,57 @@
+{
+  "note": "DEMO RATES: arbitrary placeholder values so demo prices move sensibly with the design. Not a quotation; not real margins, machine rates or supplier costs (spec 15.6).",
+  "currency": "USD",
+  "materialMarkup": 1.3,
+  "machineRatePerMin": 2.4,
+  "manualRatePerMin": 1.5,
+  "opMinutes": {
+    "connectorLoad": 1.5,
+    "backshell": 1.2,
+    "accessory": 0.3,
+    "contactCrimpInsert": 0.3,
+    "sealingPlug": 0.08,
+    "wireCutStrip": 0.12,
+    "wireLayPerM": 0.2,
+    "twist": 0.4,
+    "shieldTermination": 1.5,
+    "overbraidPerM": 1.2,
+    "tapePerM": 0.7,
+    "bandClamp": 0.6,
+    "label": 0.15,
+    "test": 1.5
+  },
+  "manualOpMinutes": {
+    "connectorLoad": 6,
+    "contactCrimpInsert": 1.2,
+    "wireCutStrip": 0.6,
+    "splice": 4,
+    "daisyChain": 3,
+    "potting": 18,
+    "heatShrinkPerM": 2.5,
+    "sleevePerM": 2,
+    "jacketPerM": 4,
+    "conduitPerM": 2,
+    "boot": 4,
+    "cableStrip": 2.5,
+    "drainTermination": 3,
+    "tieDown": 0.5,
+    "label": 0.8
+  },
+  "setupNre": 450,
+  "setupPerUniqueConnector": 60,
+  "setupPerManualOpType": 40,
+  "quoteValidityDays": 30,
+  "leadTiers": [
+    { "id": "standard", "name": "Standard", "days": 15, "multiplier": 1.0 },
+    { "id": "expedited", "name": "Expedited", "days": 8, "multiplier": 1.35 },
+    { "id": "rush", "name": "Rush", "days": 4, "multiplier": 1.85 }
+  ],
+  "quantityFactors": [
+    { "qty": 1, "factor": 1.0 },
+    { "qty": 5, "factor": 0.94 },
+    { "qty": 10, "factor": 0.9 },
+    { "qty": 25, "factor": 0.85 },
+    { "qty": 100, "factor": 0.78 }
+  ],
+  "latencyMs": [300, 800]
+}

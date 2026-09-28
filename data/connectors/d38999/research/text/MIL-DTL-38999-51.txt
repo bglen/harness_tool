@@ -1,0 +1,367 @@
+
+=== PDF PAGE 1 ===
+                                                        METRIC
+                                                                  MIL-DTL-38999/51B
+                                                    w/AMENDMENT 2
+                                                               2 July 2024
+                                                      SUPERSEDING
+                                                                  MIL-DTL-38999/51B
+                                                    w/AMENDMENT 1
+                                                               8 August 2017
+                           DETAIL SPECIFICATION SHEET
+
+                  CONNECTOR, ELECTRICAL, CIRCULAR, COVER,
+                    PROTECTIVE, PLUG, MIL-DTL-38999 SERIES IV
+
+                             This specification is approved for use by all
+                     Departments and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                                     STYLE R (ROPE ONLY)
+
+                     FIGURE 1. Protective cover, plug, all classes.
+
+
+
+AMSC N/A                                                     FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                MIL-DTL-38999/51B
+              w/AMENDMENT 2
+
+
+
+
+
+                        mm    Inches   mm     Inches
+                                         0.20     .008     16.13     .635
+                                         0.74     .029     20.55     .809
+                                         0.84     .033     27.84    1.096
+                                         0.89     .035    127       5.000
+
+
+
+
+
+ FIGURE 1. Protective cover, plug, all classes - Continued.
+
+                       2
+
+
+
+   Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                MIL-DTL-38999/51B
+                          w/AMENDMENT 2
+
+
+
+
+
+                                    Dimensions
+   Shell    A      B     C     D     E     F     H       J     U
+    size   max dia  max dia     dia       dia      dia                        dia    max
+                                                                  min
+    11     35.05    20.14    12.929  14.986   16.26                   10.74
+            (1.380)    (.793)    (.509)   (.590)   (.640)  17.145  7.010   (.423)   1.651
+                             12.776  14.884   16.15   (.675)   (.276)             (.065)
+                                           (.586)   (.636)                                  (.503)                  16.993
+    13     39.88    23.34    16.10   18.313   19.33   (.669)           13.64
+            (1.570)    (.919)    (.634)   (.721)   (.761)                     (.537)
+                              15.95   18.212   19.23
+                                  (.628)   (.717)   (.757)
+
+    15     42.17    26.52    19.28   21.463   22.48                   16.81
+            (1.660)   (1.044)    (.759)   (.845)   (.885)                     (.662)   2.159
+                              19.13   21.361   22.38                               (.085)
+                                  (.753)             (.881)                                           (.841)
+    17     49.47    29.72    22.48   24.638   25.65                   19.99
+            (1.790)   (1.170)    (.885)   (.970)   (1.010)                     (.787)
+                              22.33   24.536   25.55
+                                  (.879)            (1.006)                                           (.966)
+    19     48.77    32.87    25.63   27.81   27.66                   22.25
+            (1.920)   (1.294)   (1.009)  (1.095)  (1.089)  16.891  6.756   (.876)   2.667
+                              25.48   27.76   27.56   (.665)   (.266)             (.105)
+                                (1.003)  (1.093)  (1.085)                                                     16.739
+    21     52.33    36.04    28.80   30.99   30.84   (.659)           25.43
+            (2.060)   (1.419)   (1.134)  (1.220)  (1.214)                   (1.001)
+                              28.65   30.48   30.73
+                                (1.128)  (1.200)  (1.210)
+    23     57.15    39.22    31.98   34.29   34.11                   28.60
+            (2.250)   (1.544)   (1.259)  (1.350)  (1.343)                   (1.126)   3.175
+                              31.83   33.78   34.01                               (.125)
+                                (1.253)  (1.330)  (1.339)
+    25     60.45    42.39    35.15   37.34   37.34                   31.78
+            (2.380)   (1.669)   (1.384)  (1.470)  (1.470)                   (1.251)
+                              35.00   36.83   37.24
+                                (1.378)  (1.450)  (1.466)
+
+NOTES:
+    1. Dimensions are in millimeters. Inch equivalents are given for information only.
+    2. Method of attachment to cover and or ring is optional.
+
+                                      3
+
+
+
+                       Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                  Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                MIL-DTL-38999/51B
+              w/AMENDMENT 2
+
+
+ FIGURE 1. Protective cover, plug, all classes – Continued.
+
+
+
+
+
+             STYLE N (ROPE AND RING)
+
+                  Dimensions
+    Shell    K       L     M     N
+    size    dia max   dia min
+
+    11     27.0      18.0     20.50   127.00
+            (1.063)    (.709)    (.807)    (5.00)
+                              18.00
+                                  (.709)
+    13      30.0      20.0     27.00   127.00
+            (1.181)    (.788)    (1.06)    (5.00)
+                              20.00
+                                  (.788)
+    15      31.0      23.0     22.50   127.00
+            (1.220)    (.907)    (0.886)    (5.00)
+                              18.00
+                                  (.709)
+    17      37.0      26.0     30.50   127.00
+            (1.457)   (1.025)    ( 1.201 )   (5.00)
+                              23.50
+
+                       4
+
+
+
+   Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                   MIL-DTL-38999/51B
+                            w/AMENDMENT 2
+
+                                                         (.925)
+
+            FIGURE 2. Protective cover, plug, rope and ring assembly, all classes.
+
+
+
+                           Shell     K        L     M     N
+                           size     dia max    dia min
+                      19       40.0      29.0     31.50   127.00
+                                    (1.575)    (1.141)   (1.240)   (5.00)
+                                                    25.00
+                                                           (.984)
+                      21       44.0      32.0     33.00   127.00
+                                    (1.732)    (1.260)    (1.30)   (5.00)
+                                                    26.50
+                                                         (1.043)
+                      23       46.0      34.0    34.000  127.00
+                                    (1.811)    (1.339)   (1.339)   (5.00)
+                                                    27.50
+                                                         (1.083)
+                      25       49.0      39.0     38.00   127.00
+                                    (1.929)    (1.538)   ( 1.496 )  (5.00)
+                                                    30.00
+                                                         (1.181)
+   NOTES:
+        1. Dimensions are in millimeters. Inch equivalents are given for information only.
+        2. Method of attachment to cover and or ring is optional.
+
+        FIGURE 2. Protective cover, plug, rope and ring assembly, all classes – Continued.
+
+REQUIREMENTS:
+
+   Dimensions and configurations: See figures 1 and 2.
+
+    Materials:
+
+       Cover -    Classes C, F, G, R, T, W, and Z:  Impact extruded or machined aluminum alloy.
+                  Classes H, K, N, S and Y: Corrosion resistant steel.
+                  Classes J and M: High performance resin in accordance with MIL-DTL-38999.
+                  Class F: Impact extruded or machined aluminum alloy.
+                 (Base materials listed. For finishes or surface treatments for each class,
+                 see MIL-DTL-38999.)
+
+       Gasket -    Silicone elastomer.
+
+       Ring -      Corrosion resistant steel, passivated, 1.020 mm (0.040 inches) maximum thickness.
+
+      Rope -     Insulated stainless steel, passivated. Passivation or proof of passive finish using
+               ASTM-A967/A967M or equivalent is permissible. Insulation shall withstand 200°C.
+                                         5
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 6 ===
+                                   MIL-DTL-38999/51B
+                            w/AMENDMENT 2
+
+                   environment.
+
+       Fastener -  Stainless steel, passivated.
+                   Option: Aluminum integral to cover.
+
+
+       Mating connectors: MIL-DTL-38999, series IV plugs.
+
+       Gasket shall be bonded to cover, or mechanically retained.
+      Rope shall rotate freely on fastener.
+
+    Fastener tensile strength: The protective cover and rope assembly shall withstand a dead weight
+    tensile load of 25 pounds applied to both axial and longitudinal directions. The load shall be applied at
+    the end of the rope assembly and held for 5 minutes. There shall be no separation of the rope
+   assembly from the protective cover or damage to the rope assembly. Both axial and longitudinal
+    directions shall be 25 pounds. The load shall be applied to the end of the rope.
+
+    Air Leakage: Testing shall be in accordance with EIA-364-02, except the minimum period of
+   measurement shall be 10 seconds. The air leakage rate shall be no greater than 1 atmospheric cubic
+    inch per hour (4.55 X 10-3 cm3/s) Protective covers shall be mated to connectors having either
+    contacts or inserts removed so that a pressure of 10 lbft/in2 (.703 Kg/cm2 ) can be applied against the
+    insides of the protective covers or stowage receptacles.
+
+    Qualification  (all classes): Qualification shall be in accordance with MIL-DTL-38999 except only the
+    following tests shall be required:
+
+      Examination of product
+      Coupling torque
+      Humidity
+       Salt spray (corrosion)
+      Fastener tensile strength (see requirement)
+        Air Leakage
+
+    Qualification (classes J and M only):  Qualification shall be in accordance with MIL-DTL-38999,
+    except that in addition to the test sequence specified for all classes above, the following tests shall
+   be required:
+      Temperature cycling
+       Hydrolytic stability
+
+Group A sampling inspection. Sampling for group A inspection shall be as specified in table I.
+
+                        TABLE I. Group A sampling plan.
+                                Lot size               Sampling size
+                            1 to 13               100 percent
+                           14 to 150               13 units
+                           151 to 280               20 units
+                           281 to 500               29 units
+                          501 to 1,200              34 units
+                            1,201 to 3,200             42 units
+                                         6
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 7 ===
+                                   MIL-DTL-38999/51B
+                            w/AMENDMENT 2
+
+                            3,201 and up              54 units
+
+
+
+
+Part or Identifying Number (PIN) example:
+
+                                       D38999/51  W     15    R
+
+
+
+                 Specification sheet number
+
+              Class
+                 (see requirements)
+
+                Shell size
+
+                Style
+           R - Rope
+           N - With rope and ring
+
+          Class F is not for Navy use and is inactive for use in Air Force new design.
+
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+   EIA-364-02
+  ASTM-A967/A967M
+
+
+
+
+
+                                         7
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 8 ===
+                                   MIL-DTL-38999/51B
+                            w/AMENDMENT 2
+
+                          CONCLUDING MATERIAL
+
+Custodians:                                                              Preparing activity:
+ Army - CR                                               DLA - CC
+  Navy - AS
+  Air Force - 85                                                                 (Project 5935-2024-150)
+ DLA - CC
+
+Review activities:
+ Army - MI
+ Navy - EC, MC, OS
+  Air Force - 19
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         8
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.

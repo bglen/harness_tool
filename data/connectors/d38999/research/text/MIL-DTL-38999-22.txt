@@ -1,0 +1,452 @@
+
+=== PDF PAGE 1 ===
+                                                         METRIC
+                                                                     MIL-DTL-38999/22J
+                                                     w/AMENDMENT 2
+                                                                 11 August 2022
+                                                      SUPERSEDING
+                                                                     MIL-DTL-38999/22J
+                                                     w/AMENDMENT 1
+                                                                 27 July 2021
+
+                            DETAIL SPECIFICATION SHEET
+
+               CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE,
+                 THREADED, DUMMY STOWAGE, SERIES III, METRIC
+
+                This specification is approved for use by all Departments and Agencies of
+                                      the Department of Defense.
+
+             The requirements for acquiring the product described herein shall consist
+                                of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                       FIGURE 1. Dummy stowage receptacle.
+
+
+
+
+
+AMSC N/A                                                         FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                     MIL-DTL-38999/22J
+                 w/AMENDMENT 2
+
+                       Dimensions
+Shell         Shell size     P     PP      R1        R2
+size         code       ± .20    ± .20   (see note 4)  (see note 5)
+            A         3.25     5.49      18.26        15.09 9           (see note 8)    (.128)    (.216)      (.719)        (.594)
+            A1         3.25     5.49      18.26        15.09 9           (see note 6)    (.128)    (.216)      (.719)        (.594)
+            A2         3.25     5.49      18.26        15.09 9           (see note 7)    (.128)    (.216)      (.719)        (.594)
+                           3.25     4.93      20.62        18.26 11         B                             (.128)    (.194)      (.812)        (.719)
+                           3.25     4.93      23.01        20.62 13        C                             (.128)    (.194)      (.906)        (.812)
+                           3.25     4.39      24.61        23.01 15        D                             (.128)    (.173)      (.969)        (.906)
+                           3.25     4.93      26.97        24.61 17         E                             (.128)    (.194)      (1.062)        (.969)
+                           3.25     4.93      29.36        26.97 19          F                             (.128)    (.194)      (1.156)       (1.062)
+                           3.25     4.93      31.75        29.36 21        G                             (.128)    (.194)      (1.250)       (1.156)
+                           3.91     6.15      34.93        31.75 23        H                             (.154)    (.242)      (1.375)       (1.250)
+                           3.91     6.15      38.10        34.93 25            J                             (.154)    (.242)      (1.500)       (1.375)
+
+
+
+
+
+      FIGURE 1. Dummy stowage receptacle – Continued.
+
+
+
+
+
+                           2
+
+
+
+
+
+        Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+     Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                    MIL-DTL-38999/22J
+                            w/AMENDMENT 2
+
+                                      Dimensions
+         Shell        Shell       S       V          V’    W          W’
+                       size          size                   ± .3      + 0.00    + 1.4      ± .3
+                  code                                                                 - 0.13        - 0.0
+                A          23.8       20.83      19.5       2.5        3.65 (.144)         9                 (see note 8)     (.937)       (.820)      (.768)      (.098)       2.2 (.087)
+                 A1          23.8       20.83      19.5       2.5        3.65 / 2.2
+         9                 (see note 6)     (.937)       (.820)      (.768)      (.098)      (.144 /.087)
+                 A2          23.8       20.83      19.5       2.5        3.65 / 2.2         9                 (see note 7)     (.937)       (.820)      (.768)      (.098)      (.144 /.087)
+                                 26.2       20.83      19.5       2.5        3.65 / 2.2
+        11       B                                   (1.031)      (.820)      (.768)      (.098)      (.144 /.087)
+                                 28.6       20.83      19.5       2.5        3.65 / 2.2
+        13       C                                   (1.126)      (.820)      (.768)      (.098)      (.144 /.087)
+                                 31.0       20.83      19.5       2.5        3.65 / 2.2
+        15       D                                   (1.220)      (.820)      (.768)      (.098)      (.144 /.087)
+                                 33.3       20.83      19.5       2.5        3.65 / 2.2
+        17       E                                   (1.311)      (.820)      (.768)                                                                         (.098)      (.144 /.087)
+                                 36.5       20.83      19.5       2.5        3.65 / 2.2
+        19        F                                   (1.437)      (.820)      (.768)                                                                         (.098)      (.144 /.087)
+                                 39.7       20.07      18.7       3.2        4.35 / 2.9
+        21      G                                   (1.563)      (.790)      (.736)                 (.171 / .114)                                                                         (.126)
+                                 42.9       20.07      18.7       3.2        4.35 / 2.9
+        23       H                                   (1.689)      (.790)      (.736)      (.126)      (.171 / .114)
+                                 46.0       20.07      18.7       3.2        4.35 / 2.9
+        25          J                                   (1.811)      (.790)      (.736)      (.126)      (.171 / .114)
+
+NOTES:
+   1. Dimensions are in millimeters. Inch equivalents are given for information only.
+   2. Flange is solid.
+   3. Dummy receptacles are used when unmated plugs must be protected.
+   4. Dimensions required for intermountability with front or rear mounting series I.
+   5. Dimensions required for intermountability with front mounting series II.
+   6. Shell size code A1 is for use with size 9 plug mating key polarizations C, E and N, only.
+   7. Shell size code A2 is for use with size 9 plug mating key polarizations A, B and D, only.
+   8. Shell size code A (inactive for new design)  is for use with legacy systems with size 9 plug mating
+     key polarizations A, B, C, D, E and N.
+   9. Dimensions V’ and W’ are for classes J and M, only. Dimensions V and W are for all other classes.
+                  FIGURE 1. Dummy stowage receptacle – Continued.
+
+                                         3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                           MIL-DTL-38999/22J
+                     w/AMENDMENT 2
+
+
+
+
+                                                  SHELL SIZE 9 (SHELL SIZE CODE A,
+                                                   UNIVERSAL CONFIGURATION FOR
+                                                 MATING TO PLUGS WITH KEY
+                                                    POLARIZATIONS A, B, C, D, E AND N
+                                                          (INACTIVE FOR NEW DESIGN))
+
+
+
+
+
+                    SHELL SIZE 9, SHELL SIZE CODE A
+
+
+
+
+
+FIGURE 2. Dummy stowage receptacle, keyway arrangements (shell size 9).
+
+
+
+
+
+                                 4
+
+
+
+
+
+               Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+           Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                           MIL-DTL-38999/22J
+                     w/AMENDMENT 2
+
+
+
+
+
+                   SHELL SIZE 9, SHELL SIZE CODE A1
+
+
+
+
+
+FIGURE 2. Dummy stowage receptacle, keyway arrangements (shell size 9). – Continued.
+
+
+
+
+                                 5
+
+
+
+
+
+               Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+           Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 6 ===
+                          MIL-DTL-38999/22J
+                    w/AMENDMENT 2
+
+
+
+
+
+                     SHELL SIZE 9, SHELL SIZE CODE A2
+
+    NOTES:
+          1.  Dimensions are in millimeters.
+          2.  Inch equivalents are given for information only.
+
+
+FIGURE 2. Dummy stowage receptacle, keyway arrangements (shell size 9)  - Continued.
+
+
+
+
+                                6
+
+
+
+
+
+              Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+          Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 7 ===
+                               MIL-DTL-38999/22J
+                        w/AMENDMENT 2
+
+
+
+
+
+                           SHELL SIZES 11, 13 AND 15
+
+       Shell      Shell              A                    B
+        size     size code                  dia                            dia
+       11      B           15.88/15.60 (.625/.614)      14.66/14.45 (.577/.569)
+       13      C           19.66/19.38 (.774/.763)      17.50/17.30 (.689/.681)
+       15      D           22.84/22.56 (.899/.888)      20.65/20.44 (.813/.805)
+
+  NOTES:
+      1.  Dimensions are in millimeters.
+       2.  Inch equivalents are given for information only.
+
+FIGURE 3. Dummy stowage receptacle, keyway arrangement (shell sizes 11, 13 and 15).
+
+
+
+
+                                     7
+
+
+
+
+
+                     Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 8 ===
+                               MIL-DTL-38999/22J
+                        w/AMENDMENT 2
+
+
+
+
+
+                        SHELL SIZES 17, 19, 21, 23 AND 25
+
+    Shell       Shell              A                     B
+    size      size code                  dia                             dia
+    17       E          26.01/25.73 (1.024/1.013)      23.85/23.64 (.939/.930)
+    19       F          28.63/28.40 (1.127/1.118)      26.55/26.31 (1.045/1.036)
+    21      G          31.85/31.57 (1.254/1.243)      29.70/29.49 (1.169/1.161)
+    23      H          35.03/34.75 (1.379/1.368)      32.85/32.66 (1.293/1.286)
+    25         J          38.20/37.92 (1.504/1.493)      36.00/35.84 (1.417/1.411)
+
+
+FIGURE 4.  Dummy stowage receptacle, keyway arrangement (shell sizes 17, 19, 21, 23 and 25).
+
+                                     8
+
+
+
+
+
+                     Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 9 ===
+                                    MIL-DTL-38999/22J
+                            w/AMENDMENT 2
+
+REQUIREMENTS:
+
+  Dimensions and configurations: See figures 1 thru 4. Interface dimensions shall conform to
+  MIL-DTL-38999, except as noted.
+
+  This dummy stowage receptacle (DSR) mates with qualified plugs in accordance with
+  MIL-DTL-38999/26, MIL-DTL-38999/29, MIL-DTL-38999/30, and MIL-DTL-38999/31.
+
+  Air leakage: Testing shall be in accordance with EIA-364-02, except the minimum period of
+  measurement shall be 10 seconds. The air leakage rate shall be no greater than 1 atmospheric cubic
+  inch per hour (4.55 X 10-3 cm3/s) Stowage receptacles shall be mated to connectors having either
+  contacts or inserts removed so that a pressure of 10 lbft/in2 (.703 Kg/cm2 ) can be applied against the
+  insides of the stowage receptacles.
+
+  Qualification (general):  Qualification shall be in accordance with MIL-DTL-38999, conducted on two
+  samples of each shell size, except only the following sequence of tests shall be required:
+    Examination of product
+    Coupling torque
+   Dynamic salt spray (corrosion)
+    Air leakage (see requirement)
+    Visual and mechanical
+
+  Qualification (classes J and M only):  Qualification (general) requirements shall apply. The following
+  additional tests shall be required:
+   Temperature cycling
+    Hydrolytic stability
+
+   Group A sampling inspection. Sampling for group A inspection shall be as specified in table I.
+
+
+                        TABLE I. Group A sampling plan.
+                                 Lot size               Sampling size
+                            1 to 13               100 percent
+                           14 to 150                13 units
+                           151 to 280               20 units
+                           281 to 500               29 units
+                          501 to 1,200              34 units
+                            1,201 to 3,200              42 units
+                            3,201 and up              54 units
+
+
+
+
+
+                                         9
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 10 ===
+                                    MIL-DTL-38999/22J
+                            w/AMENDMENT 2
+
+  Part or Identifying Number (PIN) example:
+
+       D38999/        22    B   W
+
+          D38999/      DoD number prefix
+          22               Specification sheet number
+        B                Shell size code (for shell size codes A, A1 and A2, see note)
+      W             Class
+
+
+   NOTE: Shell size codes A, A1 and A2 for shell size 9 only:
+            • Shell size code A is a universal configuration for use with plugs with mating key
+               polarizations A, B, C, D, E and N.
+            • Shell size code A1 is for use with plugs with mating key polarizations C, E or N.
+            • Shell size code A2 is for use with plugs with mating key polarizations A, B or D.
+
+            Class F is not for Navy use. Class F is inactive for use in Air Force new design.
+
+              Shell size code A (shell size 9) is inactive for new design.  Use shell size codes
+          A1 or A2 for new design.
+
+   NOTE: The term PIN is equivalent to the term (part number, identification number, and type
+            designator) which was previously used in this specification.
+
+Application note:
+
+   1. Shell size 9, shell size code A (universal configuration), is not recommended for blind mate
+      applications due to the possibility for misalignment between the DSR keyways and the plug keys.
+     Misalignment can potentially damage plug EMI bands.
+
+Change effectivity. Unless otherwise specified by the preparing activity and/or the qualifying activity, all
+changes from the previous revision of this specification sheet shall become effective within 90 days of the
+date of publication of the latest revision.  If unable to implement changes within the 90 day time period,
+the manufacturer or value added distributor shall notify the qualifying activity. The qualifying activity shall
+determine if an extension may be granted.
+
+Disposition of stock. Unless otherwise specified by the qualifying activity and coordinated with the
+preparing activity, qualified manufacturers and their selling agents or distributors may continue to
+ship stowage receptacles which were manufactured in accordance with the previous revision of this
+specification sheet for a period of 18 months from the date of the latest revision, provided that form, fit
+and function are not affected.
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+
+                                         10
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 11 ===
+                                    MIL-DTL-38999/22J
+                            w/AMENDMENT 2
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+  MIL-DTL-38999/26
+  MIL-DTL-38999/29
+  MIL-DTL-38999/30
+  MIL-DTL-38999/31
+  EIA-364-02
+
+
+                         CONCLUDING MATERIAL
+
+Custodians:                                                              Preparing activity:
+  Army - CR                                               DLA - CC
+  Navy - AS
+   Air Force – 85                                                                (Project 5935-2022-180)
+  DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+   Air Force - 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         11
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:37Z
+                      Check the source to verify that this is the current version before use.

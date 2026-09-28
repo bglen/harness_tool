@@ -1,0 +1,194 @@
+
+=== PDF PAGE 1 ===
+                                                        METRIC
+
+                                                                 MIL-DTL-38999/50C
+                                                    w/AMENDMENT 1
+                                                               2 July 2024
+                                                     SUPERSEDING
+                                                                 MIL-DTL-38999/50C
+                                                               5 February 2014
+
+                           DETAIL SPECIFICATION SHEET
+
+               CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE,
+            DUMMY STOWAGE, BREECH COUPLING, SERIES IV, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                              mm   Inches  mm  Inches
+                                                  0.13   .005     0.90  .035
+                                                  0.40   .016     20.02  .788
+
+
+                  FIGURE 1. Dummy receptacle, classes T, W, X and Z.
+
+
+
+AMSC N/A                                                      FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                   MIL-DTL-38999/50C
+                            w/AMENDMENT 1
+
+
+
+
+      Shell     Shell      P       R       S         T        V    W
+       size   size code      dia      BSC                       dia
+                                    10.31     26.7 / 25.6  20.15 / 19.76
+      11     B
+                                           (.406)    (1.05/1.01)    (.793/.778)
+                                     11.51    29.1 / 28.0  23.35 / 22.96
+      13     C
+                                           (.453)    (1.15/1.10)    (.919/.904)
+                                     12.31    31.5 / 30.4  26.52 / 26.13    20.8/      2.6/
+      15     D                                                         19.2      2.1                           3.5 / 3.1       (.485)   (1.24/1.20)    (1.04/1.03)
+                           (.138/.122)
+                                     13.49    33.9 / 32.8  29.72 / 29.33    (.819/     (.102/
+      17     E                                                                               .756)     .083)                                            (.531)   (1.33/1.29)    (1.17/1.15)
+                                     14.68    37.1 / 36.0  32.87 / 32.48
+      19      F
+                                            (.578)   (1.46/1.42)    (1.29/1.28)
+                                     15.88    40.2 / 39.1  36.05 / 35.66
+      21    G
+                                            (.625)   (1.58/1.54)    (1.42/1.40)                 3.4/
+                                                                                        2.9                                     17.46    43.4 / 42.3  39.22 / 38.83
+      23     H
+                          4.0 / 3.6       (.687)   (1.71/1.67)    (1.54/1.53)               (.134/
+                           (.157/.142)                                                     .114)                                     19.05    46.6 / 45.5  42.40 / 42.01
+      25       J
+                                            (.750)   (1.83/1.79)    (1.67/1.65)
+
+         NOTES:
+              1. Dimensions are in millimeters.
+               2. Inch equivalents are given for information only.
+               3. Flange is solid.
+               4. Dummy receptacles are used when unmated plugs must be protected.
+
+             FIGURE 1. Dummy receptacle, classes T, W, X and Z – Continued.
+
+
+REQUIREMENTS:
+  Dimensions and configuration: See figure 1.
+  Interface dimensions shall conform to MIL-DTL-38999, except one design shall accommodate all
+  polarization positions (within its shell size).
+  This receptacle mates with MIL-DTL-38999/46 and /47.
+  Shell material and finish shall be as specified in MIL-DTL-38999.
+
+
+
+
+                                        2
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/50C
+                            w/AMENDMENT 1
+
+
+
+    Qualification (all classes). Qualification shall be in accordance with MIL-DTL-38999, conducted on
+   two samples of each shell size, except only the following sequence of tests shall be required:
+    Examination of product
+   Dynamic salt spray (corrosion)
+    Coupling torque
+    Air leakage (see requirement)
+    Visual and mechanical
+
+   Group A sampling inspection. Sampling for group A inspection shall be as specified in table I.
+
+
+                        TABLE I. Group A sampling plan.
+                                Lot size               Sampling size
+                            1 to 13               100 percent
+                           14 to 150               13 units
+                           151 to 280               20 units
+                           281 to 500               29 units
+                          501 to 1,200              34 units
+                            1,201 to 3,200             42 units
+                            3,201 and up              54 units
+
+
+
+
+
+  Part or Identifying Number (PIN) example:
+
+         D38999/50                 B           W
+
+          Specification                         Shell                 Class
+         sheet number                        size
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+   MIL-DTL-38999/46
+   MIL-DTL-38999/47
+
+
+
+
+
+                                        3
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/50C
+                            w/AMENDMENT 1
+
+                          CONCLUDING MATERIAL
+
+Custodians:                                                             Preparing activity:
+  Army – CR                                               DLA - CC
+  Navy - AS
+  Air Force – 85                                                               (Project 5935-2024-149)
+ DLA - CC
+Review activities:
+  Army - MI
+  Navy - EC, MC, OS
+  Air Force - 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                        4
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.

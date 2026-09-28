@@ -1,0 +1,74 @@
+# schema=1; generic backshell seed catalog; clamp range derived from rear accessory bore (seed)
+pn,description,shell_sizes,angle,style,clamp_min_mm,clamp_max_mm,band_platform,mass_g,length_mm,machine_ready,status
+HSB-SRS-09,"Strain relief backshell, straight",9,0,strainRelief,2.7,7.2,false,22,32,true,seed
+HSB-SR45-09,"Strain relief backshell, 45°",9,45,strainRelief,2.7,7.2,false,28,32,true,seed
+HSB-SR90-09,"Strain relief backshell, 90°",9,90,strainRelief,2.7,7.2,false,31,28,true,seed
+HSB-EBS-09,"EMI/RFI backshell with band-clamp platform, straight",9,0,emiBand,2.7,7.2,true,22,32,true,seed
+HSB-EB45-09,"EMI/RFI backshell with band-clamp platform, 45°",9,45,emiBand,2.7,7.2,true,28,32,true,seed
+HSB-EB90-09,"EMI/RFI backshell with band-clamp platform, 90°",9,90,emiBand,2.7,7.2,true,31,28,true,seed
+HSB-SHS-09,"Shield-termination ring backshell, straight",9,0,shieldRing,2.7,7.2,false,22,32,true,seed
+HSB-PBS-09,"Potting boot adapter, straight",9,0,pottingBoot,2.7,7.2,false,22,32,false,seed
+HSB-SRS-11,"Strain relief backshell, straight",11,0,strainRelief,3.8,10.3,false,26,32,true,seed
+HSB-SR45-11,"Strain relief backshell, 45°",11,45,strainRelief,3.8,10.3,false,32,32,true,seed
+HSB-SR90-11,"Strain relief backshell, 90°",11,90,strainRelief,3.8,10.3,false,36,28,true,seed
+HSB-EBS-11,"EMI/RFI backshell with band-clamp platform, straight",11,0,emiBand,3.8,10.3,true,26,32,true,seed
+HSB-EB45-11,"EMI/RFI backshell with band-clamp platform, 45°",11,45,emiBand,3.8,10.3,true,32,32,true,seed
+HSB-EB90-11,"EMI/RFI backshell with band-clamp platform, 90°",11,90,emiBand,3.8,10.3,true,36,28,true,seed
+HSB-SHS-11,"Shield-termination ring backshell, straight",11,0,shieldRing,3.8,10.3,false,26,32,true,seed
+HSB-PBS-11,"Potting boot adapter, straight",11,0,pottingBoot,3.8,10.3,false,26,32,false,seed
+HSB-SRS-13,"Strain relief backshell, straight",13,0,strainRelief,4.8,13.1,false,29,32,true,seed
+HSB-SR45-13,"Strain relief backshell, 45°",13,45,strainRelief,4.8,13.1,false,36,32,true,seed
+HSB-SR90-13,"Strain relief backshell, 90°",13,90,strainRelief,4.8,13.1,false,40,28,true,seed
+HSB-EBS-13,"EMI/RFI backshell with band-clamp platform, straight",13,0,emiBand,4.8,13.1,true,29,32,true,seed
+HSB-EB45-13,"EMI/RFI backshell with band-clamp platform, 45°",13,45,emiBand,4.8,13.1,true,36,32,true,seed
+HSB-EB90-13,"EMI/RFI backshell with band-clamp platform, 90°",13,90,emiBand,4.8,13.1,true,40,28,true,seed
+HSB-SHS-13,"Shield-termination ring backshell, straight",13,0,shieldRing,4.8,13.1,false,29,32,true,seed
+HSB-PBS-13,"Potting boot adapter, straight",13,0,pottingBoot,4.8,13.1,false,29,32,false,seed
+HSB-SRS-15,"Strain relief backshell, straight",15,0,strainRelief,5.9,16.1,false,32,32,true,seed
+HSB-SR45-15,"Strain relief backshell, 45°",15,45,strainRelief,5.9,16.1,false,40,32,true,seed
+HSB-SR90-15,"Strain relief backshell, 90°",15,90,strainRelief,5.9,16.1,false,45,28,true,seed
+HSB-EBS-15,"EMI/RFI backshell with band-clamp platform, straight",15,0,emiBand,5.9,16.1,true,32,32,true,seed
+HSB-EB45-15,"EMI/RFI backshell with band-clamp platform, 45°",15,45,emiBand,5.9,16.1,true,40,32,true,seed
+HSB-EB90-15,"EMI/RFI backshell with band-clamp platform, 90°",15,90,emiBand,5.9,16.1,true,45,28,true,seed
+HSB-SHS-15,"Shield-termination ring backshell, straight",15,0,shieldRing,5.9,16.1,false,32,32,true,seed
+HSB-PBS-15,"Potting boot adapter, straight",15,0,pottingBoot,5.9,16.1,false,32,32,false,seed
+HSB-SRS-17,"Strain relief backshell, straight",17,0,strainRelief,7,19.1,false,35,32,true,seed
+HSB-SR45-17,"Strain relief backshell, 45°",17,45,strainRelief,7,19.1,false,44,32,true,seed
+HSB-SR90-17,"Strain relief backshell, 90°",17,90,strainRelief,7,19.1,false,49,28,true,seed
+HSB-EBS-17,"EMI/RFI backshell with band-clamp platform, straight",17,0,emiBand,7,19.1,true,35,32,true,seed
+HSB-EB45-17,"EMI/RFI backshell with band-clamp platform, 45°",17,45,emiBand,7,19.1,true,44,32,true,seed
+HSB-EB90-17,"EMI/RFI backshell with band-clamp platform, 90°",17,90,emiBand,7,19.1,true,49,28,true,seed
+HSB-SHS-17,"Shield-termination ring backshell, straight",17,0,shieldRing,7,19.1,false,35,32,true,seed
+HSB-PBS-17,"Potting boot adapter, straight",17,0,pottingBoot,7,19.1,false,35,32,false,seed
+HSB-SRS-19,"Strain relief backshell, straight",19,0,strainRelief,8,21.6,false,38,32,true,seed
+HSB-SR45-19,"Strain relief backshell, 45°",19,45,strainRelief,8,21.6,false,48,32,true,seed
+HSB-SR90-19,"Strain relief backshell, 90°",19,90,strainRelief,8,21.6,false,54,28,true,seed
+HSB-EBS-19,"EMI/RFI backshell with band-clamp platform, straight",19,0,emiBand,8,21.6,true,38,32,true,seed
+HSB-EB45-19,"EMI/RFI backshell with band-clamp platform, 45°",19,45,emiBand,8,21.6,true,48,32,true,seed
+HSB-EB90-19,"EMI/RFI backshell with band-clamp platform, 90°",19,90,emiBand,8,21.6,true,54,28,true,seed
+HSB-SHS-19,"Shield-termination ring backshell, straight",19,0,shieldRing,8,21.6,false,38,32,true,seed
+HSB-PBS-19,"Potting boot adapter, straight",19,0,pottingBoot,8,21.6,false,38,32,false,seed
+HSB-SRS-21,"Strain relief backshell, straight",21,0,strainRelief,9.1,24.7,false,42,32,true,seed
+HSB-SR45-21,"Strain relief backshell, 45°",21,45,strainRelief,9.1,24.7,false,52,32,true,seed
+HSB-SR90-21,"Strain relief backshell, 90°",21,90,strainRelief,9.1,24.7,false,58,28,true,seed
+HSB-EBS-21,"EMI/RFI backshell with band-clamp platform, straight",21,0,emiBand,9.1,24.7,true,42,32,true,seed
+HSB-EB45-21,"EMI/RFI backshell with band-clamp platform, 45°",21,45,emiBand,9.1,24.7,true,52,32,true,seed
+HSB-EB90-21,"EMI/RFI backshell with band-clamp platform, 90°",21,90,emiBand,9.1,24.7,true,58,28,true,seed
+HSB-SHS-21,"Shield-termination ring backshell, straight",21,0,shieldRing,9.1,24.7,false,42,32,true,seed
+HSB-PBS-21,"Potting boot adapter, straight",21,0,pottingBoot,9.1,24.7,false,42,32,false,seed
+HSB-SRS-23,"Strain relief backshell, straight",23,0,strainRelief,10.2,27.7,false,45,32,true,seed
+HSB-SR45-23,"Strain relief backshell, 45°",23,45,strainRelief,10.2,27.7,false,56,32,true,seed
+HSB-SR90-23,"Strain relief backshell, 90°",23,90,strainRelief,10.2,27.7,false,63,28,true,seed
+HSB-EBS-23,"EMI/RFI backshell with band-clamp platform, straight",23,0,emiBand,10.2,27.7,true,45,32,true,seed
+HSB-EB45-23,"EMI/RFI backshell with band-clamp platform, 45°",23,45,emiBand,10.2,27.7,true,56,32,true,seed
+HSB-EB90-23,"EMI/RFI backshell with band-clamp platform, 90°",23,90,emiBand,10.2,27.7,true,63,28,true,seed
+HSB-SHS-23,"Shield-termination ring backshell, straight",23,0,shieldRing,10.2,27.7,false,45,32,true,seed
+HSB-PBS-23,"Potting boot adapter, straight",23,0,pottingBoot,10.2,27.7,false,45,32,false,seed
+HSB-SRS-25,"Strain relief backshell, straight",25,0,strainRelief,11.3,30.7,false,48,32,true,seed
+HSB-SR45-25,"Strain relief backshell, 45°",25,45,strainRelief,11.3,30.7,false,60,32,true,seed
+HSB-SR90-25,"Strain relief backshell, 90°",25,90,strainRelief,11.3,30.7,false,67,28,true,seed
+HSB-EBS-25,"EMI/RFI backshell with band-clamp platform, straight",25,0,emiBand,11.3,30.7,true,48,32,true,seed
+HSB-EB45-25,"EMI/RFI backshell with band-clamp platform, 45°",25,45,emiBand,11.3,30.7,true,60,32,true,seed
+HSB-EB90-25,"EMI/RFI backshell with band-clamp platform, 90°",25,90,emiBand,11.3,30.7,true,67,28,true,seed
+HSB-SHS-25,"Shield-termination ring backshell, straight",25,0,shieldRing,11.3,30.7,false,48,32,true,seed
+HSB-PBS-25,"Potting boot adapter, straight",25,0,pottingBoot,11.3,30.7,false,48,32,false,seed

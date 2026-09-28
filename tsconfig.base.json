@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "noImplicitOverride": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": false,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hs/model": ["packages/model/src/index.ts"],
+      "@hs/ui-tokens": ["packages/ui-tokens/src/index.ts"],
+      "@hs/dfm": ["packages/dfm/src/index.ts"],
+      "@hs/ops": ["packages/ops/src/index.ts"],
+      "@hs/io": ["packages/io/src/index.ts"],
+      "@hs/docs": ["packages/docs/src/index.ts"],
+      "@hs/providers": ["packages/providers/src/index.ts"]
+    }
+  }
+}

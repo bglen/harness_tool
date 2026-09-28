@@ -1,0 +1,10 @@
+{
+  "id": "unshielded-labeled",
+  "name": "Unshielded, labeled",
+  "description": "Strain-relief backshells, connector refDes labels and wire ID labels.",
+  "steps": [
+    { "action": "backshells", "params": { "style": "strainRelief" } },
+    { "action": "connectorLabels", "params": {} },
+    { "action": "wireIdLabels", "params": {} }
+  ]
+}

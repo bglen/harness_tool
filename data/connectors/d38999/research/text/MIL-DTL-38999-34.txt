@@ -1,0 +1,272 @@
+
+=== PDF PAGE 1 ===
+                                                          METRIC
+                                                                    MIL-DTL-38999/34D
+                                                     w/AMENDMENT 2
+                                                                 2 July 2024
+                                                       SUPERSEDING
+                                                                    MIL-DTL-38999/34D
+                                                     w/AMENDMENT 1
+                                                                13 October 2016
+
+                           DETAIL SPECIFICATION SHEET
+
+          CONNECTORS, RECEPTACLE, ELECTRICAL, CIRCULAR, BREAKAWAY,
+            JAM-NUT MOUNTING, REMOVABLE CRIMP CONTACTS, SOCKETS,
+                        SERIES III, SHELL SIZE 25, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                                                                          SEE NOTE 4
+
+
+
+
+
+                    FIGURE 1. Receptacle, classes R, T, W and Z.
+
+
+
+AMSC N/A                                                      FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:41Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+              MIL-DTL-38999/34D
+           w/AMENDMENT 2
+
+
+
+
+
+FIGURE 1. Receptacle, classes R, T, W and Z – Continued.
+
+
+
+
+
+                       2
+
+
+
+
+
+   Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:41Z
+Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                MIL-DTL-38999/34D
+                          w/AMENDMENT 2
+
+
+
+
+
+         mm    Inches  mm    Inches  mm    Inches   mm    Inches
+              0.03    .001     0.58     .023     3.0      .12      32.5     1.28
+              0.10    .004     0.7      .03     3.58     .141     42.8     1.68
+              0.13    .005     0.87     .034     12.7     .50     42.85     1.69
+              0.15    .006     1.5      .06     13.2     .52      44.4     1.75
+               0.3      .01     1.91     .075     14.3     .56      55.6     2.19
+               0.4      .02     1.98     .078     22.6     .89      58.7     2.31
+
+NOTES:
+   1. Dimensions are in millimeters.
+   2. Inch equivalents are given for information only.
+   3. Panel thickness: 3.2 - 1.58 mm.
+   4. O-ring shall be in accordance with MIL-DTL-25988/3.
+   5. C and J dimensions define feature required for proper fit in type E panel.
+   6. F diameter and P dimension defines G thread start.
+   7. Countersink may be incorporated to accept accessory configuration in accordance with
+     MIL-DTL-38999.
+   8. B flat orientation.
+   9. For details of connector front and rear configurations, see MIL-DTL-38999.
+  10. The specified red band location is measured from the front of the shell to the back end of the red
+     band.
+
+                FIGURE 1. Receptacle, classes R, T, W and Z – Continued.
+REQUIREMENTS:
+  Dimensions and configurations: See figure 1.
+  Interface dimensions shall conform to MIL-DTL-38999.
+  This receptacle mates with the following lanyard release plugs: MIL-DTL-38999/29, /30, and /31.  It is
+  intended to be used only on stores.
+  Insert arrangement: See MIL-STD-1560.
+  Separation force: The receptacle shell shall break into two parts when a separation force is applied at
+  any angle within 15° of the normal axis by the mating plug assembly. Separation shall occur such that
+  the plug assembly shall be pulled free of the receptacle insert and contacts shall remain secure in the
+                                         3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:41Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                MIL-DTL-38999/34D
+                          w/AMENDMENT 2
+
+  mounted part.
+
+  Part or Identifying Number (PIN) example:
+
+                           D38999/       34   W    20    A
+
+  Military prefix
+
+  Specification sheet number
+
+  Class
+
+  Insert arrangement
+
+  Polarizing positions
+  N is required for normal position
+
+QUALIFICATION:
+
+  Qualification is required. Qualifications shall be in accordance with MIL-DTL-38999 with the following
+  exceptions:
+
+   Group I:
+
+       Durability: Wired connectors shall meet the durability requirements of MIL-DTL-38999, with the
+      following exceptions:
+
+       The total number of cycles of mating and unmating shall be 500, in the following sequence:
+       200 cycles of normal mating and unmating, 50 cycles of normal mating with pull-separation
+        unmating, 200 cycles of normal mating and unmating, 50 cycles of normal mating with pull-
+         separation unmating. The lanyard release velocity during the pull-separation force unmating
+         cycles shall be 9.15 meters per second.
+
+      Separation force: Upon conclusion of the group I test, all samples shall be subjected to an axial
+      force applied by a mated plug assembly. The connector shall meet the requirements of separation
+      force when the applied load is 1,800 ±200 Newton.
+
+      External bending moment: Wired connectors shall meet external bending moment requirements of
+     MIL-DTL-38999 with the following exception: Shell size 25 loading shall be 28.3 Newton-meters.
+
+   Group II:
+
+       Durability: Wired connectors shall meet the durability requirements of MIL-DTL-38999, with the
+      following exceptions:
+
+       The total number of cycles of mating and unmating shall be 500, in the following sequence:
+       200 cycles of normal mating and unmating, 50 cycles of normal mating with pull-separation
+        unmating, 200 cycles of normal mating and unmating, 50 cycles of normal mating with pull-
+         separation unmating. The lanyard release velocity during the pull-separation force unmating
+         cycles shall be 9.15 meters per second.
+
+                                         4
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:41Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                MIL-DTL-38999/34D
+                          w/AMENDMENT 2
+
+
+
+      Vibration: Wired connectors shall meet the vibration requirements of MIL-DTL-38999 with the
+      following exceptions:
+
+       Sine vibration: Connectors shall be subjected to the test specified in accordance with MIL-STD-
+       202-204, test condition G.
+
+      Random vibration: Connectors shall be subjected to the test specified in test procedure
+       EIA-364-28, test condition VI, letter J, ambient temperature. Duration shall be 8 hours in the
+         longitudinal direction and 8 hours in the perpendicular direction, for a total of 16 hours.
+
+The qualifying activity will define the accessory load and cable to be used in the random and sine
+vibration tests.
+
+  Separation force: Upon conclusion of the group II test, all samples shall be subjected to an axial force
+  applied by a mated plug assembly. The connector shall meet the requirements of separation force
+  when the applied load is 1,800 ± 200 Newton.
+
+  External bending moment: Wired connectors shall meet external bending moment requirements of
+  MIL-DTL-38999 with the following exception: Shell size 25 loading shall be 28.3 Newton-meters.
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+   EIA-364-28
+   MIL-DTL-38999/29
+   MIL-DTL-38999/30
+   MIL-DTL-38999/31
+   MIL-DTL-25988/3
+   MIL-STD-202-204
+  MIL-STD-1560
+
+
+
+
+
+                                         5
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:41Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 6 ===
+                                MIL-DTL-38999/34D
+                          w/AMENDMENT 2
+
+                         CONCLUDING MATERIAL
+
+
+Custodians:                                                            Preparing activity:
+  Army – CR                                             DLA – CC
+   Air Force - 85
+  DLA – CC
+                                                                               (Project 5935-2024-140)
+
+Review activities:
+  Army - MI
+   Air Force – 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         6
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:41Z
+                      Check the source to verify that this is the current version before use.

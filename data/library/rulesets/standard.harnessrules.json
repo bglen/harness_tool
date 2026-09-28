@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "lib-standard",
+  "name": "Standard (single pedigree)",
+  "prefix": "STD",
+  "version": "1.0.0",
+  "author": "Harness Studio",
+  "description": "Default for new projects: one build class, continuity + visual inspection, IPC/WHMA-A-620 Class 3.",
+  "changelog": [{ "version": "1.0.0", "date": "2026-09-27", "notes": "Initial template" }],
+  "enforced": false,
+  "rules": [],
+  "pedigreeScheme": {
+    "id": "standard",
+    "name": "Standard",
+    "version": "1.0.0",
+    "pedigrees": [
+      {
+        "id": "std",
+        "name": "Standard",
+        "code": "STD",
+        "rank": 0,
+        "color": 1,
+        "description": "Default build class. Continuity tested; IPC/WHMA-A-620 Class 3 workmanship.",
+        "workmanship": "IPC/WHMA-A-620 Class 3",
+        "inspections": [
+          { "typeId": "continuity", "sampling": "100%", "params": { "maxOhm": 1 } },
+          { "typeId": "visual", "sampling": "100%", "params": { "magnification": "4x", "acceptanceClass": "Class 3" } }
+        ],
+        "documentation": ["Certificate of Conformance (CoC)"],
+        "markings": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "id": "overbraided-jacketed",
+  "name": "Overbraided + jacketed",
+  "description": "Overbraided preset plus a heat-shrink jacket over the braid and boots at each backshell.",
+  "steps": [
+    { "action": "backshells", "params": { "style": "emiBand" } },
+    { "action": "tape", "params": { "material": "PTFE" } },
+    { "action": "overbraid", "params": { "material": "Tinned copper", "coveragePct": 85 } },
+    { "action": "bandClamps", "params": {} },
+    { "action": "jacket", "params": { "material": "Fluoroelastomer (Viton)" } },
+    { "action": "boots", "params": {} },
+    { "action": "connectorLabels", "params": {} },
+    { "action": "wireIdLabels", "params": {} }
+  ]
+}

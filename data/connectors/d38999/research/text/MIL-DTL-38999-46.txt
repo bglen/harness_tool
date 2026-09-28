@@ -1,0 +1,46 @@
+
+=== PDF PAGE 1 ===
+ NOTICE OF                               METRIC
+ VALIDATION
+                                        MIL-DTL-38999/46B
+                                        NOTICE 3
+                                        18-Dec-2024
+
+
+                      DETAIL SPECIFICATION
+   Connectors, Electrical, Circular, Plug, Breech Coupling, EMI
+      Grounding, Removable Crimp Contacts, Series IV, Metric
+
+MIL-DTL-38999/46B, dated 10-Mar-2020, has been reviewed and
+determined to be valid for use in acquisition.
+
+Custodians:                     Preparing Activity:
+ Army - CR                       DLA - CC
+ Navy - AS
+ Air Force - 85
+ DLA - CC
+
+Reviewer Activities:
+ Army - AR, MI
+ Navy - EC, MC
+ Air Force - 19
+
+
+
+
+
+NOTE: The activities above were interested in this document as
+of the date of this document.  Since organizations and
+responsibilities can change, you should verify the currency of
+the information above using the ASSIST Online database at
+https://assist.dla.mil.
+
+
+
+AMSC N/A                                                 FSC 5935
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.

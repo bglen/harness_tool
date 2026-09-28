@@ -1,0 +1,5 @@
+# schema=1; one row per connector family (slash sheet); PNs are built parametrically: D38999/<slash><class><shell><insert><contact><key>; masses g (seed)
+slash,series,kind,mount,description,termination_allowance_mm,machine_ready,fixture_prefix,lifecycle,mass_g_9,mass_g_11,mass_g_13,mass_g_15,mass_g_17,mass_g_19,mass_g_21,mass_g_23,mass_g_25,status,source
+26,III,plug,straight,Straight plug,38,true,FX26,active,14,20,27,34,42,52,62,72,85,seed,MIL-DTL-38999/26
+20,III,receptacle,wall flange,Wall-mount receptacle,38,true,FX20,active,13,18,24,31,38,47,56,65,77,seed,MIL-DTL-38999/20
+24,III,receptacle,jam nut,Jam-nut receptacle,38,true,FX24,active,15,21,28,36,44,55,65,76,89,seed,MIL-DTL-38999/24

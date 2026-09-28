@@ -1,0 +1,179 @@
+
+=== PDF PAGE 1 ===
+                                                        METRIC
+
+                                                                  MIL-DTL-38999/49B
+                                                    w/AMENDMENT 1
+                                                               2 July 2024
+                                                     SUPERSEDING
+                                                                  MIL-DTL-38999/49B
+                                                               5 February 2014
+
+                           DETAIL SPECIFICATION SHEET
+
+               CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE,
+                            IN-LINE CABLE, BREECH COUPLING,
+               REMOVABLE CRIMP CONTACTS, SERIES IV, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                                               mm    Inches
+                                                                                   0.2      .008
+                                                                                   0.9      .035
+
+
+
+
+                 FIGURE 1. Receptacle, classes C, F, R, T, W, X and Z.
+
+
+
+
+AMSC N/A                                                      FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                   MIL-DTL-38999/49B
+                            w/AMENDMENT 1
+
+
+
+
+       Shell       Shell      S           T          V      W        Z
+        size     size code      dia             dia                            max
+                      max
+                                      20.15 / 19.76                            26.78         11     B                       (.79 / .78)                                (1.05)
+                                      23.35 / 22.96                            31.15         13     C                       (.92 / .90 )                                (1.23)
+                                      26.52 / 26.13                            34.32         15     D                     (1.04 / 1.03)                    2.6 / 2.1                                (1.35)
+                                                                             (.10 / .08 )
+                                      29.72 / 29.33                            37.50                      20.8 / 19.2         17     E                     (1.17 / 1.15)                                (1.48)                                                              (.82 / .76)                   32.0
+                                                                                            (1.26)                                      32.87 / 32.48                            40.29         19      F                     (1.29 / 1.28)                                (1.59)
+                                      36.05 / 35.66                            43.46         21     G                     (1.42 / 1.40)                                (1.71)
+                                                                        3.4 / 2.9
+                                       39.22 /38.83                    (.13 / .11)                            46.64         23     H                     (1.54 / 1.53)                                (1.84)
+                                      42.40 / 42.01                            49.89         25        J                     (1.67 / 1.65)                                (1.96)
+
+    NOTES:
+          1. Dimensions are in millimeters.
+          2. Inch equivalents are given for information only.
+
+
+             FIGURE 1.  Receptacle, classes C, F, R, T, W, X and Z – Continued.
+
+
+REQUIREMENTS:
+
+Dimensions and configurations: See figure 1.
+
+Interface dimensions shall conform to MIL-DTL-38999.
+
+This connector mates with MIL-DTL-38999/46 and /47.
+
+Main key color: Blue.
+
+For insert arrangements: See MIL-STD-1560.
+
+
+
+                                        2
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/49B
+                            w/AMENDMENT 1
+
+
+Part or Identifying Number (PIN) example:
+
+                     D38999/     49   W    A     35    P    N
+
+
+DOD no. prefix
+
+Specification sheet no.
+
+Class
+
+Shell size code
+
+Insert arrangement
+
+Contact style
+
+Polarizing position:
+ N is required for normal position
+
+  Class F is not for Navy use and is inactive for Air Force new design use.
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+  MIL-DTL-38999/46
+  MIL-DTL-38999/47
+  MIL-STD-1560
+
+
+
+
+
+                                        3
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/49B
+                            w/AMENDMENT 1
+
+                          CONCLUDING MATERIAL
+
+
+Custodians:                                                             Preparing activity:
+  Army – CR                                              DLA - CC
+  Navy - AS
+  Air Force – 85                                                               (Project 5935-2024-148)
+ DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+  Air Force - 19
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                        4
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.

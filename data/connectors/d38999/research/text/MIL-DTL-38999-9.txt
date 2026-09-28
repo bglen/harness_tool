@@ -1,0 +1,228 @@
+
+=== PDF PAGE 1 ===
+                                                         INCH-POUND
+
+                                                                    MIL-DTL-38999/9B
+                                                     w/AMENDMENT 1
+                                                                 20 October 2017
+                                                      SUPERSEDING
+                                                                    MIL-DTL-38999/9B
+                                                                 14 February 2014
+
+
+                            DETAIL SPECIFICATION SHEET
+
+       CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE, DUMMY STOWAGE,
+       BAYONET COUPLING, (MIL-DTL-27599 SERIES I AND MIL-DTL-38999 SERIES I)
+
+                       This specification is approved for use by all Departments
+                         and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                   FIGURE 1. Dummy receptacle, finishes B, T and Z.
+
+
+AMSC N/A                                                       FSC 5935
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:35Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                    MIL-DTL-38999/9B
+                w/AMENDMENT 1
+
+
+
+
+
+FIGURE 1. Dummy receptacle, finishes B, T and Z - Continued.
+
+
+
+
+
+                         2
+
+
+
+     Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:35Z
+  Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                      MIL-DTL-38999/9B
+                              w/AMENDMENT 1
+
+
+
+                                        Dimensions
+              Shell   K   M     T     R      S       J     X     Y
+               size   +.015  ±.010    dia   BSC    ±.020   +.010   (TP)     (TP)
+                      -.000          +.010                      -.015
+                                      -.005
+              9                          .3595    .938             77°     113°
+             11                          .406    1.031            67°     123°
+             13                          .453    1.125            63°     127°
+             15    .085   .727   .128    .4845   1.219     .567    61°     129°
+             17                          .531    1.312            65°     125°
+             19                          .578    1.438            65°     125°
+             21                          .625    1.562            65°     125°
+             23    .115   .697   .147    .6875   1.688            69°     121°
+             25                          .750    1.812            69°     121°
+
+
+               Inches  mm   Inches  mm    Inches  mm    Inches  mm
+                .005    0.13    .3539     9.13    .625   15.88    1.125   28.58
+                .010    0.25    .406     10.31    .632   16.05    1.219   30.96
+                .015    0.38    .453     11.51    .6875  17.46    1.312   33.32
+                .063    1.60    .4845    12.31    .697   17.70    1.438   36.53
+                .085    2.16    .531     13.49    .727   18.47    1.562   39.67
+                .115    2.92    .567     14.30    .750   19.05    1.688   42.88
+                .128    3.25    .578     14.68    .938   23.83    1.812   46.02
+                .147    3.73    .602     15.29   1.031   26.19
+
+
+NOTES:
+  1.  Dimensions are in inches.
+  2.  Metric equivalents are given for information only.
+  3.  The gage features for GG shall be .010 (0.25 mm) smaller than the MMC size at basic location.
+  4.  Flange is solid.
+  5. Dummy receptacles are used when unmated plugs must be protected.
+
+
+
+               FIGURE 1. Dummy receptacle, finishes B, T and Z - Continued.
+
+
+
+
+                                         3
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:35Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                      MIL-DTL-38999/9B
+                              w/AMENDMENT 1
+REQUIREMENTS:
+  Dimensions and configuration: See figure 1.
+  Interface dimensions shall conform to MIL-DTL-38999, except as noted.
+  This receptacle mates with MS27467, MS27653 and MS27661 connectors.
+  Fits all polarization positions.
+  Shell material and finish: Aluminum alloy as specified in MIL-DTL-38999 with finishes B, T or Z.
+  Sealing gasket: Non-corrosive silicone or fluorosilicone elastomer.
+  Air leakage: Testing shall be in accordance with EIA-364-02, except the minimum period of
+  measurement shall be 10 seconds. The air leakage rate shall be no greater than 1 atmospheric cubic
+  inch per hour (4.55 X 10-3 cm3/s). Stowage receptacles shall be mated to connectors having either
+  contacts or inserts removed so that a pressure of 10 lb-ft/in2 (.703 Kg/cm2 ) can be applied against the
+  insides of the stowage receptacles.
+
+  Part or Identifying Number (PIN) is equivalent to the term (part number, identification number, and type
+  designator) which was previously used in this specification. Example:
+
+                             M38999/        9   -  11    B
+
+
+ DoD number prefix
+
+  Specification sheet number
+
+  Shell size
+
+  Finish
+ NOTE: In the PIN, a dash symbol (“-“) shall be placed between the specification sheet number and
+  shell size.
+
+
+  QUALIFICATION:
+
+  Qualification (all classes). Qualification shall be in accordance with MIL-DTL-38999, conducted on two
+  samples of each shell size, except only the following test sequence shall be required:
+
+  Visual and mechanical
+  Dynamic salt spray (corrosion)
+  Coupling torque
+  Coupling pin strength
+  Air leakage (see requirement)
+  Post test examination
+
+
+
+
+
+                                         4
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:35Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                      MIL-DTL-38999/9B
+                              w/AMENDMENT 1
+
+
+
+   Group A sampling inspection. Sampling for group A inspection shall be as specified in table I.
+
+                         TABLE I. Group A sampling plan.
+                                 Lot size               Sampling size
+                            1 to 13               100 percent
+                           14 to 150                13 units
+                           151 to 280               20 units
+                           281 to 500               29 units
+                           501 to 1,200              34 units
+                            1,201 to 3,200              42 units
+                            3,201 and up               54 units
+
+Changes from previous issue. The margins of this specification are marked with vertical lines to indicate
+where changes from the previous issue were made. This was done as a convenience only and the
+Government assumes no liability whatsoever for any inaccuracies in these notations. Bidders and
+contractors are cautioned to evaluate the requirements of this document based on the entire content
+irrespective of the marginal notations and relationship to the last previous issue.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+  MIL-DTL-27599
+ MS27467
+ MS27653
+ MS27661
+  EIA-364-02
+
+
+                          CONCLUDING MATERIAL
+
+Custodians:                                                             Preparing activity:
+  Army – CR                                              DLA – CC
+  Navy – AS
+  Air Force – 85                                                                (Project 5935-2017-133)
+ DLA – CC
+
+Review Activities:
+  Army – AR, MI
+  Navy – EC, MC, OS
+  Air Force – 19, 99
+ DLA – IS
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+                                         5
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:35Z
+                      Check the source to verify that this is the current version before use.

@@ -1,0 +1,200 @@
+
+=== PDF PAGE 1 ===
+                                                         METRIC
+                                                                   MIL-DTL-38999/26G
+                                                     w/AMENDMENT 4
+                                                                 11 August 2022
+                                                      SUPERSEDING
+                                                                   MIL-DTL-38999/26G
+                                                     w/AMENDMENT 3
+                                                                 27 July 2021
+
+                            DETAIL SPECIFICATION SHEET
+
+             CONNECTORS, ELECTRICAL, PLUG, CIRCULAR, THREADED,
+             STRAIGHT, REMOVABLE CRIMP CONTACTS, SERIES III, METRIC
+
+                This specification is approved for use by all Departments and Agencies of
+                                      the Department of Defense.
+
+             The requirements for acquiring the product described herein shall consist
+                                of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                               FIGURE 1. Plug.
+
+AMSC N/A                                                         FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                  MIL-DTL-38999/26G
+                            w/AMENDMENT 4
+
+Shell  Shell   B      B’ dia max  H max number   K     S     Z        Z’     External bendin
+ size   size     dia       (alternate         of ribs     max     dia    max   max       moment,
+      code  + 0.2      design,         (alternate          max           (classes     minimum,
+                     - 0.0   classes J and  design, classes                        J and M  classes J and M
+              M only)      J and M only)                               only)       (N–m)
+  9    A     18.4        20.6           12        19.0    21.8    31.0    31.5
+                                                                                       8.865
+               (.724)       (.811)                        (.748)   (.858)   (1.22)   (1.240)
+ 11   B     21.1        23.6           14        21.9    25.0    31.0    31.5
+                                                                                     29.492
+               (.830)       (.929)                        (.862)   (.984)   (1.22)   (1.240)
+ 13   C     25.4        28.2           16        26.1    29.4    31.0    31.5
+                                                                                     34.485
+               (.999)       (1.11)                        (1.03)  (1.157)  (1.22)   (1.240)
+ 15   D     28.7        31.3           18        29.3    32.5    31.0    31.5
+                                                                                     40.566
+              (1.129)      (1.23)                        (1.15)   (1.27)   (1.22)   (1.240)
+ 17   E     32.2        34.5           20        32.8    35.7    31.0    31.5
+                                                                                     50.781
+               (1.26)       (1.35)                        (1.29)   (1.40)   (1.22)   (1.240)
+ 19    F     34.9        37.3           22        35.5    38.5    31.0    31.5
+                                                                                     51.450
+               (1.37)       (1.46)                        (1.39)   (1.51)   (1.22)   (1.240)
+ 21   G     38.1        40.5           24        38.7    41.7    31.0    31.5
+                                                                                     80.941
+               (1.49)       (1.59)                        (1.52)   (1.64)   (1.22)   (1.240)
+ 23   H     41.1        43.7           26        41.7    44.9    31.0    31.5
+                                                                                     69.810
+               (1.61)       (1.72)                        (1.64)   (1.76)   (1.22)   (1.240)
+ 25     J     44.3        46.8           28        44.9    48.0    31.0    31.5
+                                                                                     91.310
+               (1.74)       (1.84)                        (1.76)   (1.88)   (1.22)   (1.240)
+
+         NOTES:
+                1.  Dimensions are in millimeters.
+                2.  Inch equivalents are given for information only.
+                3.  Knurl design: Straight pattern, or “flute”, design optional, provided the design
+                   includes the specified flat or scalloped “4 places min” areas between the knurled
+                  areas. For the alternate design for classes J and M, the design shall include “H
+              MAX” number of ribs. The minimum length of flats between knurls on the outside
+                  diameter of the coupling nut shall be at least 2/3 the length of the coupling nut. For
+                  classes T and Z only, knurled areas on the coupling nut may be omitted, provided the
+               minimum number of specified flat or scalloped areas are included.
+                4.  Dimensions B’ and Z’ are for classes J and M, only. Dimensions B and Z are for all
+                   other classes.
+
+                          FIGURE 1. Plug - Continued.
+
+
+
+                                         2
+
+
+
+
+
+                          Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                     Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/26G
+                            w/AMENDMENT 4
+
+REQUIREMENTS:
+
+  Dimensions and configuration: See figure 1. Interface dimensions shall be in accordance with
+  MIL-DTL-38999.
+
+  This connector mates with MIL-DTL-38999/20, /21, /22, /23, /24, /25 and /27.
+
+  For insert arrangements: See MIL-STD-1560.
+
+  Connector accessories: SAE-AS85049.
+
+  Part or Identifying Number (PIN) example:
+
+       D38999/       26   W   A     35     P    N
+
+          D38999/  DoD number prefix
+          26          Specification sheet number
+      W         Class
+        A           Shell size code
+          35          Insert arrangement
+        P          Contact style
+       N           Polarizing positions (N is required for normal position)
+
+
+  Class F is not for Navy use and is inactive for Air Force new design use.
+
+ NOTE: The term PIN is equivalent to the term (part number, identification number, and type
+  designator) which was previously used in this specification.
+
+  Note: Bending moment torque (class J and M). Details of bending moment torque requirements may be
+  found in MIL-DTL-38999/20. Plug requirements were set at the requirements of the flange mounted
+  receptacles (MIL-DTL-38999/20, representing the strongest mating partner for the plug).
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+    MIL-STD-1560
+    MIL-DTL-38999/20
+    MIL-DTL-38999/21
+    MIL-DTL-38999/22
+    MIL-DTL-38999/23
+    MIL-DTL-38999/24
+    MIL-DTL-38999/25
+    MIL-DTL-38999/27
+    SAE-AS85049
+
+
+                                         3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/26G
+                            w/AMENDMENT 4
+
+                         CONCLUDING MATERIAL
+
+Custodians:                                                              Preparing activity:
+  Army – CR                                                DLA - CC
+  Navy - AS
+  Air Force – 85                                                                 (Project 5935-2022-184)
+ DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+  Air Force - 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                          4
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.

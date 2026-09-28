@@ -1,0 +1,9 @@
+# schema=1; wire sealing range (finished wire OD, mm) and wire gauges per contact size, MIL-DTL-38999N Table IV
+size,sealing_min_mm,sealing_max_mm,gauges,current_a,status,source
+23,0.76,1.27,26;24;22,5,verified,MIL-DTL-38999N Table IV
+22D,0.76,1.37,28;26;24;22,5,verified,MIL-DTL-38999N Table IV
+20,1.02,2.11,24;22;20,7.5,verified,MIL-DTL-38999N Table IV
+16,1.65,2.77,20;18;16,13,verified,MIL-DTL-38999N Table IV
+12,2.46,3.61,14;12,23,verified,MIL-DTL-38999N Table IV
+10,3.43,4.12,10,33,verified,MIL-DTL-38999N Table IV
+8,3.15,3.94,,0,verified,"MIL-DTL-38999N Table IV (coax/twinax, Phase 2)"

@@ -1,0 +1,161 @@
+
+=== PDF PAGE 1 ===
+                                                          METRIC
+                                                                     MIL-DTL-38999/25C
+                                                      w/AMENDMENT 3
+                                                                  2 July 2024
+                                                        SUPERSEDING
+                                                                     MIL-DTL-38999/25C
+                                                      w/AMENDMENT 2
+                                                                 11 August 2022
+
+                           DETAIL SPECIFICATION SHEET
+
+           CONNECTOR, ELECTRICAL, CIRCULAR, THREADED, RECEPTACLE,
+           SOLDER MOUNTING, HERMETIC, HERMETIC SOLDER CONTACTS,
+                              SERIES III, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                 The requirements for acquiring the product described herein
+                        shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                      FIGURE 1. Receptacle, classes N and Y.
+
+AMSC N/A                                                        FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                      MIL-DTL-38999/25C
+                              w/AMENDMENT 3
+
+
+            Shell     Shell     F      L     S      V  ref       V  ref       Z
+            size    size code   max    max    max      with pins      with sockets   max
+
+           9      A       17.1      5.1     19.4        17.2           19.4        23.8
+                                 (.673)    (.201)    (.764)       (.677)          (.764)       (.937)
+
+          11      B       19.9      5.1     21.8        17.2           19.4        23.8
+                                 (.783)    (.201)    (.858)       (.677)          (.764)       (.937)
+
+          13     C       23.1      5.1     24.9        17.2           19.4        23.8
+                                 (.909)    (.201)    (.980)       (.677)          (.764)       (.937)
+
+          15     D       26.2      5.1     28.1        17.2           19.4        23.8
+                               (1.031)   (.201)   (1.106)      (.677)          (.764)       (.937)
+
+          17      E       29.4      5.1     31.3        17.2           19.4        23.8
+                               (1.157)   (.201)   (1.232)      (.677)          (.764)       (.937)
+
+          19      F       31.8      5.1     33.6        17.2           19.4        23.8
+                               (1.252)   (.201)   (1.323)      (.677)          (.764)       (.937)
+
+          21     G       35.0      5.1     36.8        17.2           19.4        23.8
+                               (1.378)   (.201)   (1.449)      (.677)          (.764)       (.937)
+
+          23     H       38.2      5.9     40.0        17.2           19.4        24.6
+                               (1.504)   (.232)   (1.575)      (.677)          (.764)       (.969)
+
+          25        J       41.3      5.9     43.2        17.2           19.4        24.6
+                               (1.626)   (.232)   (1.701)      (.677)          (.764)       (.969)
+
+  NOTES:
+      1. Dimensions are in millimeters.
+      2. Polarizing position N is shown.
+      3. Inch equivalents are given for information only.
+      4. The specified red band location is measured from the front edge of the shell to the back edge of the
+        red band.
+
+                    FIGURE 1. Receptacle, classes N and Y - Continued.
+
+
+REQUIREMENTS:
+   Dimensions and configurations: See figure 1. Interface dimensions shall conform to MIL-DTL-38999.
+
+   This connector mates with MIL-DTL-38999/26.
+   For insert arrangements, see MIL-STD-1560.
+
+
+
+                                            2
+
+
+
+
+
+                               Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                         Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/25C
+                            w/AMENDMENT 3
+
+Part or Identifying Number (PIN) example:
+
+       D38999/       25    Y   A     35     P    N
+
+          D38999/  DoD number prefix
+          25          Specification sheet number
+        Y         Class
+        A           Shell size code
+          35          Insert arrangement
+        P         Contact style
+       N           Polarizing positions (N is required for normal position)
+
+Eyelet contact termination: See MIL-DTL-38999.
+
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+   MIL-DTL-38999/26
+   MIL-STD-1560
+
+
+                          CONCLUDING MATERIAL
+
+Custodians:                                                               Preparing activity:
+  Army – CR                                               DLA - CC
+  Navy - AS
+   Air Force - 85                                                                 (Project 5935-2024-138)
+  DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+   Air Force – 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.

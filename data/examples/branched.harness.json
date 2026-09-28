@@ -1,0 +1,1402 @@
+{
+  "schemaVersion": 1,
+  "id": "161a3b67-7e44-45ca-a979-39e42fb1da81",
+  "name": "Avionics branch harness (example)",
+  "partNumber": "HS-2040",
+  "units": "in",
+  "settings": {
+    "autoCommit": true,
+    "serviceLoopMm": 0,
+    "defaultWireSpec": "M22759/16",
+    "defaultColor": {
+      "base": 9,
+      "stripes": []
+    },
+    "colorByClass": false,
+    "classColors": {
+      "power": {
+        "base": 2,
+        "stripes": []
+      },
+      "ground": {
+        "base": 0,
+        "stripes": []
+      },
+      "signal": {
+        "base": 9,
+        "stripes": []
+      },
+      "rf": {
+        "base": 9,
+        "stripes": [
+          6
+        ]
+      },
+      "spare": {
+        "base": 8,
+        "stripes": []
+      }
+    },
+    "defaultSegmentMm": 304.8,
+    "defaultBackshell": "none",
+    "cutResolutionMm": 1,
+    "packingFactor": 1.2,
+    "defaultLabelDistanceMm": 50,
+    "wiredSpares": false
+  },
+  "pedigreeScheme": {
+    "id": "standard",
+    "name": "Standard",
+    "version": "1.0.0",
+    "pedigrees": [
+      {
+        "id": "std",
+        "name": "Standard",
+        "code": "STD",
+        "rank": 0,
+        "color": 1,
+        "description": "Default build class. Continuity tested; IPC/WHMA-A-620 Class 3 workmanship.",
+        "workmanship": "IPC/WHMA-A-620 Class 3",
+        "inspections": [
+          {
+            "typeId": "continuity",
+            "sampling": "100%",
+            "params": {
+              "maxOhm": 1
+            }
+          },
+          {
+            "typeId": "visual",
+            "sampling": "100%",
+            "params": {
+              "magnification": "4x",
+              "acceptanceClass": "Class 3"
+            }
+          }
+        ],
+        "documentation": [
+          "Certificate of Conformance (CoC)"
+        ],
+        "markings": []
+      }
+    ]
+  },
+  "rulesets": [],
+  "projectRules": [],
+  "overrides": [],
+  "waivers": [],
+  "presets": [],
+  "titleBlock": {
+    "company": "Harness Studio",
+    "title": "",
+    "drawingNumber": "",
+    "drawnBy": "",
+    "checkedBy": "",
+    "approvedBy": "",
+    "sheetSize": "ANSI B",
+    "tolerances": "Lengths ±10 mm (±0.4 in) unless noted",
+    "notes": [],
+    "exportControl": ""
+  },
+  "report": {
+    "summary": "",
+    "designNotes": "",
+    "reviewComments": "",
+    "sections": {}
+  },
+  "quote": {
+    "quantities": [
+      1,
+      5,
+      10,
+      25,
+      100
+    ],
+    "selected": {
+      "qty": 10,
+      "tier": "standard"
+    }
+  },
+  "revisions": [
+    {
+      "id": "5e8b4814-8e68-4b98-afd7-aa85e8d8d315",
+      "label": "A",
+      "notes": "",
+      "frozen": false,
+      "activePedigreeId": "std",
+      "harness": {
+        "connectors": [
+          {
+            "id": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+            "refDes": "J1",
+            "pn": "D38999/20WD35PN",
+            "position": {
+              "x": 220,
+              "y": 360
+            },
+            "rotation": 0,
+            "clocking": "N",
+            "backshell": {
+              "pn": "HSB-EBS-15",
+              "clockingDeg": 0,
+              "auto": true
+            },
+            "accessories": [],
+            "pins": {
+              "1": {
+                "netId": "b8c44ef9-368f-401a-ad25-fbc8d5d3c4e9"
+              },
+              "2": {
+                "netId": "33239bdb-da86-4716-adff-53c6ede25d61"
+              },
+              "3": {
+                "netId": "c405b535-fbda-4ffa-aa85-e01cd8e77239"
+              },
+              "4": {
+                "netId": "7c2ca784-d070-4a56-a750-29d1115b6f31"
+              },
+              "5": {
+                "netId": "f68bf466-2b2a-47fe-aa32-cabb1dd86681"
+              },
+              "6": {
+                "netId": "876e0dc0-5468-433e-a4a0-b8cd54d2edb9"
+              },
+              "7": {
+                "netId": "01cd5aa2-dce0-47c6-af55-537765da99f9"
+              },
+              "8": {
+                "netId": "65a9db0c-47e1-4be6-aa41-6c1930c60d41"
+              },
+              "9": {
+                "netId": "d97dbea3-c5c0-420e-acf6-06bac2e9e4e1"
+              },
+              "20": {
+                "netId": "f5f3f56a-7446-45d2-ab78-591fe1d393ad"
+              },
+              "21": {
+                "netId": "86d60ec4-869a-4be6-a435-1e75d07a5ff5"
+              },
+              "22": {
+                "netId": "b95c4df5-fb69-48fa-abc6-10d8698bbbe5"
+              },
+              "23": {
+                "netId": "33bb9ad7-c4fd-4522-af94-f0da7ee4c6ad"
+              },
+              "24": {
+                "netId": "c49db431-7360-4d5a-a653-1e34f8f12085"
+              },
+              "25": {
+                "netId": "3efd0113-1cc6-47b2-abd9-a026ad5b243d"
+              },
+              "26": {
+                "netId": "a2d9817d-da29-4f2a-adc2-e9806088cff5"
+              },
+              "27": {
+                "netId": "9c4e1832-8ca1-49ce-a23a-a4bf2b0eada5"
+              },
+              "28": {
+                "netId": "21eecb50-73b0-4c82-a9cb-5d01d3a2a80d"
+              }
+            },
+            "showUnused": false,
+            "description": ""
+          },
+          {
+            "id": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+            "refDes": "P1",
+            "pn": "D38999/26WB35SN",
+            "position": {
+              "x": 1000,
+              "y": 180
+            },
+            "rotation": 180,
+            "clocking": "N",
+            "backshell": {
+              "pn": "HSB-EBS-11",
+              "clockingDeg": 0,
+              "auto": true
+            },
+            "accessories": [],
+            "pins": {
+              "1": {
+                "netId": "b8c44ef9-368f-401a-ad25-fbc8d5d3c4e9"
+              },
+              "2": {
+                "netId": "33239bdb-da86-4716-adff-53c6ede25d61"
+              },
+              "3": {
+                "netId": "c405b535-fbda-4ffa-aa85-e01cd8e77239"
+              },
+              "8": {
+                "netId": "f5f3f56a-7446-45d2-ab78-591fe1d393ad"
+              },
+              "9": {
+                "netId": "86d60ec4-869a-4be6-a435-1e75d07a5ff5"
+              },
+              "10": {
+                "netId": "b95c4df5-fb69-48fa-abc6-10d8698bbbe5"
+              }
+            },
+            "showUnused": false,
+            "description": ""
+          },
+          {
+            "id": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+            "refDes": "P2",
+            "pn": "D38999/26WC35SN",
+            "position": {
+              "x": 1000,
+              "y": 380
+            },
+            "rotation": 180,
+            "clocking": "N",
+            "backshell": {
+              "pn": "HSB-EBS-13",
+              "clockingDeg": 0,
+              "auto": true
+            },
+            "accessories": [],
+            "pins": {
+              "1": {
+                "netId": "7c2ca784-d070-4a56-a750-29d1115b6f31"
+              },
+              "2": {
+                "netId": "f68bf466-2b2a-47fe-aa32-cabb1dd86681"
+              },
+              "3": {
+                "netId": "876e0dc0-5468-433e-a4a0-b8cd54d2edb9"
+              },
+              "4": {
+                "netId": "01cd5aa2-dce0-47c6-af55-537765da99f9"
+              },
+              "12": {
+                "netId": "33bb9ad7-c4fd-4522-af94-f0da7ee4c6ad"
+              },
+              "13": {
+                "netId": "c49db431-7360-4d5a-a653-1e34f8f12085"
+              },
+              "14": {
+                "netId": "3efd0113-1cc6-47b2-abd9-a026ad5b243d"
+              },
+              "15": {
+                "netId": "a2d9817d-da29-4f2a-adc2-e9806088cff5"
+              }
+            },
+            "showUnused": false,
+            "description": ""
+          },
+          {
+            "id": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+            "refDes": "P3",
+            "pn": "D38999/26WA35SN",
+            "position": {
+              "x": 1000,
+              "y": 580
+            },
+            "rotation": 180,
+            "clocking": "N",
+            "backshell": {
+              "pn": "HSB-EBS-09",
+              "clockingDeg": 0,
+              "auto": true
+            },
+            "accessories": [],
+            "pins": {
+              "1": {
+                "netId": "65a9db0c-47e1-4be6-aa41-6c1930c60d41"
+              },
+              "2": {
+                "netId": "9c4e1832-8ca1-49ce-a23a-a4bf2b0eada5"
+              },
+              "3": {
+                "netId": "d97dbea3-c5c0-420e-acf6-06bac2e9e4e1"
+              },
+              "4": {
+                "netId": "21eecb50-73b0-4c82-a9cb-5d01d3a2a80d"
+              }
+            },
+            "showUnused": false,
+            "description": ""
+          }
+        ],
+        "nodes": [
+          {
+            "id": "e42bfb32-a4a6-4eec-aa03-8fc7437c2c61",
+            "kind": "connector",
+            "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+            "position": {
+              "x": 220,
+              "y": 360
+            }
+          },
+          {
+            "id": "48087b9c-012f-43b8-a18b-cddd1be83d65",
+            "kind": "connector",
+            "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+            "position": {
+              "x": 1000,
+              "y": 180
+            }
+          },
+          {
+            "id": "ad82e8bd-f7aa-4e1a-ac46-6004a0e04569",
+            "kind": "connector",
+            "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+            "position": {
+              "x": 1000,
+              "y": 380
+            }
+          },
+          {
+            "id": "27e2359f-6af5-4f2e-a862-1752f6751281",
+            "kind": "connector",
+            "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+            "position": {
+              "x": 1000,
+              "y": 580
+            }
+          },
+          {
+            "id": "5905cc84-229c-4256-a0fd-a5755dccccb5",
+            "kind": "breakout",
+            "position": {
+              "x": 620,
+              "y": 360
+            }
+          }
+        ],
+        "segments": [
+          {
+            "id": "c2faf22b-def6-464e-a893-5402f6cafc11",
+            "a": "e42bfb32-a4a6-4eec-aa03-8fc7437c2c61",
+            "b": "5905cc84-229c-4256-a0fd-a5755dccccb5",
+            "lengthMm": 762,
+            "toleranceMm": 10,
+            "label": ""
+          },
+          {
+            "id": "963572f5-0748-4afa-ae02-4e4cf91d6869",
+            "a": "5905cc84-229c-4256-a0fd-a5755dccccb5",
+            "b": "48087b9c-012f-43b8-a18b-cddd1be83d65",
+            "lengthMm": 457.2,
+            "toleranceMm": 10,
+            "label": ""
+          },
+          {
+            "id": "d3651966-f6c5-48a2-ace3-eeb3e167b6ed",
+            "a": "5905cc84-229c-4256-a0fd-a5755dccccb5",
+            "b": "ad82e8bd-f7aa-4e1a-ac46-6004a0e04569",
+            "lengthMm": 457.2,
+            "toleranceMm": 10,
+            "label": ""
+          },
+          {
+            "id": "1094bfd7-4d75-4506-a322-bed22863a3c9",
+            "a": "5905cc84-229c-4256-a0fd-a5755dccccb5",
+            "b": "27e2359f-6af5-4f2e-a862-1752f6751281",
+            "lengthMm": 457.2,
+            "toleranceMm": 10,
+            "label": ""
+          }
+        ],
+        "nets": [
+          {
+            "id": "b8c44ef9-368f-401a-ad25-fbc8d5d3c4e9",
+            "name": "+28V_SENSOR",
+            "cls": "power",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "1"
+              },
+              {
+                "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+                "cavityId": "1"
+              }
+            ],
+            "currentA": 3
+          },
+          {
+            "id": "f5f3f56a-7446-45d2-ab78-591fe1d393ad",
+            "name": "SENSOR_RTN",
+            "cls": "ground",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "20"
+              },
+              {
+                "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+                "cavityId": "8"
+              }
+            ]
+          },
+          {
+            "id": "33239bdb-da86-4716-adff-53c6ede25d61",
+            "name": "SENS_A+",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "2"
+              },
+              {
+                "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+                "cavityId": "2"
+              }
+            ]
+          },
+          {
+            "id": "86d60ec4-869a-4be6-a435-1e75d07a5ff5",
+            "name": "SENS_A-",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "21"
+              },
+              {
+                "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+                "cavityId": "9"
+              }
+            ]
+          },
+          {
+            "id": "c405b535-fbda-4ffa-aa85-e01cd8e77239",
+            "name": "SENS_B+",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "3"
+              },
+              {
+                "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+                "cavityId": "3"
+              }
+            ]
+          },
+          {
+            "id": "b95c4df5-fb69-48fa-abc6-10d8698bbbe5",
+            "name": "SENS_B-",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "22"
+              },
+              {
+                "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+                "cavityId": "10"
+              }
+            ]
+          },
+          {
+            "id": "7c2ca784-d070-4a56-a750-29d1115b6f31",
+            "name": "+28V_ACT",
+            "cls": "power",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "4"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "1"
+              }
+            ],
+            "currentA": 3
+          },
+          {
+            "id": "33bb9ad7-c4fd-4522-af94-f0da7ee4c6ad",
+            "name": "ACT_RTN",
+            "cls": "ground",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "23"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "12"
+              }
+            ]
+          },
+          {
+            "id": "f68bf466-2b2a-47fe-aa32-cabb1dd86681",
+            "name": "CAN_H",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "5"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "2"
+              }
+            ]
+          },
+          {
+            "id": "c49db431-7360-4d5a-a653-1e34f8f12085",
+            "name": "CAN_L",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "24"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "13"
+              }
+            ]
+          },
+          {
+            "id": "876e0dc0-5468-433e-a4a0-b8cd54d2edb9",
+            "name": "ACT_EN",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "6"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "3"
+              }
+            ]
+          },
+          {
+            "id": "3efd0113-1cc6-47b2-abd9-a026ad5b243d",
+            "name": "ACT_FLT",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "25"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "14"
+              }
+            ]
+          },
+          {
+            "id": "01cd5aa2-dce0-47c6-af55-537765da99f9",
+            "name": "ACT_POS+",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "7"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "4"
+              }
+            ]
+          },
+          {
+            "id": "a2d9817d-da29-4f2a-adc2-e9806088cff5",
+            "name": "ACT_POS-",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "26"
+              },
+              {
+                "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+                "cavityId": "15"
+              }
+            ]
+          },
+          {
+            "id": "65a9db0c-47e1-4be6-aa41-6c1930c60d41",
+            "name": "+5V_AUX",
+            "cls": "power",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "8"
+              },
+              {
+                "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+                "cavityId": "1"
+              }
+            ],
+            "currentA": 3
+          },
+          {
+            "id": "9c4e1832-8ca1-49ce-a23a-a4bf2b0eada5",
+            "name": "AUX_RTN",
+            "cls": "ground",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "27"
+              },
+              {
+                "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+                "cavityId": "2"
+              }
+            ]
+          },
+          {
+            "id": "d97dbea3-c5c0-420e-acf6-06bac2e9e4e1",
+            "name": "AUX_TX",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "9"
+              },
+              {
+                "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+                "cavityId": "3"
+              }
+            ]
+          },
+          {
+            "id": "21eecb50-73b0-4c82-a9cb-5d01d3a2a80d",
+            "name": "AUX_RX",
+            "cls": "signal",
+            "topology": "daisy",
+            "members": [
+              {
+                "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+                "cavityId": "28"
+              },
+              {
+                "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+                "cavityId": "4"
+              }
+            ]
+          }
+        ],
+        "wires": [
+          {
+            "id": "5f1e71c1-98a0-4312-a6df-4874a0203d71",
+            "label": "W1",
+            "netId": "b8c44ef9-368f-401a-ad25-fbc8d5d3c4e9",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "1"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+              "cavityId": "1"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "910cb1f6-974a-4ffe-aaca-252bfd5f4ac5",
+            "label": "W2",
+            "netId": "f5f3f56a-7446-45d2-ab78-591fe1d393ad",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "20"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+              "cavityId": "8"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "ce3c5867-826e-4bfe-aa52-e46628aebda9",
+            "label": "W3",
+            "netId": "33239bdb-da86-4716-adff-53c6ede25d61",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "2"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+              "cavityId": "2"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0,
+            "twistGroupId": "8af40cb9-9555-4c9a-a484-7f78ef62f019",
+            "shieldId": "53450c89-d9c9-416a-a3b6-fa34e095124d"
+          },
+          {
+            "id": "16ad6514-dbda-4f5a-aa18-f1edb853bc6d",
+            "label": "W4",
+            "netId": "86d60ec4-869a-4be6-a435-1e75d07a5ff5",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "21"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+              "cavityId": "9"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0,
+            "twistGroupId": "8af40cb9-9555-4c9a-a484-7f78ef62f019",
+            "shieldId": "53450c89-d9c9-416a-a3b6-fa34e095124d"
+          },
+          {
+            "id": "53dd0b85-6dd1-495a-ac07-fbd08d12b279",
+            "label": "W5",
+            "netId": "c405b535-fbda-4ffa-aa85-e01cd8e77239",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "3"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+              "cavityId": "3"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "85cb4bba-9f5b-422e-a546-8ce7d97445f5",
+            "label": "W6",
+            "netId": "b95c4df5-fb69-48fa-abc6-10d8698bbbe5",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "22"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
+              "cavityId": "10"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "1928a103-45f1-4df2-addf-ad9282b1c25d",
+            "label": "W7",
+            "netId": "7c2ca784-d070-4a56-a750-29d1115b6f31",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "4"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "1"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "dbf8fa92-aa7f-4422-ad1f-f58761f89c29",
+            "label": "W8",
+            "netId": "33bb9ad7-c4fd-4522-af94-f0da7ee4c6ad",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "23"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "12"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "9ec95421-3fd7-496a-a8e6-4b10d64dc2a5",
+            "label": "W9",
+            "netId": "f68bf466-2b2a-47fe-aa32-cabb1dd86681",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "5"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "2"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0,
+            "twistGroupId": "4dc46648-bce0-45ee-a611-15e1b4ebf6fd"
+          },
+          {
+            "id": "6199adb0-52e0-414a-a251-554d2353dda9",
+            "label": "W10",
+            "netId": "c49db431-7360-4d5a-a653-1e34f8f12085",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "24"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "13"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0,
+            "twistGroupId": "4dc46648-bce0-45ee-a611-15e1b4ebf6fd"
+          },
+          {
+            "id": "0de73ac7-a574-4e72-aea2-b04e1b02c9e5",
+            "label": "W11",
+            "netId": "876e0dc0-5468-433e-a4a0-b8cd54d2edb9",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "6"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "3"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "d0b79456-6d5b-48e2-abbc-fc03061eda69",
+            "label": "W12",
+            "netId": "3efd0113-1cc6-47b2-abd9-a026ad5b243d",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "25"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "14"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "9387ede5-7805-455a-a3bb-b8fca81cd7ed",
+            "label": "W13",
+            "netId": "01cd5aa2-dce0-47c6-af55-537765da99f9",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "7"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "4"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0,
+            "twistGroupId": "16156618-090a-4efe-a558-2eddc30f4a81"
+          },
+          {
+            "id": "56584774-2d1e-489a-a28b-2bd9e1027869",
+            "label": "W14",
+            "netId": "a2d9817d-da29-4f2a-adc2-e9806088cff5",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "26"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
+              "cavityId": "15"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0,
+            "twistGroupId": "16156618-090a-4efe-a558-2eddc30f4a81"
+          },
+          {
+            "id": "c5762e1a-faa7-4682-a43b-991fbcf53a19",
+            "label": "W15",
+            "netId": "65a9db0c-47e1-4be6-aa41-6c1930c60d41",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "8"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+              "cavityId": "1"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "644732c0-861a-454e-a436-0879f6fd269d",
+            "label": "W16",
+            "netId": "9c4e1832-8ca1-49ce-a23a-a4bf2b0eada5",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "27"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+              "cavityId": "2"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "a176d931-07e4-4cca-a3b1-a720b26f03a9",
+            "label": "W17",
+            "netId": "d97dbea3-c5c0-420e-acf6-06bac2e9e4e1",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "9"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+              "cavityId": "3"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          },
+          {
+            "id": "dea67fa2-b272-41e2-a998-8937e91700a5",
+            "label": "W18",
+            "netId": "21eecb50-73b0-4c82-a9cb-5d01d3a2a80d",
+            "from": {
+              "kind": "pin",
+              "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
+              "cavityId": "28"
+            },
+            "to": {
+              "kind": "pin",
+              "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
+              "cavityId": "4"
+            },
+            "spec": "M22759/16",
+            "gauge": 22,
+            "color": {
+              "base": 9,
+              "stripes": []
+            },
+            "pinned": [],
+            "extraLengthMm": 0
+          }
+        ],
+        "splices": [],
+        "cables": [],
+        "twistGroups": [
+          {
+            "id": "4dc46648-bce0-45ee-a611-15e1b4ebf6fd",
+            "wireIds": [
+              "9ec95421-3fd7-496a-a8e6-4b10d64dc2a5",
+              "6199adb0-52e0-414a-a251-554d2353dda9"
+            ]
+          },
+          {
+            "id": "8af40cb9-9555-4c9a-a484-7f78ef62f019",
+            "wireIds": [
+              "ce3c5867-826e-4bfe-aa52-e46628aebda9",
+              "16ad6514-dbda-4f5a-aa18-f1edb853bc6d"
+            ]
+          },
+          {
+            "id": "16156618-090a-4efe-a558-2eddc30f4a81",
+            "wireIds": [
+              "9387ede5-7805-455a-a3bb-b8fca81cd7ed",
+              "56584774-2d1e-489a-a28b-2bd9e1027869"
+            ]
+          }
+        ],
+        "shields": [
+          {
+            "id": "53450c89-d9c9-416a-a3b6-fa34e095124d",
+            "label": "SH1",
+            "wireIds": [
+              "ce3c5867-826e-4bfe-aa52-e46628aebda9",
+              "16ad6514-dbda-4f5a-aa18-f1edb853bc6d"
+            ],
+            "material": "tinned copper",
+            "coverage": 85,
+            "drainWire": false
+          }
+        ],
+        "layers": [
+          {
+            "id": "0ad3ffdc-feb5-4626-a000-d5b109c68219",
+            "type": "tape",
+            "pn": "HSL-TP-PTFE-12",
+            "material": "PTFE",
+            "extents": [
+              {
+                "segmentId": "c2faf22b-def6-464e-a893-5402f6cafc11"
+              },
+              {
+                "segmentId": "963572f5-0748-4afa-ae02-4e4cf91d6869"
+              },
+              {
+                "segmentId": "d3651966-f6c5-48a2-ace3-eeb3e167b6ed"
+              },
+              {
+                "segmentId": "1094bfd7-4d75-4506-a322-bed22863a3c9"
+              }
+            ],
+            "stackOrder": 1,
+            "params": {
+              "overlapPct": 50,
+              "direction": "cw"
+            },
+            "auto": true,
+            "pinned": false
+          },
+          {
+            "id": "c262f32f-8a53-4e22-a0bf-658a282a6a8d",
+            "type": "overbraid",
+            "pn": "HSL-OB-TC-10",
+            "material": "Tinned copper",
+            "extents": [
+              {
+                "segmentId": "c2faf22b-def6-464e-a893-5402f6cafc11"
+              },
+              {
+                "segmentId": "963572f5-0748-4afa-ae02-4e4cf91d6869"
+              },
+              {
+                "segmentId": "d3651966-f6c5-48a2-ace3-eeb3e167b6ed"
+              },
+              {
+                "segmentId": "1094bfd7-4d75-4506-a322-bed22863a3c9"
+              }
+            ],
+            "stackOrder": 2,
+            "params": {
+              "coveragePct": 85
+            },
+            "auto": true,
+            "pinned": false
+          }
+        ],
+        "terminations": [
+          {
+            "id": "cda4596b-a55d-4d02-a5ce-7b6669cc404d",
+            "targetId": "53450c89-d9c9-416a-a3b6-fa34e095124d",
+            "nodeId": "e42bfb32-a4a6-4eec-aa03-8fc7437c2c61",
+            "method": "band360",
+            "partPns": [],
+            "auto": false
+          },
+          {
+            "id": "9074b2fa-c9c4-48be-a3dc-208f4cf5e539",
+            "targetId": "53450c89-d9c9-416a-a3b6-fa34e095124d",
+            "nodeId": "48087b9c-012f-43b8-a18b-cddd1be83d65",
+            "method": "floating",
+            "partPns": [],
+            "auto": false
+          },
+          {
+            "id": "85334cbe-c171-4536-afd9-2133ca96d5b1",
+            "targetId": "c262f32f-8a53-4e22-a0bf-658a282a6a8d",
+            "nodeId": "e42bfb32-a4a6-4eec-aa03-8fc7437c2c61",
+            "method": "band360",
+            "partPns": [],
+            "auto": true
+          },
+          {
+            "id": "69c7d901-c51c-436a-a375-18ac47eaa77d",
+            "targetId": "c262f32f-8a53-4e22-a0bf-658a282a6a8d",
+            "nodeId": "5905cc84-229c-4256-a0fd-a5755dccccb5",
+            "method": "junction",
+            "partPns": [],
+            "auto": true
+          },
+          {
+            "id": "2c983290-200b-474e-a98a-9a3510735b81",
+            "targetId": "c262f32f-8a53-4e22-a0bf-658a282a6a8d",
+            "nodeId": "48087b9c-012f-43b8-a18b-cddd1be83d65",
+            "method": "band360",
+            "partPns": [],
+            "auto": true
+          },
+          {
+            "id": "3636d6c6-bf70-47c6-a732-465b3d062b7d",
+            "targetId": "c262f32f-8a53-4e22-a0bf-658a282a6a8d",
+            "nodeId": "ad82e8bd-f7aa-4e1a-ac46-6004a0e04569",
+            "method": "band360",
+            "partPns": [],
+            "auto": true
+          },
+          {
+            "id": "73667d37-0455-4a46-ad85-5816353a19d1",
+            "targetId": "c262f32f-8a53-4e22-a0bf-658a282a6a8d",
+            "nodeId": "27e2359f-6af5-4f2e-a862-1752f6751281",
+            "method": "band360",
+            "partPns": [],
+            "auto": true
+          }
+        ],
+        "clamps": [
+          {
+            "id": "4803a64d-9245-4ffa-adbf-f3887bc74ced",
+            "terminationId": "cda4596b-a55d-4d02-a5ce-7b6669cc404d",
+            "nodeId": "e42bfb32-a4a6-4eec-aa03-8fc7437c2c61",
+            "pn": "HSC-BC-S",
+            "quantity": 1,
+            "auto": true,
+            "pinned": false
+          },
+          {
+            "id": "bbd789e4-a668-48f2-abd6-391d02d7692d",
+            "terminationId": "85334cbe-c171-4536-afd9-2133ca96d5b1",
+            "nodeId": "e42bfb32-a4a6-4eec-aa03-8fc7437c2c61",
+            "pn": "HSC-BC-S",
+            "quantity": 1,
+            "auto": true,
+            "pinned": false
+          },
+          {
+            "id": "f9073055-0092-477a-a7b9-317895f5fbc9",
+            "terminationId": "69c7d901-c51c-436a-a375-18ac47eaa77d",
+            "nodeId": "5905cc84-229c-4256-a0fd-a5755dccccb5",
+            "pn": "HSC-BC-S",
+            "quantity": 1,
+            "auto": true,
+            "pinned": false
+          },
+          {
+            "id": "41783d02-5346-4506-af03-55df55d0415d",
+            "terminationId": "2c983290-200b-474e-a98a-9a3510735b81",
+            "nodeId": "48087b9c-012f-43b8-a18b-cddd1be83d65",
+            "pn": "HSC-BC-S",
+            "quantity": 1,
+            "auto": true,
+            "pinned": false
+          },
+          {
+            "id": "7ea7e373-e206-4546-a86c-54dadf0e0e89",
+            "terminationId": "3636d6c6-bf70-47c6-a732-465b3d062b7d",
+            "nodeId": "ad82e8bd-f7aa-4e1a-ac46-6004a0e04569",
+            "pn": "HSC-BC-S",
+            "quantity": 1,
+            "auto": true,
+            "pinned": false
+          },
+          {
+            "id": "c718f020-e6af-4a4a-a243-1fe1d2ce75dd",
+            "terminationId": "73667d37-0455-4a46-ad85-5816353a19d1",
+            "nodeId": "27e2359f-6af5-4f2e-a862-1752f6751281",
+            "pn": "HSC-BC-S",
+            "quantity": 1,
+            "auto": true,
+            "pinned": false
+          }
+        ],
+        "boots": [],
+        "potting": [],
+        "labels": [
+          {
+            "attachedTo": {
+              "kind": "connector",
+              "id": "d8ea94f6-9e66-45c4-afdb-16fb383ed021"
+            },
+            "template": "{refDes}",
+            "type": "sleeve",
+            "distanceMm": 50,
+            "auto": true,
+            "pinned": false,
+            "rule": "connectorRefDes",
+            "id": "8538220d-6de7-461a-a3ad-6136c0a6c2d5",
+            "pn": "HSM-SL-4"
+          },
+          {
+            "attachedTo": {
+              "kind": "connector",
+              "id": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d"
+            },
+            "template": "{refDes}",
+            "type": "sleeve",
+            "distanceMm": 50,
+            "auto": true,
+            "pinned": false,
+            "rule": "connectorRefDes",
+            "id": "7053424c-5cea-4366-ac93-566d8e75dc05",
+            "pn": "HSM-SL-3"
+          },
+          {
+            "attachedTo": {
+              "kind": "connector",
+              "id": "69ccae50-3376-47f8-a7cf-cee130c2b1ad"
+            },
+            "template": "{refDes}",
+            "type": "sleeve",
+            "distanceMm": 50,
+            "auto": true,
+            "pinned": false,
+            "rule": "connectorRefDes",
+            "id": "eab28f2e-c1d3-4e82-add9-c00bcbd089c5",
+            "pn": "HSM-SL-3"
+          },
+          {
+            "attachedTo": {
+              "kind": "connector",
+              "id": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991"
+            },
+            "template": "{refDes}",
+            "type": "sleeve",
+            "distanceMm": 50,
+            "auto": true,
+            "pinned": false,
+            "rule": "connectorRefDes",
+            "id": "7b94a888-c86e-47ee-a0a9-9a213599600d",
+            "pn": "HSM-SL-3"
+          }
+        ],
+        "hardware": [],
+        "notes": [],
+        "labelRules": {
+          "connectorRefDes": true,
+          "wireIds": false,
+          "harnessId": false,
+          "pedigreeMarkings": true
+        },
+        "suppressedAuto": []
+      }
+    }
+  ],
+  "currentRevisionId": "5e8b4814-8e68-4b98-afd7-aa85e8d8d315",
+  "catalogVersion": "",
+  "created": "2026-09-27T12:00:00.000Z",
+  "updated": "2026-09-27T12:00:00.000Z"
+}

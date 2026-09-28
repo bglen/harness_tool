@@ -1,0 +1,248 @@
+
+=== PDF PAGE 1 ===
+                                                          METRIC
+
+                                                                    MIL-DTL-38999/28H
+                                                      w/AMENDMENT 2
+                                                                 11 August 2022
+                                                       SUPERSEDING
+                                                                    MIL-DTL-38999/28H
+                                                      w/AMENDMENT 1
+                                                                 27 February 2018
+
+                           DETAIL SPECIFICATION SHEET
+
+              CONNECTORS, ELECTRICAL, CIRCULAR, NUT, HEXAGON,
+               CONNECTOR MOUNTING, SERIES III AND IV, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                                                                      SEE NOTE 5
+
+
+
+
+
+                            FIGURE 1. Nut, hexagon.
+
+
+
+
+AMSC N/A                                                        FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                 MIL-DTL-38999/28H
+                          w/AMENDMENT 2
+
+
+
+                            Shell size
+      Dash       Series III     Series IV,       A         P          X’       X
+      number       and       MIL-DTL-      thread size       hex      + .29     + .45
+                  MIL-DTL-                               38999/44                                                 - .00          - .00                  38999/43                                      only
+                      of series IV
+                                    M17X1 – 6H      24.00        1           9               --------                                   4.54       3.17                                               (see note 3)      21.82
+                                     M20X1– 6H      27.00        2           11              --------                                   4.54       3.17                                               (see note 4)      24.99
+                                                              32.00        3           13          11      M25X1 – 6H                 4.54       3.17                                                              29.77
+                                                              36.00        4           15          13       M28X1– 6H                 4.54       3.17                                                              32.91
+                                                              41.00        5                --------        15      M31X1 – 6H                 4.54       3.17                                                              39.26
+                                                              37.00        6           17              --------     M32X1 – 6H                 4.54       3.17                                                              36.12
+                                                              41.00        7                -------        17      M34X1 – 6H                 4.54       3.17                                                              39.25
+                                                              41.00        8           19              -------     M35X1 – 6H                 4.54       3.17                                                              39.25
+                                                              46.00        9           21          19      M38X1 – 6H                 4.54       3.17                                                              42.47
+                                                              50.00                    23          21      M41X1 – 6H                 4.54       3.17        10                                                   45.61
+                                                              51.23                    25          23      M44X1 – 6H                 4.54       3.17        11                                                   49.25
+                                                              55.00                                -------        25      M47X1 – 6H                 4.54       3.17        12                                                   53.54
+
+NOTES:
+    1.  Dimensions are in millimeters. Inch equivalents are given for information only.
+    2.  Remove all burrs and sharp edges.
+    3.  Modified minor diameter: 16.04 – 16.15 mm (.631 - .636 inches).
+    4.  Modified minor diameter: 19.07 – 19.15 mm (.751 - .754 inches).
+    5.  Standard safety wire holes are drilled. The safety wire openings depicted in the alternate
+       design are crimped. The alternate hex nut with a crimped edge is specified by adding a “-C” to
+        the Part or Identifying Number (PIN).
+    6.  Classes J and M only (includes hex nut finish codes J, M and V): Optional 45° chamfer and
+        blunt start permissible at transition area between major thread diameter and start of first
+        thread.
+
+                                      2
+
+
+
+
+
+                        Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                   Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                     MIL-DTL-38999/28H
+                              w/AMENDMENT 2
+                            FIGURE 1. Nut, hexagon – Continued.
+
+
+         mm    Inches  mm    Inches  mm    Inches  mm    Inches
+               0.29     .011    24.00     .945    36.12    1.422    46.00    1.811
+               0.45     .018    24.99     .984    37.00    1.457    49.25    1.939
+               0.75    .0295   27.00    1.063    39.25    1.545    50.00    1.969
+                 1.5     .059    29.77    1.172    39.26    1.546    51.23    2.017
+               3.17     .125    32.00    1.260    41.00    1.614    53.54    2.108
+               4.54     .178    32.91    1.296    42.47    1.672    55.00    2.165
+             21.82     .859    36.00    1.417    45.61    1.796
+
+
+REQUIREMENTS:
+  Dimensions and configurations: See figure 1.
+  Material: See table I.
+  Finish: See table I and MIL-DTL-38999.
+  Applicable jam-nut connectors: See MIL-DTL-38999, series III and IV.
+
+                           TABLE I. Material and finish. 1/
+                                                                                            Applicable
+     Hex nut                             Material                                Finish                   connector
+     finish code                                                                                             class code
+      C      Aluminum alloy                Anodic (nonconductive)                C
+
+       F      Aluminum alloy                  Electroless nickel coating (conductive)        F, G, R
+                                                 Olive-drab cadmium plate over a suitable    W     Aluminum alloy                                W                                                underplate (conductive)
+                                                  Nickel fluorocarbon polymer,       T      Aluminum alloy                                                 T                                                     non-reflective (conductive)
+       Z      Aluminum alloy                 Zinc nickel, non-reflective (conductive)        Z
+
+      K      Corrosion resistant steel 2/     Passivated (conductive)                     K, H, Y
+                                                 Electrodeposited nickel plating      N      Corrosion resistant steel 2/                                               N, S, L                                                  (conductive)
+                                                 Olive-drab cadmium plate over a suitable        J      Resin with or without filler                                                   J                                                underplate (conductive)
+     M      Resin with or without filler        Electroless nickel coating, (conductive)      M
+
+      V      Resin with or without filler       Unplated (no finish)                                J, M
+
+   1/ See MIL-DTL-38999.
+   2/  Shall be cleaned, descaled and passivated in accordance with SAE-AMS2700.
+
+
+                                          3
+
+
+
+
+
+                             Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                        Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/28H
+                            w/AMENDMENT 2
+
+
+
+Qualification. Qualification shall be in accordance with MIL-DTL-38999, except only the following tests
+shall be required:
+    Examination of product.
+     Safety wire hole pull-out (see requirement below).
+     Salt spray (corrosion).
+
+Safety wire pull-out: Safety wire shall not pull out of hex nuts with crimped edges when safety wire NI-CU
+alloy (MONEL™) (UNS NO4400) or NI-CR alloy (INCONEL™) (UNS NO6600) 0.51 mm (.020 inch)
+diameter in accordance with NASM20995 is threaded through a hole and a pull of 133.5 Newton (30 lb)
+minimum is applied. Nine pulls total shall be applied. Pulls shall be applied in three directions. Pulling
+forces shall be applied parallel with the axis of the nut and also perpendicular to the axis of the nut.
+Three pulls shall be applied parallel to the axis in one direction and three pulls shall be applied parallel to
+the axis in the opposite direction. An additional three pulls shall be applied perpendicular to axis of nut.
+
+Group A inspection shall consist of examination of product and safety wire pull-out.  Sampling for group
+A inspection shall be as specified in table II.
+
+                        TABLE II. Group A sampling plan.
+                                 Lot size               Sampling size
+                            1 to 13               100 percent
+                           14 to 150                13 units
+                           151 to 280               20 units
+                           281 to 500               29 units
+                          501 to 1,200              34 units
+                            1,201 to 3,200              42 units
+                             3,201 and up              54 units
+
+Part or Identifying Number (PIN) example:
+
+      D38999 /  28  -11    F         - C
+
+          D38999/   MIL number prefix
+          28          Specification sheet number
+           -11       Dash number (see figure 1)
+         F           Finish code (see table I)
+       C          Safety wire holes
+     (Standard safety wire holes are drilled. No PIN designator code is used when hex nuts with drilled
+     safety wire holes are specified. When a hex nut with crimped edges is required, a “-C” designator
+     shall be added to the end of the PIN to indicate a crimped design.)
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate where
+changes from the previous issue were made. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations and relationship to the last previous issue.
+
+                                        4
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                   MIL-DTL-38999/28H
+                            w/AMENDMENT 2
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+   MIL-DTL-38999/43
+   MIL-DTL-38999/44
+   NASM20995
+   SAE-AMS2700
+
+
+                           CONCLUDING MATERIAL
+
+  Custodians:                                                             Preparing activity:
+   Army – CR                                              DLA - CC
+   Navy - AS
+     Air Force - 85
+   DLA – CC                                                                    (Project 5935-2022-186)
+
+  Review activities:
+   Army - AR, MI
+   Navy - EC, MC, SH
+    Air Force - 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                        5
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:39Z
+                      Check the source to verify that this is the current version before use.

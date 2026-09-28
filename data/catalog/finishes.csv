@@ -1,0 +1,17 @@
+# schema=1; shell class/finish codes from MIL-DTL-38999N Table II
+code,material,finish,conductive,hermetic,temp_max_c,cadmium,lifecycle,notes,source,status
+C,aluminum,anodic,false,false,200,false,active,nonconductive,MIL-DTL-38999N Table II p5,verified
+F,aluminum,electroless nickel,true,false,200,false,inactive,not for Navy use; inactive for Air Force new design,MIL-DTL-38999N Table II and slash24 p5 p5,verified
+G,aluminum,electroless nickel,true,false,200,false,active,space grade,MIL-DTL-38999N Table II p5,verified
+J,composite,cadmium olive drab,true,false,175,true,active,geometry differs from metallic shells,MIL-DTL-38999N Table II p5,verified
+K,stainless steel,passivated,false,false,200,false,active,firewall,MIL-DTL-38999N Table II p5,verified
+L,stainless steel,electrodeposited nickel,true,false,200,false,active,conductive,MIL-DTL-38999N Table II p5,verified
+M,composite,nickel,true,false,200,false,active,geometry differs from metallic shells,MIL-DTL-38999N Table II p5,verified
+R,aluminum,electroless nickel,true,false,200,false,active,higher corrosion requirement than F,MIL-DTL-38999N Table II p5,verified
+S,stainless steel,electrodeposited nickel,true,false,200,false,active,firewall,MIL-DTL-38999N Table II p5,verified
+T,aluminum,nickel fluorocarbon polymer,true,false,175,false,active,conductive,MIL-DTL-38999N Table II p5,verified
+V,aluminum,tin-zinc,true,false,175,false,active,not approved for NAVAIR,MIL-DTL-38999N Table II p5,verified
+W,aluminum,cadmium olive drab,true,false,175,true,active,conductive,MIL-DTL-38999N Table II p5,verified
+Z,aluminum,zinc-nickel,true,false,175,false,active,conductive,MIL-DTL-38999N Table II p5,verified
+AA,aluminum,tri-nickel alloy,true,false,200,false,active,trailing hyphen required in PIN; not approved for NAVAIR,MIL-DTL-38999N Table II p5,verified
+AB,aluminum,tin-zinc,true,false,175,false,active,trailing hyphen required in PIN; higher performance than V; not approved for NAVAIR,MIL-DTL-38999N Table II p5,verified

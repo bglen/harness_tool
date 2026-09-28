@@ -1,0 +1,14 @@
+# schema=1; alternate parts; * = prefix wildcard
+pn,alternate,relationship
+D38999/26W*,D38999/26Z*,"Cadmium-free finish (zinc-nickel), same form/fit"
+D38999/26Z*,D38999/26W*,"Cadmium olive drab finish, same form/fit"
+D38999/26W*,D38999/26M*,"Composite shell, nickel finish (lighter)"
+D38999/26F*,D38999/26G*,"Electroless nickel, space grade (F is inactive)"
+D38999/20W*,D38999/20Z*,Cadmium-free finish (zinc-nickel)
+D38999/20Z*,D38999/20W*,Cadmium olive drab finish
+D38999/24W*,D38999/24Z*,Cadmium-free finish (zinc-nickel)
+D38999/24Z*,D38999/24W*,Cadmium olive drab finish
+M22759/16,M22759/32,"Lightweight XL-ETFE, smaller OD"
+M22759/32,M22759/16,Normal wall ETFE
+M22759/32,M22759/33,"High-strength alloy, 200 °C"
+HSL-OB-TC*,HSL-OB-MF*,Lightweight metal-clad fiber braid

@@ -1,0 +1,12 @@
+# schema=1; label stock: heat-shrink sleeves, flags, wraps, direct marking (generic seed catalog)
+pn,type,description,min_dia_mm,max_dia_mm,printable_length_mm,chars_per_mm
+HSM-SL-1,sleeve,"Heat-shrink marker sleeve, 0.8-1.8 mm",0.8,1.8,25,0.55
+HSM-SL-2,sleeve,"Heat-shrink marker sleeve, 1.5-3.2 mm",1.5,3.2,25,0.55
+HSM-SL-3,sleeve,"Heat-shrink marker sleeve, 2.8-6 mm",2.8,6,38,0.55
+HSM-SL-4,sleeve,"Heat-shrink marker sleeve, 5-11 mm",5,11,38,0.55
+HSM-SL-5,sleeve,"Heat-shrink marker sleeve, 9-20 mm",9,20,38,0.55
+HSM-SL-6,sleeve,"Heat-shrink marker sleeve, 17-38 mm",17,38,38,0.55
+HSM-SL-7,sleeve,"Heat-shrink marker sleeve, 32-70 mm",32,70,38,0.55
+HSM-FL-50,flag,"Flag label, 50 x 19 mm",1,60,45,0.5
+HSM-WR-38,wrap,"Self-laminating wrap-around label, 38 mm",2,25,30,0.5
+HSM-DM,direct,Direct marking on insulation (inkjet),0.8,5,60,0.6

@@ -1,0 +1,14 @@
+# schema=1; crimp contacts; tooling columns are seed data (verify before release); gauge_min = thinnest AWG, gauge_max = thickest
+pn,size,gender,gauge_min,gauge_max,plating,crimp_tool,positioner,insertion_tool,removal_tool,machine_insertable,current_a,status,source
+M39029/122-670,23,pin,26,22,gold,M22520/2-01,M22520/2-37,M81969/14-01,M81969/14-01,false,5,verified,MIL-STD-1560C insert tables
+M39029/121-663,23,socket,26,22,gold,M22520/2-01,M22520/2-37,M81969/14-01,M81969/14-01,false,5,verified,MIL-STD-1560C insert tables
+M39029/58-360,22D,pin,28,22,gold,M22520/2-01,M22520/2-09,M81969/14-01,M81969/14-01,true,5,verified,MIL-STD-1560C insert tables
+M39029/56-348,22D,socket,28,22,gold,M22520/2-01,M22520/2-09,M81969/14-01,M81969/14-01,true,5,verified,MIL-STD-1560C insert tables
+M39029/58-363,20,pin,24,20,gold,M22520/1-01,M22520/1-04,M81969/14-10,M81969/14-10,true,7.5,verified,MIL-STD-1560C insert tables
+M39029/56-351,20,socket,24,20,gold,M22520/1-01,M22520/1-04,M81969/14-10,M81969/14-10,true,7.5,verified,MIL-STD-1560C insert tables
+M39029/58-364,16,pin,20,16,gold,M22520/1-01,M22520/1-04,M81969/14-03,M81969/14-03,true,13,seed,seed: verify tooling/PN
+M39029/56-352,16,socket,20,16,gold,M22520/1-01,M22520/1-04,M81969/14-03,M81969/14-03,true,13,seed,seed: verify tooling/PN
+M39029/58-365,12,pin,14,12,gold,M22520/1-01,M22520/1-04,M81969/14-04,M81969/14-04,true,23,seed,seed: verify tooling/PN
+M39029/56-353,12,socket,14,12,gold,M22520/1-01,M22520/1-04,M81969/14-04,M81969/14-04,true,23,seed,seed: verify tooling/PN
+TBD-S10-PIN,10,pin,10,10,gold,M22520/1-01,(verify),(verify),(verify),false,33,seed,seed: verify tooling/PN
+TBD-S10-SKT,10,socket,10,10,gold,M22520/1-01,(verify),(verify),(verify),false,33,seed,seed: verify tooling/PN

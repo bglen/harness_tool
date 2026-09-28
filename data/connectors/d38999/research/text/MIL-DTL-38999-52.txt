@@ -1,0 +1,302 @@
+
+=== PDF PAGE 1 ===
+                                                        METRIC
+                                                                   MIL-DTL-38999/52B
+                                                     w/AMENDMENT 2
+                                                                2 July 2024
+                                                      SUPERSEDING
+                                                                   MIL-DTL-38999/52B
+                                                     w/AMENDMENT 1
+                                                                8 August 2017
+                           DETAIL SPECIFICATION SHEET
+
+                 CONNECTORS, ELECTRICAL, CIRCULAR, COVER,
+                 PROTECTIVE, RECEPTACLE, MIL-DTL-38999, SERIES IV
+
+                             This specification is approved for use by all
+                      Departments and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                          shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+ mm    Inches  mm    Inches  mm    Inches                                                                      STYLE R (WITH ROPE)
+ 4.80     .189    27.64   1.088   34.93   1.375
+ 6.35      .25     27.79   1.094   127.00   5.00
+
+
+                   FIGURE 1. Protective cover, receptacle, all classes.
+
+MSC N/A                                                         FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                   MIL-DTL-38999/52B
+                            w/AMENDMENT 2
+
+
+A
+
+
+                                        Dimensions
+                    Shell        A             B           C
+                     size            dia                 dia          BSC
+                         max           max
+                 11       26.59 (1.047)       19.18 (.775)       2.84 (.112)
+                 13       30.99 (1.220)       22.86 (.900)       2.87 (.113)
+                 15       34.19 (1.346)      26.42 (1.040)       3.37 (.133)
+                 17       37.39 (1.472)      29.21 (1.150)       3.37 (.133)
+                 19       40.21 (1.583)      32.39 (1.275)       3.89 (.153)
+                 21       43.31 (1.705)      35.56 (1.400)       3.89 (.153)
+                 23       46.50 (1.831)      38.74 (1.525)       4.39 (.173)
+                 25       49.71 (1.957)      41.91 (1.650)       4.39 (.173)
+
+                                        Dimensions
+      Shell         D°               E°                 F°               G°
+       size       BSC           BSC           BSC            BSC
+              REF           REF           REF            REF
+      11         47° 21’           148° 21’            211° 47’             312° 39’
+      13         46° 34’           148° 22’            211° 38’             313° 26’
+      15         46° 23’           148° 35’            211° 25’             313° 37’
+      17         46° 11’           148° 47’            211° 13’             313° 49’
+      19         45° 33’           149° 27’            210° 33’             314° 27’
+      21         45° 28’           149° 29’            210° 31’             314° 32’
+      23         45° 25’           149° 29’            210° 31’             314° 35’
+      25         45° 30’           149° 34’            210° 26’             314° 30’
+
+         NOTES:
+                 1. Dimensions are in millimeters. Inch equivalents are given for information only.
+                 2. Method of attachment to cover and / or ring is optional.
+                 3. Protective covers shall fit receptacles with pin or socket contacts configured in any
+                    polarization position.
+
+
+
+
+
+              FIGURE 1. Protective cover, receptacle, all classes – Continued.
+
+
+
+                                         2
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                MIL-DTL-38999/52B
+                          w/AMENDMENT 2
+
+
+
+
+
+                               STYLE N (WITH ROPE AND RING)
+
+Shell     K       K         L         L       M       M        N
+ size    dia max    dia max     dia min      dia min       (class H,    (see note 4
+         (class H,  (see note 4  (class H,   (see note 4   N and Y)     for classes)
+     N and Y)  for classes) N and Y)   for classes)
+ 11      32.0       35.0      21.97       25.12     21.00 / 18.00  22.50 /19.50    127.00
+          (1.26)       (1.38)        (.86)         (.99)         (.83/.71)      (.89/.76)       (5.00)
+ 13      37.0       37.0      25.12       29.92     22.50 / 18.50  25.00 /23.50    127.00
+          (1.46)       (1.46)       (.99)        (1.18)        (.89/.73)       (.98/.93)       (5.00)
+ 15      40.0       42       29.92       31.50     25.00 / 23.50  27.00 / 24.50    127.00
+          (1.57)       (1.65)      (1.18)       (1.24)        (.98/.93)      (1.06/.96)      (5.00)
+ 17      44.0       46       32.00       34.75     31.00 / 25.00  32.00 / 26.00    127.00
+          (1.73)       (1.81)      (1.26)       (1.37)       (1.22/.98)     (1.26/1.02)      (5.00)
+ 19      46.0       49.0      36.27       38.05     32.50 / 26.50  34.00 / 28.00    127.00
+          (1.81)       (1.93)      (1.43)       (1.50)      (1.28/1.04)    (1.34/1.10)      (5.00)
+ 21      49.0       54.0      38.25       42.55     34.00 / 28.00  36.50 / 30.50    127.00
+          (1.93)       (2.13)      (1.51)       (1.68)      (1.34/1.10)    (1.44/1.20)      (5.00)
+ 23      54.0       56.0      42.62       44.35     35.50 / 30.00  36.50 / 31.00    127.00
+          (2.13)       (2.20)      (1.68)       (1.75)      (1.40/1.18)    (1.44/1.22)      (5.00)
+ 25      56.0       59.0      44.45       47.55     37.50 / 31.50  39.00 / 33.00    127.00
+          (2.20)       (2.32)      (1.75)       (1.87)      (1.48/1.24)    (1.54/1.30)      (5.00)
+
+        FIGURE 2. Protective cover, receptacle, rope and ring assembly, all classes.
+
+                                      3
+
+
+
+
+                       Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                  Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/52B
+                            w/AMENDMENT 2
+
+
+         NOTES:
+                 1. Dimensions are in millimeters. Inch equivalents are given for information only.
+                 2. Method of attachment to cover and/or ring is optional.
+                 3. Protective covers shall fit receptacles configured in any polarization position.
+                 4. Applicable connector classes: Environmental classes C, F, G, J, K, L, M, R, S, T,
+         W and Z.
+
+      FIGURE 2. Protective cover, receptacle, rope and ring assembly, all classes – Continued.
+
+REQUIREMENTS:
+
+   Dimensions and configurations: See figures 1 and 2.
+
+    Materials:
+       Cover     - Classes C, F, G, R, T, W and Z: Impact extruded or machined aluminum alloy.
+                  Classes H, K, N, S and Y: Corrosion resistant steel.
+                  Classes J and M: High performance virgin resin in accordance with MIL-DTL-38999.
+                  Class F: Impact extruded or machined aluminum alloy.
+                  (Cover base materials listed. For finishes or surface treatments, see MIL-DTL-
+                   38999.)
+       Gasket    - Silicone elastomer.
+       Ring       - Corrosion resistant steel, passivated, 1.020 mm (0.04 inches) maximum thickness.
+      Rope      - Insulated stainless steel, passivated. Passivation or proof of passive finish using
+               ASTM-A967/A967M or equivalent is permissible. Insulation shall withstand 200°C.
+       Fastener  - Stainless steel, passivated.
+                    Option: Aluminum integral to cover.
+
+    Mating connectors: MIL-DTL-38999, series IV.
+
+   Gasket shall be bonded to cover, or mechanically retained.
+
+   Rope shall rotate freely on fastener.
+
+    Fastener tensile strength: The protective cover and rope assembly shall withstand a dead weight
+    tensile load of 11.33 kg (25 pounds) applied to both axial and longitudinal directions. The load shall be
+    applied at the end of the rope assembly and held for 5 minutes. There shall be no separation of the
+    rope assembly from the protective cover or damage to the rope assembly. Both axial and longitudinal
+    directions shall be 11.33 kg (25 pounds). The load shall be applied to the end of the rope.
+
+    Air Leakage: Testing shall be in accordance with EIA-364-02, except the minimum period of
+   measurement shall be 10 seconds. The air leakage rate shall be no greater than 1 atmospheric cubic
+    inch per hour (4.55 X 10-3 cm3/s).  Protective covers shall be mated to connectors having either
+    contacts or inserts removed so that a pressure of 10 lbft/in2 (.703 Kg/cm2 ) can be applied against the
+    insides of the protective covers or stowage receptacles.
+
+    Qualification  (all classes): Qualification shall be in accordance with MIL-DTL-38999, except only the
+    following tests shall be required:
+
+
+                                         4
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                   MIL-DTL-38999/52B
+                            w/AMENDMENT 2
+
+      Examination of product
+      Coupling torque
+      Humidity
+       Salt spray (corrosion)
+      Fastener tensile strength (see requirement)
+        Air leakage
+
+    Qualification (classes J and M only):  Qualification shall be in accordance with MIL-DTL-38999,
+    except that in addition to the test sequence specified for all classes above, the additional following
+    tests shall be required:
+      Temperature cycling
+       Hydrolytic stability
+
+Group A sampling inspection. Sampling for group A inspection shall be as specified in table I.
+
+                        TABLE I. Group A sampling plan.
+                                Lot size               Sampling size
+                           1 to 13                100 percent
+                          14 to 150                13 units
+                          151 to 280                20 units
+                          281 to 500                29 units
+                          501 to 1,200              34 units
+                           1,201 to 3,200              42 units
+                           3,201 and up               54 units
+
+Part or Identifying Number (PIN) example:
+
+                                     D38999/52   W     15    R
+
+
+              Specification sheet number
+
+              Class
+                 (see requirements)
+
+                Shell size
+
+                Style
+           R – Rope
+           N – With rope and ring
+
+
+            Class F is not for Navy use and is inactive for use in Air Force new design.
+
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+
+                                         5
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 6 ===
+                                   MIL-DTL-38999/52B
+                            w/AMENDMENT 2
+
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+   EIA-364-02
+  ASTM-A967/A967M
+
+                          CONCLUDING MATERIAL
+
+Custodians:                                                           Preparing activity:
+ Army - CR                                             DLA - CC
+  Navy - AS
+  Air Force – 85                                                             (Project 5935-2024-151)
+ DLA - CC
+
+Review activities:
+ Army - MI
+ Navy - EC, MC, OS
+  Air Force - 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         6
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:45Z
+                      Check the source to verify that this is the current version before use.

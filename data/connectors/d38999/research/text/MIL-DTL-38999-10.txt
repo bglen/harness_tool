@@ -1,0 +1,194 @@
+
+=== PDF PAGE 1 ===
+                                                                 INCH - POUND
+                                                                         MIL-DTL-38999/10B
+                                                          w/AMENDMENT 2
+                                                                      11 August 2022
+                                                           SUPERSEDING
+                                                                         MIL-DTL-38999/10B
+                                                          w/AMENDMENT 1
+                                                                      20 October 2017
+
+                            DETAIL SPECIFICATION SHEET
+
+       CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE, DUMMY STOWAGE,
+      BAYONET COUPLING, (MIL-DTL-27599, SERIES II AND MIL-DTL-38999, SERIES II)
+
+                       This specification is approved for use by all Departments
+                         and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                       FIGURE 1. Dummy receptacle, finish B.
+
+
+
+
+AMSC N/A                                                         FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                 MIL-DTL-38999/10B
+              w/AMENDMENT 2
+
+
+
+
+
+                      DETAIL A
+
+                     Dimensions
+     Shell   R     S      T     X     Y
+     size   BSC   max     dia    (TYP)   (TYP)
+                           +.010
+                              -.005
+     8     .297    .828            82°     118°
+     10    .3595    .954            72°     128°
+     12    .406   1.047            68°     132°
+     14    .453   1.141    .120    66°     134°
+     16    .4845   1.234            70°     130°
+     18    .531   1.328            70°     130°
+     20    .578   1.453            70°     130°
+     22    .625   1.578            74°     126°
+     24    .6875   1.703    .147    74°     126°
+
+
+   FIGURE 1. Dummy receptacle, finish B - Continued.
+
+
+
+
+                       2
+
+
+
+
+
+   Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/10B
+                            w/AMENDMENT 2
+                         Inch   mm     Inch   mm     Inch   mm
+                        .005     0.13     .297     7.54     8.28    21.03
+                        .010     0.25    .3595    9.13     9.54    24.23
+                        .011     0.28     .406    10.31    1.047    26.59
+                        .015     0.38     .451    11.46    1.141    28.98
+                        .058     1.47     .453    11.51    1.234    31.34
+                        .063     1.60     .531    13.49    1.328    33.73
+                        .120     3.05     .578    14.68    1.453    36.91
+                        .147     3.73     .625    15.88    1.578    40.08
+                        .222     5.64    .6875    17.46    1.703    43.26
+
+NOTES:
+   1. Dimensions are in inches.
+   2. Metric equivalents are given for information only and are based upon 1 inch = 25.4 mm.
+   3. The gage features for GG shall be .010 inch (.25 mm) smaller than the MMC size at basic location.
+   4. Flange is solid.
+   5. Dummy receptacles are used when unmated plugs must be protected.
+
+                   FIGURE 1. Dummy receptacle, finish B - Continued.
+REQUIREMENTS:
+
+  Dimensions and configuration: See figure 1.
+  Interface dimensions shall conform to MIL-DTL-38999, except as noted.
+  Material:
+    Shell: Aluminum alloy as specified in MIL-DTL-38999 with finish B.
+    Sealing gasket: Non-corrosive silicone or fluorosilicone elastomer.
+  This receptacle mates with MS27473, MS27480, MS27484 and MS27500.
+  Fits all polarization positions.
+
+  Part or Identifying Number (PIN) example:
+
+      M38999/10    -  10    B
+
+          M38999/10      Specification sheet number
+          10               Shell size
+        B                Finish
+
+
+ NOTE: The term PIN is equivalent to the term (part number, identification number, and type
+  designator) which was previously used in this specification. In the PIN, a dash symbol (“-”) shall be
+  placed between the specification sheet number and shell size.
+
+
+
+
+
+                                         3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/10B
+                            w/AMENDMENT 2
+Qualification:
+
+  Qualification shall consist of the dynamic salt spray test, altitude immersion, coupling torque, coupling
+  pin strength, and visual and mechanical inspection as specified in MIL-DTL-38999, conducted on two
+  samples of each shell size.
+
+Amendment notations. The margins of  this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+    MIL-DTL-27599
+    MS27473
+    MS27480
+    MS27484
+    MS27500
+
+
+                          CONCLUDING MATERIAL
+
+
+Custodians:                                                             Preparing activity:
+  Army - CR                                                DLA - CC
+  Navy - AS
+  Air Force - 85
+ DLA - CC                                                                    (Project 5935-2022-177)
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+  Air Force – 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         4
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:36Z
+                      Check the source to verify that this is the current version before use.

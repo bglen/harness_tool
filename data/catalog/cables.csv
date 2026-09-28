@@ -1,0 +1,14 @@
+# schema=1; M27500 PN building blocks: kind=wire code|shield|jacket (seed; verify code tables)
+kind,code,spec,material,thickness_mm,coverage,gauges
+wire,TE,M22759/16,,,,24;22;20;18;16;14;12
+wire,SE,M22759/32,,,,26;24;22;20;18;16;14;12
+wire,SB,M22759/33,,,,26;24;22;20;18;16;14;12
+wire,RC,M22759/44,,,,24;22;20;18;16;14;12
+shield,U,,none (unshielded),0,0,
+shield,T,,"tin-coated copper, round",0.25,85,
+shield,S,,"silver-coated copper, round",0.25,85,
+shield,N,,"nickel-coated copper, round",0.25,85,
+jacket,00,,no jacket,0,,
+jacket,14,,"extruded FEP, white",0.2,,
+jacket,23,,"extruded ETFE, white",0.2,,
+jacket,24,,"extruded XL-ETFE, white",0.18,,

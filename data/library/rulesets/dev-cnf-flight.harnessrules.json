@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "lib-dev-cnf-flight",
+  "name": "Dev / Critical non-flight / Flight",
+  "prefix": "PED",
+  "version": "1.0.0",
+  "author": "Harness Studio",
+  "description": "Three build classes with light, editable example requirements. Replace with your company's definitions.",
+  "changelog": [{ "version": "1.0.0", "date": "2026-09-27", "notes": "Initial template (example values)" }],
+  "enforced": false,
+  "rules": [
+    { "id": "PED-001", "type": "spare_pins", "category": "Design", "severity": "warning", "title": "Spare cavities per connector", "description": "Minimum share of unused cavities per connector.", "rationale": "Spares allow late changes without a new connector.", "params": { "minPct": 0 }, "paramsByPedigree": { "cnf": { "minPct": 5 }, "flight": { "minPct": 10 } }, "severityByPedigree": { "dev": "off", "cnf": "warning", "flight": "error" } },
+    { "id": "PED-002", "type": "required_labels", "category": "Documentation", "severity": "warning", "title": "Every connector end labeled", "description": "Each connector carries a refDes label.", "rationale": "Identification during installation and maintenance.", "params": { "target": "connector" }, "severityByPedigree": { "dev": "off", "cnf": "warning", "flight": "error" } },
+    { "id": "PED-003", "type": "gauge_vs_current", "category": "Electrical", "severity": "error", "title": "Wire derating by build class", "description": "Wire current rating × derating factor must exceed the net current.", "rationale": "Flight hardware uses stricter derating.", "params": { "deratingFactor": 0.8 }, "paramsByPedigree": { "cnf": { "deratingFactor": 0.7 }, "flight": { "deratingFactor": 0.5 } } },
+    { "id": "PED-004", "type": "allowed_parts", "category": "Parts", "severity": "info", "title": "No cadmium finishes", "description": "Cadmium-plated shells (classes W, J) are not allowed.", "rationale": "Cadmium is restricted for many programs.", "params": { "bannedFinishes": ["W", "J"] }, "severityByPedigree": { "flight": "error" } },
+    { "id": "PED-005", "type": "bend_radius", "category": "Mechanical", "severity": "warning", "title": "Bend radius by build class", "description": "Room for a bend of N × bundle OD at 90° exits.", "rationale": "Flight harnesses use a larger bend radius.", "params": { "multiple": 6 }, "paramsByPedigree": { "flight": { "multiple": 10 } } }
+  ],
+  "pedigreeScheme": {
+    "id": "dev-cnf-flight",
+    "name": "Dev / Critical non-flight / Flight",
+    "version": "1.0.0",
+    "pedigrees": [
+      {
+        "id": "dev",
+        "name": "Development",
+        "code": "DEV",
+        "rank": 0,
+        "color": 0,
+        "description": "Engineering development units. Not for flight.",
+        "workmanship": "IPC/WHMA-A-620 Class 2",
+        "inspections": [
+          { "typeId": "continuity", "sampling": "100%", "params": { "maxOhm": 1 } },
+          { "typeId": "visual", "sampling": "100%", "params": { "magnification": "4x", "acceptanceClass": "Class 2" } }
+        ],
+        "documentation": ["Certificate of Conformance (CoC)"],
+        "markings": [{ "text": "NOT FOR FLIGHT", "type": "tag", "color": "red" }],
+        "partsPolicy": { "qplOnly": false }
+      },
+      {
+        "id": "cnf",
+        "name": "Critical non-flight",
+        "code": "CNF",
+        "rank": 1,
+        "color": 2,
+        "extends": "dev",
+        "description": "GSE, test sets and other critical non-flight hardware.",
+        "workmanship": "IPC/WHMA-A-620 Class 3",
+        "inspections": [
+          { "typeId": "visual", "sampling": "100%", "params": { "magnification": "4x", "acceptanceClass": "Class 3" } },
+          { "typeId": "hipot", "sampling": "100%", "params": { "voltage": 1000, "mode": "DC", "dwellS": 1, "maxLeakageMa": 1, "pairs": "all-to-all" } },
+          { "typeId": "ir", "sampling": "100%", "params": { "voltage": 500, "minMohm": 100 } },
+          { "typeId": "pull", "sampling": "Per lot (n=5)", "params": {} },
+          { "typeId": "dimensional", "sampling": "First article", "params": {} }
+        ],
+        "documentation": ["Certificate of Conformance (CoC)", "Test data package"],
+        "markings": [{ "text": "NOT FOR FLIGHT", "type": "tag", "color": "red" }],
+        "partsPolicy": { "qplOnly": true }
+      },
+      {
+        "id": "flight",
+        "name": "Flight",
+        "code": "FLT",
+        "rank": 2,
+        "color": 3,
+        "extends": "cnf",
+        "description": "Flight hardware.",
+        "workmanship": "IPC/WHMA-A-620 Class 3 with space addendum",
+        "inspections": [
+          { "typeId": "visual", "sampling": "100%", "params": { "magnification": "10x", "acceptanceClass": "Class 3 space" } },
+          { "typeId": "pull", "sampling": "First/last article", "params": {} },
+          { "typeId": "retention", "sampling": "100%", "params": { "forceN": 44 } },
+          { "typeId": "xray", "sampling": "10%", "params": { "targets": "contact seating" } },
+          { "typeId": "bond", "sampling": "100%", "params": { "maxMohm": 2.5 } },
+          { "typeId": "dimensional", "sampling": "100%", "params": {} }
+        ],
+        "documentation": ["Certificate of Conformance (CoC)", "AS9102 First Article Inspection", "Material certifications", "Serial traceability", "Test data package"],
+        "markings": [{ "text": "FLIGHT {harnessPN}-{rev} S/N {serial}", "type": "label" }],
+        "partsPolicy": { "qplOnly": true, "noAlternates": true, "bannedFinishes": ["W", "J"], "authorizedDistributionOnly": true, "dateCodeMaxYears": 5 },
+        "process": { "serializedLabels": true, "doubleBandClamps": true, "minBraidCoverage": 90, "bendRadiusMultiple": 10 }
+      }
+    ]
+  }
+}

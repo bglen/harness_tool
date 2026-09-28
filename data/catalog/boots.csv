@@ -1,0 +1,32 @@
+# schema=1; boots and transitions (generic seed catalog)
+pn,shape,description,min_dia_mm,max_dia_mm,mass_g
+HSK-BS-1,straight,"Heat-shrink boot, straight, 3-8 mm",3,8,3
+HSK-B9-1,90,"Heat-shrink boot, 90°, 3-8 mm",3,8,4
+HSK-TY-1,Y,"Y transition, 3-8 mm",3,8,5
+HSK-TT-1,T,"T transition, 3-8 mm",3,8,5
+HSK-TM-1,multi,"Multi-leg transition, 3-8 mm",3,8,6
+HSK-BS-2,straight,"Heat-shrink boot, straight, 6-13 mm",6,13,6
+HSK-B9-2,90,"Heat-shrink boot, 90°, 6-13 mm",6,13,8
+HSK-TY-2,Y,"Y transition, 6-13 mm",6,13,9
+HSK-TT-2,T,"T transition, 6-13 mm",6,13,9
+HSK-TM-2,multi,"Multi-leg transition, 6-13 mm",6,13,11
+HSK-BS-3,straight,"Heat-shrink boot, straight, 10-19 mm",10,19,9
+HSK-B9-3,90,"Heat-shrink boot, 90°, 10-19 mm",10,19,12
+HSK-TY-3,Y,"Y transition, 10-19 mm",10,19,13
+HSK-TT-3,T,"T transition, 10-19 mm",10,19,13
+HSK-TM-3,multi,"Multi-leg transition, 10-19 mm",10,19,16
+HSK-BS-4,straight,"Heat-shrink boot, straight, 15-26 mm",15,26,12
+HSK-B9-4,90,"Heat-shrink boot, 90°, 15-26 mm",15,26,16
+HSK-TY-4,Y,"Y transition, 15-26 mm",15,26,17
+HSK-TT-4,T,"T transition, 15-26 mm",15,26,17
+HSK-TM-4,multi,"Multi-leg transition, 15-26 mm",15,26,21
+HSK-BS-5,straight,"Heat-shrink boot, straight, 22-36 mm",22,36,15
+HSK-B9-5,90,"Heat-shrink boot, 90°, 22-36 mm",22,36,20
+HSK-TY-5,Y,"Y transition, 22-36 mm",22,36,21
+HSK-TT-5,T,"T transition, 22-36 mm",22,36,21
+HSK-TM-5,multi,"Multi-leg transition, 22-36 mm",22,36,26
+HSK-BS-6,straight,"Heat-shrink boot, straight, 30-48 mm",30,48,18
+HSK-B9-6,90,"Heat-shrink boot, 90°, 30-48 mm",30,48,24
+HSK-TY-6,Y,"Y transition, 30-48 mm",30,48,25
+HSK-TT-6,T,"T transition, 30-48 mm",30,48,25
+HSK-TM-6,multi,"Multi-leg transition, 30-48 mm",30,48,31

@@ -1,0 +1,10 @@
+shell_size,dash,thread_diameter,hex_min,hex_max,thickness_min,thickness_max,composite_thickness_min,composite_thickness_max,unit,source,page
+9,1,17,21.82,24.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+11,2,20,24.99,27.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+13,3,25,29.77,32.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+15,4,28,32.91,36.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+17,6,32,36.12,37.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+19,8,35,39.25,41.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+21,9,38,42.47,46.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+23,10,41,45.61,50.00,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2
+25,11,44,49.25,51.23,3.17,3.62,4.54,4.83,mm,MIL-DTL-38999-28H Amendment 2,2

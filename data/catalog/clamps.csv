@@ -1,0 +1,6 @@
+# schema=1; band clamps (generic seed catalog)
+pn,description,min_dia_mm,max_dia_mm,tension_spec,tool,mass_g
+HSC-BC-S,"Band clamp, small, 3.2 mm band",3,15,450 N,"Band clamp tool, pneumatic",1.2
+HSC-BC-M,"Band clamp, medium, 3.2 mm band",12,28,450 N,"Band clamp tool, pneumatic",1.8
+HSC-BC-L,"Band clamp, large, 4.8 mm band",24,45,670 N,"Band clamp tool, pneumatic",2.9
+HSC-BC-XL,"Band clamp, extra large, 4.8 mm band",40,70,670 N,"Band clamp tool, pneumatic",4.2

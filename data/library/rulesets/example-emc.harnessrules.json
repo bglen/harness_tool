@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "lib-example-emc",
+  "name": "Example: EMC & wiring practice",
+  "prefix": "EMC",
+  "version": "1.0.0",
+  "author": "Harness Studio",
+  "description": "An example team ruleset showing design-oriented rule types. Duplicate and adapt to your own standard.",
+  "changelog": [{ "version": "1.0.0", "date": "2026-09-27", "notes": "Initial example" }],
+  "enforced": false,
+  "rules": [
+    { "id": "EMC-001", "type": "required_twist", "category": "EMC", "severity": "error", "title": "CAN buses are twisted pairs", "description": "Nets matching ^CAN_ must be in a twisted pair.", "rationale": "Differential buses need twisting for noise rejection.", "params": { "namePattern": "^CAN_" } },
+    { "id": "EMC-002", "type": "required_shield", "category": "EMC", "severity": "error", "title": "RF nets individually shielded", "description": "Nets of class RF must be inside an individual shield.", "rationale": "Unshielded RF radiates and picks up noise.", "params": { "netClass": "rf" } },
+    { "id": "EMC-003", "type": "pin_adjacency", "category": "EMC", "severity": "warning", "title": "Power not adjacent to signal", "description": "Power-class nets must not sit in cavities adjacent to signal-class nets.", "rationale": "Keeps switching noise away from sensitive lines and improves hipot margins.", "params": { "classA": "power", "classB": "signal", "minMm": 2.6 } },
+    { "id": "EMC-004", "type": "gauge_min_by_class", "category": "Electrical", "severity": "warning", "title": "Power nets ≥ 20 AWG", "description": "Power-class nets use 20 AWG or heavier.", "rationale": "Voltage drop and mechanical robustness.", "params": { "netClass": "power", "maxGauge": 20 } },
+    { "id": "EMC-005", "type": "naming", "category": "Documentation", "severity": "info", "title": "Net names are upper case", "description": "Net names use A–Z, 0–9, _ and + only.", "rationale": "Consistent names across ICDs and test programs.", "params": { "target": "net", "pattern": "^[A-Z0-9_+\\-]+$" } },
+    { "id": "EMC-006", "type": "cvd_confusable", "category": "Human factors", "severity": "warning", "title": "No CVD-confusable wire colors on a connector", "description": "Flags wires on the same connector whose colors are easily confused by color-vision-deficient technicians.", "rationale": "About 1 in 12 men have a color vision deficiency.", "params": {}, "enabled": false },
+    { "id": "EMC-007", "type": "segregation", "category": "EMC", "severity": "info", "title": "RF segregated from power", "description": "RF and power nets should not share a bundle segment.", "rationale": "Coupling from power switching into RF.", "params": { "classA": "rf", "classB": "power" } }
+  ]
+}

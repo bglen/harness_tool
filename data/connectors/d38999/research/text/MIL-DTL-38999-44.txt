@@ -1,0 +1,246 @@
+
+=== PDF PAGE 1 ===
+                                                      METRIC
+                                                                MIL-DTL-38999/44D
+                                                   w/AMENDMENT 3
+                                                              2 July 2024
+                                                    SUPERSEDING
+                                                                MIL-DTL-38999/44D
+                                                   w/AMENDMENT 2
+                                                             10 March 2020
+
+                           DETAIL SPECIFICATION SHEET
+
+               CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE,
+                JAM-NUT MOUNTING, BREECH COUPLING, REMOVABLE
+                      CRIMP CONTACTS, SERIES IV, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                   The requirements for acquiring the product described herein
+                          shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                                                 mm   Inches
+                                                                                      1.8     .07
+                                                                                      3.2     .13
+
+
+
+
+
+                FIGURE 1. Receptacle, classes C, F, K, R, S, T, W, X and Z.
+
+
+AMSC N/A                                                        FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                      MIL-DTL-38999/44D
+                  w/AMENDMENT 3
+               DRAFT DATED 8 MAY 2024
+
+
+
+
+
+                                   mm   Inches
+                                                           0.70  .03
+                                                           0.96  .04
+                                                           1.07  .04
+                                                             1.3   .05
+                                                             1.9   .07
+                                                             2.1   .08
+                                                             2.2   .09
+                                                             2.7   .11
+                                                             5.0   .20
+                                                             5.4   .21
+                                                             6.9   .27
+
+
+
+
+
+FIGURE 1. Receptacle, classes C, F, K, R, S, T, W, X and Z - Continued.
+
+
+
+
+
+                              2
+
+
+
+
+          Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+       Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/44D
+                            w/AMENDMENT 3
+                         DRAFT DATED 8 MAY 2024
+
+Shell Shell   A     B     F    G      J     K    S    V   W   Z max  Z max
+ size  size    dia       flat     dia   thread    dia     dia                         (see    (see
+     code                          plated                                      note 2) note 3)
+            38.6   23.93  27.84          20.42  25.40   35.4
+ 11   B   (1.520)  (.942)  (1.096) M25x1-  (.804)  (1.000) (1.394)
+            37.6   23.74  27.55 6g 0.1R  20.17  25.15   34.4
+            (1.480)  (.935)  (1.085)           (.794)  (.990)  (1.354)
+            41.7   27.08  31.02          23.57  28.58   38.6
+ 13  C   (1.642) (1.066) (1.221) M28X1-  (.928)  (1.125) (1.520)
+            40.7   26.89  30.73 6g 0.1R  23.32  28.33   37.6
+            (1.602) (1.059) (1.210)           (.918)  (1.115) (1.480)
+            44.9   30.26  34.19          26.56  31.75   41.7
+ 15  D   (1.768) (1.191) (1.346) M31X1- (1.046) (1.250) (1.642)
+            43.9   30.07  33.90 6g 0.1R  26.31  31.50   40.7
+            (1.728) (1.184) (1.335)          (1.036) (1.240) (1.602)
+            49.7   33.56  37.67          30.02  34.92   45.7
+ 17   E   (1.957) (1.321) (1.483) M34X1- (1.182) (1.375) (1.799)
+            48.7   33.37  37.38 6g 0.1R  29.77  34.67   44.7   28.4    2.7
+            (1.917) (1.314) (1.472)          (1.172) (1.365) (1.760) (1.118) (.106)  32.0    39.5
+            51.7   36.61  40.85          32.91  38.10   48.5   27.5    1.9  (1.260) (1.555)
+ 19   F   (2.035) (1.441) (1.608) M38X1- (1.296) (1.500) (1.909) (1.083) (.075)
+            50.7   36.42  40.56 6g 0.1R  32.66  37.85   47.5
+            (1.996) (1.434) (1.597)          (1.286) (1.490) (1.870)
+            54.8   39.78  44.02          36.11  41.28   51.7
+ 21  G   (2.157) (1.566) (1.733) M41X1- (1.422) (1.625) (2.035)
+            53.8   39.59  43.73 6g 0.1R  35.86  41.03   50.7
+            (2.118) (1.559) (1.722)          (1.412) (1.615) (1.996)
+            58.0   42.96  47.20          39.26  44.45   54.8
+ 23  H   (2.283) (1.691) (1.858) M44X1- (1.546) (1.750) (2.157)
+            57.0   42.77  46.91 6g 0.1R  39.01  44.20   53.8
+            (2.244) (1.684) (1.847)          (1.536) (1.740) (2.118)
+            61.2   46.13  50.37          42.46  47.63   58.0
+ 25    J   (2.409) (1.816) (1.983) M47X1- (1.672) (1.875) (2.283)
+            60.2   45.94  50.08 6g 0.1R  42.21  47.38   57.0
+            (2.370) (1.809) (1.972)          (1.662) (1.865) (2.244)
+NOTES:
+  1. Dimensions are in millimeters.
+  2. Classes C, F, T, W, X and Z.
+  3. Classes K, S and R.
+  4. Insert can be recessed a max of 6.00 mm back of teeth.
+  5. Inch equivalents are given for information only. Inch equivalents are in parentheses.
+  6. For details of connector front and rear end configuration, see procurement specification.
+
+           FIGURE 1. Receptacle, classes C, F, K, R, S, T, W, X and Z - Continued.
+
+
+REQUIREMENTS:
+
+  Dimensions and configurations: See figure 1.
+
+  Interface dimensions shall conform to MIL-DTL-38999.
+
+                                          3
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/44D
+                            w/AMENDMENT 3
+                         DRAFT DATED 8 MAY 2024
+
+  This connector mates with the following:
+
+    Classes C, F, T, W, X and Z mate with MIL-DTL-38999/46 and MIL-DTL-38999/47.
+    Classes K, S and R mate with MIL-DTL-38999/46.
+
+  Main key color: Blue.
+
+  For insert arrangements: See MIL-STD-1560.
+
+  PIN example:
+
+       D38999/      44    F    A     35    P    N
+
+                                                                       Polarizing position: N is
+                                                                    required for normal position
+
+                                                               Contact style
+
+                                                                           Insert arrangement
+
+                                                                      Shell size code
+
+                                                               Class
+
+                                                                        Specification sheet number
+
+                                               DoD prefix
+
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notation.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+   MIL-DTL-38999/46
+   MIL-DTL-38999/47
+   MIL-STD-1560
+
+
+
+
+
+                                          4
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                   MIL-DTL-38999/44D
+                            w/AMENDMENT 3
+                         DRAFT DATED 8 MAY 2024
+
+                          CONCLUDING MATERIAL
+
+
+Custodians:                                                              Preparing activity:
+  Army - CR                                              DLA - CC
+  Navy - AS
+  Air Force - 85                                                               (Project 5935-2024-145)
+ DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+  Air Force – 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                          5
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:43Z
+                      Check the source to verify that this is the current version before use.

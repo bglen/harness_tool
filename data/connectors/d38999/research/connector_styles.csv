@@ -1,0 +1,36 @@
+slash,series,kind,mounting,hermetic,contacts,shell_sizes,pin_schema,cad_status,source
+9,I,dummy,stowage,false,none,,special,not_in_scope,MIL-DTL-38999-9 p1
+10,II,dummy,stowage,false,none,,special,not_in_scope,MIL-DTL-38999-10 p1
+20,III,receptacle,wall flange,false,removable,9;11;13;15;17;19;21;23;25,standard,not_implemented,MIL-DTL-38999-20 p1-2
+21,III,receptacle,box flange,true,fixed,9;11;13;15;17;19;21;23;25,standard,not_implemented,MIL-DTL-38999-21 p1-2
+22,III,dummy,stowage,false,none,,special,not_in_scope,MIL-DTL-38999-22 p1
+23,III,receptacle,jam nut,true,fixed,9;11;13;15;17;19;21;23;25,standard,not_implemented,MIL-DTL-38999-23 p1
+24,III,receptacle,jam nut,false,removable,9;11;13;15;17;19;21;23;25,standard,comparison_model,MIL-DTL-38999-24 p1-4
+25,III,receptacle,solder mount,true,fixed,9;11;13;15;17;19;21;23;25,standard,not_implemented,MIL-DTL-38999-25 p1-2
+26,III,plug,straight,false,removable,9;11;13;15;17;19;21;23;25,standard,comparison_model,MIL-DTL-38999-26 p1-2
+27,III,receptacle,weld mount,true,fixed,9;11;13;15;17;19;21;23;25,standard,not_implemented,MIL-DTL-38999-27 p1
+28,III;IV,nut,jam nut,false,none,,special,component_only,MIL-DTL-38999-28 p1-2
+29,III,plug,lanyard release,false,pin,,special,not_implemented,MIL-DTL-38999-29 p1
+30,III,plug,lanyard release,false,socket,,special,not_implemented,MIL-DTL-38999-30 p1
+31,III,plug,lanyard release,false,pin,25,special,not_implemented,MIL-DTL-38999-31 p1
+32,III,cover,plug,false,none,,special,not_in_scope,MIL-DTL-38999-32 p1
+33,III,cover,receptacle,false,none,,special,not_in_scope,MIL-DTL-38999-33 p1
+34,III,receptacle,breakaway jam nut,false,socket,25,special,not_implemented,MIL-DTL-38999-34 p1
+35,III,receptacle,breakaway wall flange,false,socket,25,special,not_implemented,MIL-DTL-38999-35 p1
+36,III,plug,lanyard release,false,pin,25,special,not_implemented,MIL-DTL-38999-36 p1
+40,IV,receptacle,wall flange,false,removable,,standard,missing_dimensional_sheet,MIL-DTL-38999-40 validation notice
+41,IV,receptacle,box flange,true,fixed,,standard,not_implemented,MIL-DTL-38999-41 p1
+42,IV,receptacle,box flange,false,removable,,standard,missing_dimensional_sheet,MIL-DTL-38999-42 validation notice
+43,IV,receptacle,jam nut,true,fixed,,standard,not_implemented,MIL-DTL-38999-43 p1
+44,IV,receptacle,jam nut,false,removable,,standard,not_implemented,MIL-DTL-38999-44 p1
+45,IV,receptacle,solder mount,true,fixed,,standard,not_implemented,MIL-DTL-38999-45 p1
+46,IV,plug,EMI grounding,false,removable,,standard,missing_dimensional_sheet,MIL-DTL-38999-46 validation notice
+47,IV,plug,straight,false,removable,,standard,not_implemented,MIL-DTL-38999-47 p1
+48,IV,receptacle,weld mount,true,fixed,,standard,not_implemented,MIL-DTL-38999-48 p1
+49,IV,receptacle,in-line cable,false,removable,,standard,not_implemented,MIL-DTL-38999-49 p1
+50,IV,dummy,stowage,false,none,,special,not_in_scope,MIL-DTL-38999-50 p1
+51,IV,cover,plug,false,none,,special,not_in_scope,MIL-DTL-38999-51 p1
+52,IV,cover,receptacle,false,none,,special,not_in_scope,MIL-DTL-38999-52 p1
+60,III,plug,tight tolerance fiber optic,false,removable,25,special,not_implemented,MIL-DTL-38999-60 p1
+61,III,receptacle,tight tolerance fiber optic wall flange,false,removable,25,special,not_implemented,MIL-DTL-38999-61 p1
+62,,boot,contact sealing,false,none,,special,not_in_scope,MIL-DTL-38999-62 p1

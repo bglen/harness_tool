@@ -1,0 +1,174 @@
+
+=== PDF PAGE 1 ===
+                                                        METRIC
+
+                                                                  MIL-DTL-38999/48B
+                                                    w/AMENDMENT 1
+                                                               2 July 2024
+                                                     SUPERSEDING
+                                                                  MIL-DTL-38999/48B
+                                                               5 February 2014
+
+                           DETAIL SPECIFICATION SHEET
+
+               CONNECTORS, ELECTRICAL, CIRCULAR, RECEPTACLE,
+               WELD MOUNTING, HERMETIC, BREECH COUPLING,
+                HERMETIC SOLDER CONTACTS, SERIES IV, METRIC
+
+                       This specification is approved for use by all Departments
+                        and Agencies of the Department of Defense.
+
+                  The requirements for acquiring the product described herein
+                         shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+          mm   Inches   mm  Inches   mm   Inches  mm   Inches
+                0.17    .007       1.3    .05      2.5      .10     20.8     .82
+                0.90    .035       1.5    .06     10.7     .42     25.0     .98
+                 1.0     .040       1.8    .07     19.2     .76
+
+
+                      FIGURE 1. Receptacle, classes N and Y.
+
+AMSC N/A                                                      FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                   MIL-DTL-38999/48B
+                            w/AMENDMENT 1
+
+
+
+
+
+            Shell      Shell      S          T         U          V
+             size    size code      dia            dia              dia              dia
+                                                            max
+
+                              28.1 / 27.8    26.3 / 26.0    20.15 / 19.76       15.88          11      B                               (1.11 / 1.09)   (1.04 / 1.02)      (.79 / .78)           (.63)
+                              31.3 / 31.0    29.5 / 29.2    23.35 / 22.96       19.05          13      C                               (1.23 / 1.22)   (1.16 / 1.15)      (.92 / .90)           (.75)
+                              34.5 / 34.2    32.7 / 32.4    26.52 / 26.13       23.01          15      D                               (1.36 / 1.35)   (1.29 / 1.28)    (1.23 / 1.22)         (.91)
+                              36.7 / 36.4    34.9 / 34.6     29.72 /29.33       25.81          17      E                               (1.44 / 1.43)   (1.37 / 1.36)    (1.17 / 1.15)        (1.02)
+                              40.4 / 40.1    38.6 / 38.3     32.87 /32.48       28.98          19       F                               (1.59 / 1.58)   (1.52 / 1.51)    (1.29 / 1.28)        (1.14)
+                              44.0 / 43.7    42.2 / 41.9     36.05 /33.66       32.16          21     G                               (1.73 / 1.72)   (1.66 / 1.65)    (1.42 / 1.33)        (1.27)
+                              48.2 / 47.9    46.4 / 46.1    39.22 / 38.83       34.93          23      H                               (1.90 / 1.89)   (1.83 / 1.81)    (1.54 / 1.53)        (1.38)
+                              50.4 / 50.1    48.6 / 48.3    42.40 / 42.01       37.69          25        J                               (1.98 / 1.97)   (1.91 / 1.90)    (1.67 / 1.65)        (1.48)
+
+       NOTES:
+             1. Dimensions are in millimeters.
+             2. Inch equivalents are given for information only.
+
+                  FIGURE 1. Receptacle, classes N and Y – Continued.
+
+
+REQUIREMENTS:
+
+  Dimensions and configurations: See figure 1.
+  Interface dimensions shall conform to MIL-DTL-38999.
+  This connector mates with MIL-DTL-38999/46 and /47.
+  Main key color: Blue.
+  For insert arrangements: See MIL-STD-1560.
+
+
+
+                                         2
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                   MIL-DTL-38999/48B
+                            w/AMENDMENT 1
+
+
+
+
+  Part or Identifying Number (PIN) example:
+                      D38999/    48   N      B    35   P     N
+
+
+ DOD no. prefix
+
+  Specification sheet no.
+
+  Class
+
+  Shell size code
+
+  Insert arrangement
+
+  Contact style
+   P – Pin, solder cup.
+   X – Pin, eyelet.
+
+  Polarizing position
+  N is required for normal position.
+  For contact termination: See MIL-DTL-38999.
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+  MIL-DTL-38999/46
+  MIL-DTL-38999/47
+  MIL-STD-1560
+
+
+
+
+
+                                         3
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                   MIL-DTL-38999/48B
+                            w/AMENDMENT 1
+
+                          CONCLUDING MATERIAL
+Custodians:                                                            Preparing activity:
+  Army – CR                                              DLA - CC
+  Navy - AS
+  Air Force – 85                                                              (Project 5935-2024-147)
+ DLA - CC
+
+Review activities:
+  Army - AR, MI
+  Navy - EC, MC, OS
+  Air Force - 19
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil.
+
+
+
+
+
+                                         4
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:44Z
+                      Check the source to verify that this is the current version before use.

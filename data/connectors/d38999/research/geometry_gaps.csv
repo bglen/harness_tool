@@ -1,0 +1,15 @@
+id,scope,feature,status,source,required_action
+G01,all,manufacturer-specific internal retention and construction,not_specified,MIL-DTL-38999 general performance requirements,compare manufacturer CAD if internal fidelity is needed
+G02,slash24,O-ring solid and groove details,not_implemented,MIL-DTL-38999-24 p2 and MIL-DTL-25988/3,extract referenced O-ring cross sections and finish groove model
+G03,slash24,mounting nut internal thread and safety holes,not_implemented,MIL-DTL-38999-28,replace smooth nut bore with controlled 6H thread and drill holes
+G04,slash26,EMI spring fingers and retention shoulder,partially_specified,MIL-DTL-38999N Figure 3 p86,implement spring-finger envelope with documented choices for unregulated details
+G05,slash26,coupling grip axial bands and knurl design,manufacturer_option,MIL-DTL-38999-26 p1-2,compare manufacturer CAD; optional cosmetics in separate parameter profile
+G06,slash24;slash26,rear teeth and sealing-land/full-thread transition,not_implemented,MIL-DTL-38999N Figure 10 p121-124,resolve axial datum interpretation and model teeth including tip and root radii
+G07,slash24;slash26,modified thread approach and root fillets,partially_specified,MIL-DTL-38999N Figure 3 note 10 and Figure 10,add standard root-radius and approach treatment after interface review
+G08,slash24;slash26,grommet internals and contact retention bores,not_specified,MIL-DTL-38999N and MIL-STD-1560C,provide manufacturer section drawing only if internal geometry matters
+G09,other inserts,contact coordinates and mixed contact sizes,unreviewed,research/insert_coordinates_unreviewed.csv,verify candidate rows and contact-size assignments before promotion
+G10,slash40;slash42;slash46,dimensional sheets,missing,provided PDFs contain validation notices only,obtain underlying dimensional sheets if Series IV is needed
+G11,other styles,complete CAD construction,not_implemented,research/specs,review style-specific figures and implement separate builder
+G12,MS-series,Series I and II decoding and CAD,not_implemented,MIL-DTL-38999N p2 and Figures 1;2;5;8;9,obtain MS connector shell sheets and implement their distinct PIN schema
+G13,all,red or blue indicator bands and markings,not_implemented,slash24 p1 and slash26 p1,add colored surface representation if desired
+G14,slash24,sizes 17;19;21 flange/keyed panel details,partial,MIL-DTL-38999-24 p2 and notes5;7,review C equals G exception before detailed panel-fit use

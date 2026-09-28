@@ -1,0 +1,828 @@
+
+=== PDF PAGE 1 ===
+                                                          METRIC
+                                                                    MIL-DTL-38999/36
+                                                     w/AMENDMENT 1
+                                                                  2 July 2024
+                                                      SUPERSEDING
+                                                                    MIL-DTL-38999/36
+                                                                  30 November 2006
+                            DETAIL SPECIFICATION SHEET
+
+             CONNECTORS, ELECTRICAL, CIRCULAR, THREADED, PLUG,
+           LANYARD RELEASE, FAIL-SAFE, REMOVABLE CRIMP CONTACTS,
+                          PINS, SHELL SIZE 25, SERIES III, METRIC
+
+                        This specification is approved for use by all Departments
+                         and Agencies of the Department of Defense.
+
+                   The requirements for acquiring the product described herein
+                          shall consist of this specification sheet and MIL-DTL-38999.
+
+
+
+
+
+                    FIGURE 1. Plug, classes F, R, W and X, type 1.
+
+
+
+AMSC N/A                                                        FSC 5935
+DISTRIBUTION STATEMENT A. Approved for public release; distribution is unlimited.
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 2 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                  mm      Inches    mm      Inches
+
+                                 .80        .031       42.5       1.67
+                               6.30       .248       51        2.01
+                               7.11       .280       56.5       2.22
+                               9.50       .374       63.5       2.50
+                             15.01      .591
+
+
+
+
+NOTES:
+    1. Dimensions are in millimeters. Inch equivalents are given for information only.
+    2. Polarizing position N is shown.
+    3. EMI grounding feature required on this connector.
+    4. The Government may stock, store, and issue this configuration.
+
+
+
+
+                FIGURE 1. Plug, classes F, R, W and X, type 1 – Continued.
+
+
+
+
+
+                                           2
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 3 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                  mm      Inches   mm      Inches
+
+                                 .80       .031       42.5       1.67
+                               4.50       .177       46.0       1.81
+                               7.11       .280       53.4       2.10
+                               9.50       .374       61.0       2.40
+                             15.01      .591
+
+NOTES:
+   1. Dimensions are in millimeters. Inch equivalents are given for information only.
+   2. Polarization position N is shown.
+   3. EMI grounding feature required on this connector.
+   4. The Government may stock, store, and issue this configuration.
+
+                      FIGURE 2. Plug, classes J and M, type 3.
+
+
+
+                                           3
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 4 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                   mm     Inches   mm     Inches
+
+                                  .80       .031     15.01     .591
+                                6.30      .248      42.5      1.67
+                                7.11      .280      51       2.01
+                                9.50      .374      46.0      1.81
+
+
+
+NOTES:
+   1. Dimensions are in millimeters. Inch equivalents are given for information only.
+   2. Polarizing position N is shown.
+   3. EMI grounding feature required on this connector.
+   4. The Government may stock, store, and issue this configuration.
+
+
+                    FIGURE 3. Plug, classes F, R, W and X, type 4.
+
+
+
+
+                                           4
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 5 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                   mm     Inches   mm     Inches
+
+                                   .80      .031     41.8     1.65
+                                 4.50     .177     42.5     1.67
+                                 7.11     .280     46.0     1.81
+                                 9.50     .374     53.4     2.10
+                               15.01     .591
+NOTES:
+   1. Dimensions are in millimeters. Inch equivalents are given for information only.
+   2. Polarization position N is shown.
+   3. EMI grounding feature required on this connector.
+   4. The Government may stock, store, and issue this configuration.
+
+                      FIGURE 4. Plug, classes J and M, type 5.
+
+
+                                           5
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 6 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                   mm     Inches   mm     Inches
+
+                                   .80      .031     42.5     1.67
+                                 6.30     .248      51      2.01
+                                 7.11     .280     48.26    1.900
+                                 9.50     .374     51.56    2.030
+                               15.01     .591
+
+
+NOTES:
+    1. Dimensions are in millimeters. Inch equivalents are given for information only.
+    2. Polarizing position N is shown.
+    3. EMI grounding feature required on this connector.
+    4. The Government may stock, store, and issue this configuration.
+
+
+
+                    FIGURE 5. Plug, classes F, R, W and X, type 6.
+
+
+
+                                           6
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 7 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                   mm     Inches   mm     Inches
+
+                                   .80      .031     42.5     1.67
+                                 6.30     .248      51      2.01
+                                 7.11     .280     56.5     2.22
+                                 9.50     .374     63.5     2.50
+                               15.01     .591
+
+NOTES:
+    1. Dimensions are in millimeters. Inch equivalents are given for information only.
+    2. Polarizing position N is shown.
+    3. EMI grounding feature required on this connector.
+    4. The Government may stock, store, and issue this configuration.
+
+
+
+                    FIGURE 6. Plug, classes F, R, W and X, type 7.
+
+
+
+
+
+                                           7
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 8 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                   mm     Inches   mm     Inches
+
+                                   .80      .031     42.5     1.67
+                                 6.30     .248      51      2.01
+                                 7.11     .280     48.26    1.900
+                                 9.50     .374     51.56    2.030
+                               15.01     .591
+
+NOTES:
+    1. Dimensions are in millimeters. Inch equivalents are given for information only.
+    2. Polarizing position N is shown.
+    3. EMI grounding feature required on this connector.
+    4. The Government may stock, store, and issue this configuration.
+
+
+                    FIGURE 7. Plug, classes F, R, W and X, type 8.
+
+
+
+
+
+                                           8
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 9 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+                   mm     Inches   mm     Inches
+
+                                   .80      .031     15.01     .591
+                                 6.30     .248     42.5     1.67
+                                 7.11     .280      51      2.01
+                                 9.50     .374     46.0     1.81
+
+NOTES:
+   1. Dimensions are in millimeters. Inch equivalents are given for information only.
+   2. Polarizing position N is shown.
+   3. EMI grounding feature required on this connector.
+   4. The Government may stock, store, and issue this configuration.
+
+                    FIGURE 8. Plug, classes F, R, W and X, type 9.
+
+
+REQUIREMENTS:
+
+  Dimensions and configurations: See figures 1 through 8 and table I.
+  Interface dimensions shall be in accordance with to MIL-DTL-38999.
+
+
+
+
+
+                                           9
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 10 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+                       TABLE I. Summary of connector types.
+
+                                                            Shell length           Coupling ring
+           Types                 Material                 type                length type
+             1                   Metal               Long                Long
+             3               Composite               Short                Long
+             4                   Metal                  Short                  Short
+             5               Composite               Short                  Short
+             6                   Metal             Medium            Medium
+             7                                     Long                Long
+                               Hybrid Metal shell,
+             8           Composite coupling ring       Medium            Medium
+             9                                           Short                  Short
+
+  This connector mates with MIL-DTL-38999/20 and /24.
+
+  Connector shall accept SAE-AS85049 self-locking accessories.
+
+  For insert arrangements: See MIL-STD-1560.
+
+  Lanyard:
+
+    a.  1.57 millimeter minimum diameter, seven strands of stainless steel capable of withstanding 890
+       Newtons pull test after assembly with connector.
+    b.  Coupling design optional. Cable shall be covered with a suitable protective sleeving to preclude
+        possible chaffing of wires.
+     c.  Class J and M connectors, 2.54 millimeters nominal diameter, Kevlar cord capable of
+        withstanding 890 Newtons pull test after assembly with connector.
+
+  The connector shall properly disengage from any mated connector, including partially mated
+  connectors, in accordance with the requirements as specified herein, and before the lanyard reaches its
+  breaking point.
+
+  Connector design shall incorporate a swivel action for the lanyard to prevent twisting of the cable. The
+  degree of rotation shall be restricted to prevent the lanyard going under the cable when fitted with a
+  right-angled backshell.
+  Spare contacts: The twin-axial and coaxial contacts are exempted from the spare contact requirements
+  of MIL-DTL-38999.
+
+  The Government may stock, store, and issue types 1, 3, 4, 5, 6, 7, 8 and 9 (see figures 1 through 8).
+
+
+QUALIFICATION
+Connectors shall meet the qualification requirements of MIL-DTL-38999 with the following exceptions and
+additions:
+
+                                          10
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 11 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+Durability: Wired connectors shall meet the durability requirements of groups 1 and 2, as specified in
+the qualification and group C periodic tests table in MIL-DTL-38999, with the following exceptions:
+
+  The total number of cycles of mating and un-mating shall be 400 normal mating and un-mating
+   cycles and 100 high speed pull separations.
+
+  The following sequences shall be followed: For each of the mating sequences performed,
+   connectors with adjustable lanyards shall exercise the full extent of the lanyard in the following way:
+
+  The lanyard shall be released to its fully elongated state, and then tightened to remove all slack
+  when in its installed position simulating a weapons installation. The lanyard shall then be
+   slackened to allow for the amount of slack required by this specification. This operation shall be
+   repeated for all 100 high speed separation operations.
+
+   Connectors with adjustable lanyards and fixed length lanyards shall then be subjected to the
+   following cycles of testing:
+
+    a.  Perform 25 cycles of angle and straight high speed separation at a velocity of 9.15 m/s
+       (30 ft/sec) + 10% - 0%, at a temperature of -65°C (tolerance of + 0°C, -5 °C) with a brand
+     new fully wired receptacle using the following sequence:
+
+        (1)     5 cycles of 15 degree angle pull at 180 degrees from the main receptacle keyway.
+        (2)     5 cycles of 15 degree angle pull (see figure 9) at 0 degrees from the main receptacle
+              keyway.
+        (3)     5 cycles of 15 degree angle pull (see figure 9) at 90 degree from the main receptacle
+              keyway.
+        (4)     5 cycles of 15 degree angle pull (see figure 9) at 270 degree from the main receptacle
+              keyway.
+        (5)     5 cycles of 0 degree angle pull (see figure 9).
+
+    b.  Perform 100 cycles of normal mating and unmating. When performing the low temperature high
+      speed separation test, the connector shall be tested within 3 minutes of removal from the cold
+      chamber.
+
+    c.  Perform 25 cycles of angle and straight high speed separation test at a velocity of 9.15 m/s
+       (30 ft/sec) + 10% - 0%, at ambient temperature using a brand new fully wired receptacle for every
+      25 cycles, using the following sequence:
+
+        (1)     5 cycles of 15 degree angle pull at 180 degrees from the main receptacle keyway.
+        (2)     5 cycles of 15 degree angle pull (see figure 9) at 0 degrees from the main receptacle
+              keyway.
+        (3)     5 cycles of 15 degree angle pull (see figure 9) at 90 degree from the main receptacle
+              keyway.
+        (4)     5 cycles of 15 degree angle pull (see figure 9) at 270 degree from the main receptacle
+              keyway.
+        (5)     5 cycles of 0 degree angle pull (see figure 9).
+        (6)     The sequence is to be followed by 100 normal cycles of mating and unmating.
+
+      Repeat this sequence (subpara c) a further 2 times (3 total).
+
+
+
+                                          11
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 12 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+    d.  Durability test requirements:
+
+        (1)     The force required to separate the connectors during the high speed separation shall
+             be measured and recorded. The force shall not exceed the 400 Newtons for straight
+                  pulls and 445 Newtons for 15° pulls.
+
+        (2)     The Bail bar dimension for the test shall be 4.5 mm radius +/- .8 mm.
+
+        (3)     The 15-degree angle is measured from the front insert face of the plug after mating with
+                the receptacle and shell-to-shell bottoming is achieved. There shall be no pre-tensioning
+                forces applied via the lanyard prior to separation.
+
+        (4)      Slack in the lanyard shall be 13 ± 6 mm and shall be measured from the top of the bail
+                 bar.
+
+        (5)      At the point of separation the velocity shall be measured and recorded. The test rig shall
+              have sufficient momentum to ensure that the velocity is maintained at a minimum of 30
+                  ft/sec throughout the entire separation phase. The measurement period for the force and
+                 velocity measurements shall extend to either side of the initial point of separation to
+               capture the entire separation force characteristics.
+
+        (6)     The Lanyards shall be examined for mechanical damage. There shall be no permanent
+            damage such as elongation, fraying of wires. Adjustable lanyards shall be examined and
+             measurements made to ensure that no slippage of the locking mechanism has occurred.
+           No elongation of the lanyard length, measured from the top of the bail bar, greater than
+             2 mm shall be permitted. The connector shall be examined. There shall be no visible
+                  distortion of the lanyard attachment points, or the rear end retention mechanism.
+
+Vibration: Wired mated connectors shall meet the vibration requirements of MIL-DTL-38999 with the
+following exceptions:
+
+         a.  Sine vibration: Connectors shall be subjected to the test specified in method 204, test
+            condition G, of MIL-STD-202.
+         b.  Random vibration: Connectors shall be subjected to the test procedure specified in test
+           procedure EIA-364-28, test condition VI, letter I, at ambient temperature. Duration shall be 8
+           hours in the longitudinal direction and 8 hours in a perpendicular direction, for a total
+             of 16 hours.
+         c.  The QPL evaluating activity will define the accessory load and cable to be used in the
+          random and sine vibration tests.
+         d.  The vibration test accessory load fixture referenced in the vibration test paragraph of
+          MIL-DTL-38999 shall be attached during this vibration test.
+
+
+
+
+
+                                          12
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 13 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+
+
+
+NOTES:
+    1.        The Interface plane between a mated receptacle and the plug as specified herein.
+    2.          Representation of the lanyard position with respect to the bail bar/attachment point
+              as a cone. Maximum offset from the perpendicular is to be no greater than 15
+               degrees in any direction.
+
+
+                FIGURE 9. Lanyard position to the bail bar attachment point.
+
+
+
+                                          13
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 14 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+Ice Resistance: To be performed in place of the Ice Resistance test in group 11 of the qualification
+table in MIL-DTL-38999. The test item shall consist of a mated, wired set of new connectors (not
+previously exercised) with accessories attached and is required to complete two cycles of the sequence.
+The first sequence shall end with a pull at 15° and the second sequence with a straight pull. In between
+cycles, the connector shall be permitted to attain ambient temperature and dry off before being subjected
+to the second cycle. The test item shall be placed in a chamber and the temperature reduced and
+stabilized such that the item is maintained at -18°C (tolerance of +0°C, - 5°C) for 1 hour. After
+stabilization of the chamber temperature, the test item shall be sprayed with water pre-cooled to 2°C
+(tolerance of +5°C, -0°C), for a period of five (5) minutes. The test item shall be located a maximum of
+305 mm (12 inches) from the spray nozzle. The entire test item shall be exposed to the spray. After
+completion of water spray, the test item shall remain in the chamber at -18°C (tolerance of +0°C, -5°C) for
+an additional 30 minutes. Upon completion of the 30-minute cold soak period, the test item shall be
+removed from the chamber and immediately (within two (2) minutes) subjected to uncoupling by use of
+the lanyard mechanism, using the high speed pull separation at a velocity of 9.15 m/s (30 ft/sec) + 10%, -
+0%. The force required to separate the connectors shall not exceed 400 Newton for straight pulls and
+440 Newtons for angled pulls (at 15°), by more than 50%.
+
+Eyelet - Lanyard strength test: This test shall be applied immediately prior to and immediately following
+the durability tests in groups 1 and 2 of the qualification table in MIL-DTL-38999. The connector lanyard
+shall be subjected to a straight pull with the body of the connector restrained. The load applied shall be
+890 Newtons. The load shall be applied for a period of one minute. The test shall be repeated 3 times (4
+total). The lanyard shall withstand the loads without breaking.
+
+The lanyards shall be examined for mechanical damage. There shall be no permanent damage such as
+elongation or fraying of wires.
+
+The connector shall be examined. There shall be no visible distortion of the lanyard attachment points or
+the rear end retention mechanism.
+
+Partially mated disengagement: To be applied immediately after the durability tests in groups 1 and 2
+of the qualification table in MIL-DTL-38999. The test is to be performed when connectors are partially
+mated with the plug. The coupling ring shall be rotated until the connector is fully mated (red band
+obscured) and then the coupling ring shall be backed off by rotating through 180°. Pull-separation shall
+be accomplished within the limits as specified in the durability test. One single straight pull and one pull at
+15°.
+
+Dust (fine sand): To be performed in addition to the requirements of dust (fine sand) in group 11 of the
+qualification table in MIL-DTL-38999. Upon completion of the dust test, the test items shall be removed
+from the chamber and within 4 minutes shall be subjected to uncoupling by use of the lanyard mechanism
+using the high speed pull separation at a velocity of 9.15 m/s (30 ft/sec) + 10%, - 0% (single straight pull).
+ The force required to separate the connectors shall not exceed the required values specified for pull-
+separation by more than 25 percent.
+
+External bending moment: Wired connectors shall meet the external bending moment requirements of
+MIL-DTL-38999 with the following exceptions: shell size 25 shall be 28.3 Newton-meters.
+
+GROUP A INSPECTION
+In addition to the group A inspection requirements of MIL-DTL-38999, the connectors shall be subjected
+to the following test:
+
+All connectors, prior to delivery, shall be subjected to a low-speed pull separation test.
+                                          14
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 15 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+The functioning of the release mechanism shall be exercised by a single pull in the axial direction to
+demonstrate that the mechanism operates satisfactorily. The velocity of pull shall not exceed
+13cm/second. The maximum force to release the connector shall not exceed 400 Newtons. The tests
+shall be conducted at ambient temperature and the results retained for audit by the Qualifying Activity.
+
+GROUP C PERIODIC INSPECTION
+
+12 Month tests: In addition to the 12 month tests required under MIL-DTL-38999 group C inspection,
+two sample connectors shall be subjected to the durability test in the manner described by this
+specification sheet, except that the total number of cycles shall be 125. The sequence shall be 25 high
+speed separation tests followed by 100 normal mating and un-mating operations. The test is to be
+conducted at ambient temperature.
+
+24 Month tests: In addition to the 24 month tests required under MIL-DTL-38999 group C inspection,
+two extra samples shall be subjected to the revised test program as follows:
+
+One connector shall be included in group 1 testing. The durability element of group 1 shall meet the
+requirements of this specification sheet (500 cycles, including angular pulls and temperature extremes).
+One connector shall be included in group 2 testing. The durability element of group 2 shall meet the
+requirements of this specification sheet (500 cycles, including angular pulls and temperature extremes).
+The samples provided shall not be required to complete the rest of groups 1 and 2 following completion of
+the durability test.
+
+USER INTEGRATION GUIDANCE (See MIL-HDBK-1760)
+
+Lanyard slack
+Excessive slackness in the Lanyard when integrated into the aircraft is known to be detrimental to the
+performance of the connector. Best practice suggests that users endeavor to minimize the amount of
+slack in the lanyard in operational use.
+
+Deployment angle
+This connector is tested to the angular limit of 15° during High Speed separations. The 15° should not be
+used by the integrator as a tolerance for the attachment point, and integrators should endeavor to achieve
+perpendicular alignment whenever possible.
+
+Side Thrust avoidance
+Side thrust forces and torsional forces, imparted by the umbilical cable are known to be detrimental to the
+performance of the connector in High Speed Separation. Users are advised to route the umbilical cable in
+such a manner to minimize these forces.
+
+MIL-HDBK-1760:
+MILITARY HANDBOOK, AIRCRAFT/STORE ELECTRICAL INTERCONNECTION SYSTEM
+
+This handbook is available to provide advice and guidance for the integration of weapons onto aircraft.
+Users are advised to consult this document.
+
+
+
+
+
+                                          15
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 16 ===
+                                MIL-DTL-38999/36
+                         w/AMENDMENT 1
+
+Part or Identifying Number (PIN) example for all figures and types:
+
+                          D38999/   36  W    E    20     P    N     1
+
+DOD number prefix
+
+Specification sheet number
+
+Class
+
+Lanyard length code (see table II)
+
+Insert arrangement
+
+Contact style
+  Only P & A are valid contact style options.
+
+Polarizing positions
+ N is required for normal position
+
+Type number
+  For type 1, see figure 1.
+  For type 3, see figure 2.
+  For type 4, see figure 3.
+  For type 5, see figure 4.
+  For type 6, see figure 5.
+  For type 7, see figure 6.
+  For type 8, see figure 7.
+  For type 9, see figure 8.
+
+                         TABLE II. Lanyard length codes.
+
+                        Code                      L +/- 6
+                       E                     153 (6.024)
+                         F                     166 (6.535)
+                    G                     178 (7.008)
+                     H                     191 (7.520)
+                                                        I                     203 (7.992)
+                               J                     216 (8.504)
+                       K                     229 (9.016)
+                            L                     242 (9.528)
+                   X (Adjustable)          153 (6.024) – 191 (7.520)
+                   Y (Adjustable)          178 (7.008) – 216 (8.504)
+                    Z (Adjustable)           203 (7.992) – 242 (9.53)
+
+                                         16
+
+
+
+
+
+                         Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                    Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 17 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+
+SUPERSSESION DATA
+
+This slash sheet supersedes MIL-DTL-38999/31. See table III for further clarification.
+
+                   TABLE III. Supersession cross reference information.
+
+      SUPERSEDING CONNECTOR TYPE       SUPERSEDED CONNECTOR TYPE
+             MIL-DTL-38999/36 Type 1                   MIL-DTL-38999/31 Type 1
+               None (no type 2)                       MIL-DTL-38999/31 Type 2
+             MIL-DTL-38999/36 Type 3                   MIL-DTL-38999/31 Type 3
+             MIL-DTL-38999/36 Type 4                   MIL-DTL-38999/31 Type 4
+             MIL-DTL-38999/36 Type 5                   MIL-DTL-38999/31 Type 5
+             MIL-DTL-38999/36 Type 6                   MIL-DTL-38999/31 Type 6
+             MIL-DTL-38999/36 Type 7                         None
+             MIL-DTL-38999/36 Type 8                         None
+             MIL-DTL-38999/36 Type 9                         None
+
+Amendment notations. The margins of this specification are marked with vertical lines to indicate
+modifications generated by this amendment. This was done as a convenience only and the Government
+assumes no liability whatsoever for any inaccuracies in these notations. Bidders and contractors are
+cautioned to evaluate the requirements of this document based on the entire content irrespective of the
+marginal notations.
+
+Referenced documents. In addition to MIL-DTL-38999, this document references the following:
+
+MIL-DTL-38999/20
+MIL-DTL-38999/24
+MIL-STD-202
+MIL-STD-1560
+MIL-HDBK-1760
+EIA-364-28
+SAE-AS85049
+
+
+
+
+
+                                          17
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.
+
+=== PDF PAGE 18 ===
+                                  MIL-DTL-38999/36
+                          w/AMENDMENT 1
+
+                          CONCLUDING MATERIAL
+
+
+Custodians:                                                            Preparing activity:
+  Army – CR                                              DLA – CC
+  Navy – AS
+  Air Force – 85
+ DLA – CC
+                                                                            (Project 5935-2024-142)
+Review activities:
+  Army – AR, MI
+  Navy – EC, MC, OS
+  Air Force – 19
+
+
+NOTE: The activities listed above were interested in this document as of the date of this document.
+Since organizations and responsibilities can change, you should verify the currency of the information
+above using the ASSIST Online database at https://assist.dla.mil
+
+
+
+
+
+                                          18
+
+
+
+
+
+                           Source: https://assist.dla.mil -- Downloaded: 2026-09-26T18:42Z
+                      Check the source to verify that this is the current version before use.

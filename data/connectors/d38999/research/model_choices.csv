@@ -1,0 +1,36 @@
+parameter,value,unit,status,rationale
+insert_radial_clearance,0.02,mm,assumption,insert outside diameter not fully controlled; clearance to G support bore
+coupling_ring_radial_clearance,0.08,mm,assumption,uncontrolled internal running clearance
+coupling_ring_back,21.0,mm,assumption,axial end of plug coupling nut not dimensioned by slash26
+plug_coupling_thread_start,0.5,mm,assumption,thread start approach not fully dimensioned
+plug_coupling_thread_end,13.2,mm,assumption,thread usable span selected within interface envelope
+plug_shoulder_start,13.7,mm,assumption,simplified retention shoulder behind coupling thread
+plug_shoulder_end,18.0,mm,assumption,uncontrolled internal shell construction
+plug_body_end,22.31,mm,derived_choice,Z max minus rear interface length and selected tooth height
+rear_grommet_length,5.0,mm,assumption,internal grommet thickness not controlled
+rear_hole_diameter,1.10,mm,assumption,simplified wire sealing hole for 22D; not contact retention cavity
+red_band_width,0.7,mm,assumption,band width not controlled; back edge location is controlled
+red_band_radial_offset,0.01,mm,visual_only,thin colored surface representation
+groove_width,1.0,mm,assumption,optional plug grip groove width
+groove_depth,0.4,mm,assumption,optional plug grip groove depth
+plug_grip_groove_fraction,0.5,ratio,assumption,groove position on coupling ring
+thread_phase,0,deg,assumption,thread angular start not specified relative to main key
+thread_hand,1,sign,assumption,right handed coupling and accessory thread convention
+thread_boolean_overlap,0.02,mm,numerical,overlap only for stable CAD booleans
+step_check_tolerance,0.001,mm,numerical,STEP round trip bounding box tolerance
+mesh_linear_tolerance,0.08,mm,numerical,preview mesh only
+mesh_angular_tolerance,0.15,rad,numerical,preview mesh only
+nut_bore_clearance,0.08,mm,assumption,smooth bore major diameter clearance; nut thread omitted
+panel_thickness,2.0,mm,assumption,sets nut position within slash24 allowed panel range
+rear_thread_flank_angle,60,deg,standard_form,ISO metric basic profile; root radius omitted in comparison model
+rear_thread_starts,1,count,standard_form,single start metric accessory and mounting threads
+flange_recess_clearance,0.10,mm,assumption,recess around rear accessory thread in flange
+plug_grip_flat_depth,0.50,mm,assumption,uncontrolled optional coupling grip flat depth
+socket_cavity_depth,1.0,mm,assumption,depth beyond controlled socket entrance is manufacturer-specific
+oring_radial_stretch,0,ratio,assumption,free-state mean diameter sets groove centerline; radial groove location not dimensioned in slash24
+rear_tooth_phase,0,deg,source_choice,projection centered on main-key vertical centerline per Figure 10 note 6
+emi_strip_thickness,0.10,mm,assumption,representative spring strip gauge; not specified by Figure 3
+emi_finger_arc_pitch,2.5,mm,assumption,representative circumferential spacing; finger count is manufacturer dependent
+emi_slot_fraction,0.25,ratio,assumption,slot width as fraction of circumferential pitch
+emi_anchor_length,0.20,mm,assumption,continuous band at spring forward edge joins all fingers
+emi_radial_seat_clearance,0.01,mm,numerical,prevents coincident shell and spring surfaces

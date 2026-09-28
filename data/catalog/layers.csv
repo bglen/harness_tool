@@ -1,0 +1,88 @@
+# schema=1; bundle coverings: tape, sleeve, heat shrink, jacket, conduit, overbraid; mm, g/m (generic seed catalog)
+coverage_options,shrink_ratio,machine_ready,status,pn,type,material,description,min_dia_mm,max_dia_mm,thickness_mm,mass_g_per_m
+,,true,seed,HSL-TP-PTFE-12,tape,PTFE,"PTFE tape, 12.7 mm wide",1,80,0.08,3
+,,true,seed,HSL-TP-PI-12,tape,Polyimide (Kapton),"Polyimide tape, 12.7 mm wide",1,80,0.05,2
+,,true,seed,HSL-TP-FG-19,tape,Fiberglass,"Fiberglass tape, 19 mm wide",3,80,0.18,8
+,,false,seed,HSL-TP-SIL-25,tape,Self-fusing silicone,"Self-fusing silicone tape, 25 mm wide",3,80,0.5,18
+,,false,seed,HSL-SL-PET-03,sleeve,PET,"Expandable braided sleeving, PET, 2-5 mm",2,5,0.4,7
+,,false,seed,HSL-SL-PET-06,sleeve,PET,"Expandable braided sleeving, PET, 3-9 mm",3,9,0.4,12
+,,false,seed,HSL-SL-PET-10,sleeve,PET,"Expandable braided sleeving, PET, 6-14 mm",6,14,0.4,20
+,,false,seed,HSL-SL-PET-13,sleeve,PET,"Expandable braided sleeving, PET, 8-19 mm",8,19,0.4,27
+,,false,seed,HSL-SL-PET-19,sleeve,PET,"Expandable braided sleeving, PET, 12-25 mm",12,25,0.4,37
+,,false,seed,HSL-SL-PET-25,sleeve,PET,"Expandable braided sleeving, PET, 16-32 mm",16,32,0.4,48
+,,false,seed,HSL-SL-PET-32,sleeve,PET,"Expandable braided sleeving, PET, 22-40 mm",22,40,0.4,62
+,,false,seed,HSL-SL-NMX-03,sleeve,Nomex,"Expandable braided sleeving, Nomex, 2-5 mm",2,5,0.5,9.1
+,,false,seed,HSL-SL-NMX-06,sleeve,Nomex,"Expandable braided sleeving, Nomex, 3-9 mm",3,9,0.5,15.6
+,,false,seed,HSL-SL-NMX-10,sleeve,Nomex,"Expandable braided sleeving, Nomex, 6-14 mm",6,14,0.5,26
+,,false,seed,HSL-SL-NMX-13,sleeve,Nomex,"Expandable braided sleeving, Nomex, 8-19 mm",8,19,0.5,35.1
+,,false,seed,HSL-SL-NMX-19,sleeve,Nomex,"Expandable braided sleeving, Nomex, 12-25 mm",12,25,0.5,48.1
+,,false,seed,HSL-SL-NMX-25,sleeve,Nomex,"Expandable braided sleeving, Nomex, 16-32 mm",16,32,0.5,62.4
+,,false,seed,HSL-SL-NMX-32,sleeve,Nomex,"Expandable braided sleeving, Nomex, 22-40 mm",22,40,0.5,80.6
+,,false,seed,HSL-SL-FG-03,sleeve,Fiberglass,"Expandable braided sleeving, Fiberglass, 2-5 mm",2,5,0.6,12.6
+,,false,seed,HSL-SL-FG-06,sleeve,Fiberglass,"Expandable braided sleeving, Fiberglass, 3-9 mm",3,9,0.6,21.6
+,,false,seed,HSL-SL-FG-10,sleeve,Fiberglass,"Expandable braided sleeving, Fiberglass, 6-14 mm",6,14,0.6,36
+,,false,seed,HSL-SL-FG-13,sleeve,Fiberglass,"Expandable braided sleeving, Fiberglass, 8-19 mm",8,19,0.6,48.6
+,,false,seed,HSL-SL-FG-19,sleeve,Fiberglass,"Expandable braided sleeving, Fiberglass, 12-25 mm",12,25,0.6,66.6
+,,false,seed,HSL-SL-FG-25,sleeve,Fiberglass,"Expandable braided sleeving, Fiberglass, 16-32 mm",16,32,0.6,86.4
+,,false,seed,HSL-SL-FG-32,sleeve,Fiberglass,"Expandable braided sleeving, Fiberglass, 22-40 mm",22,40,0.6,111.6
+,2,false,seed,HSL-HS-PO-032,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 3.2 mm supplied / 1.6 mm recovered",1.68,2.72,0.31,3.5
+,2,false,seed,HSL-HS-PO-048,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 4.8 mm supplied / 2.4 mm recovered",2.52,4.08,0.35,5.3
+,2,false,seed,HSL-HS-PO-064,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 6.4 mm supplied / 3.2 mm recovered",3.36,5.44,0.38,7
+,2,false,seed,HSL-HS-PO-095,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 9.5 mm supplied / 4.8 mm recovered",5.04,8.07,0.44,10.5
+,2,false,seed,HSL-HS-PO-127,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 12.7 mm supplied / 6.4 mm recovered",6.72,10.79,0.51,14
+,2,false,seed,HSL-HS-PO-191,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 19.1 mm supplied / 9.5 mm recovered",9.97,16.23,0.63,21
+,2,false,seed,HSL-HS-PO-254,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 25.4 mm supplied / 12.7 mm recovered",13.33,21.59,0.76,27.9
+,2,false,seed,HSL-HS-PO-381,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 38.1 mm supplied / 19.1 mm recovered",20.06,32.38,1.01,41.9
+,2,false,seed,HSL-HS-PO-508,heatShrink,Polyolefin,"Heat-shrink tubing, Polyolefin, 2:1, 50.8 mm supplied / 25.4 mm recovered",26.67,43.18,1.27,55.9
+,2,false,seed,HSL-HS-KY-032,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 3.2 mm supplied / 1.6 mm recovered",1.68,2.72,0.31,3.5
+,2,false,seed,HSL-HS-KY-048,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 4.8 mm supplied / 2.4 mm recovered",2.52,4.08,0.35,5.3
+,2,false,seed,HSL-HS-KY-064,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 6.4 mm supplied / 3.2 mm recovered",3.36,5.44,0.38,7
+,2,false,seed,HSL-HS-KY-095,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 9.5 mm supplied / 4.8 mm recovered",5.04,8.07,0.44,10.5
+,2,false,seed,HSL-HS-KY-127,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 12.7 mm supplied / 6.4 mm recovered",6.72,10.79,0.51,14
+,2,false,seed,HSL-HS-KY-191,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 19.1 mm supplied / 9.5 mm recovered",9.97,16.23,0.63,21
+,2,false,seed,HSL-HS-KY-254,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 25.4 mm supplied / 12.7 mm recovered",13.33,21.59,0.76,27.9
+,2,false,seed,HSL-HS-KY-381,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 38.1 mm supplied / 19.1 mm recovered",20.06,32.38,1.01,41.9
+,2,false,seed,HSL-HS-KY-508,heatShrink,PVDF (Kynar),"Heat-shrink tubing, PVDF (Kynar), 2:1, 50.8 mm supplied / 25.4 mm recovered",26.67,43.18,1.27,55.9
+,2,false,seed,HSL-JK-VT-032,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 3.2 mm supplied / 1.6 mm recovered",1.68,2.72,0.496,3.5
+,2,false,seed,HSL-JK-VT-048,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 4.8 mm supplied / 2.4 mm recovered",2.52,4.08,0.5599999999999999,5.3
+,2,false,seed,HSL-JK-VT-064,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 6.4 mm supplied / 3.2 mm recovered",3.36,5.44,0.6080000000000001,7
+,2,false,seed,HSL-JK-VT-095,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 9.5 mm supplied / 4.8 mm recovered",5.04,8.07,0.7040000000000001,10.5
+,2,false,seed,HSL-JK-VT-127,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 12.7 mm supplied / 6.4 mm recovered",6.72,10.79,0.8160000000000001,14
+,2,false,seed,HSL-JK-VT-191,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 19.1 mm supplied / 9.5 mm recovered",9.97,16.23,1.008,21
+,2,false,seed,HSL-JK-VT-254,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 25.4 mm supplied / 12.7 mm recovered",13.33,21.59,1.2160000000000002,27.9
+,2,false,seed,HSL-JK-VT-381,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 38.1 mm supplied / 19.1 mm recovered",20.06,32.38,1.616,41.9
+,2,false,seed,HSL-JK-VT-508,jacket,Fluoroelastomer (Viton),"Heat-shrink jacket, Fluoroelastomer (Viton), 2:1, 50.8 mm supplied / 25.4 mm recovered",26.67,43.18,2.032,55.9
+,,false,seed,HSL-CV-NY-048,conduit,Nylon,"Convoluted tubing, nylon, 4.8 mm ID",2.4,4.8,1.4,16.7
+,,false,seed,HSL-CV-NY-064,conduit,Nylon,"Convoluted tubing, nylon, 6.4 mm ID",3.2,6.4,1.75,21.8
+,,false,seed,HSL-CV-NY-095,conduit,Nylon,"Convoluted tubing, nylon, 9.5 mm ID",4.8,9.5,1.85,29
+,,false,seed,HSL-CV-NY-127,conduit,Nylon,"Convoluted tubing, nylon, 12.7 mm ID",6.3,12.7,2.1,37.2
+,,false,seed,HSL-CV-NY-191,conduit,Nylon,"Convoluted tubing, nylon, 19.1 mm ID",9.6,19.1,2.35,52.4
+,,false,seed,HSL-CV-NY-254,conduit,Nylon,"Convoluted tubing, nylon, 25.4 mm ID",12.7,25.4,3,69.1
+85;90;95,,true,seed,HSL-OB-TC-06,overbraid,Tinned copper,"Overbraid, Tinned copper, 3-6 mm",3,6,0.5,15.3
+85;90;95,,true,seed,HSL-OB-TC-10,overbraid,Tinned copper,"Overbraid, Tinned copper, 5-10 mm",5,10,0.5,25.5
+85;90;95,,true,seed,HSL-OB-TC-14,overbraid,Tinned copper,"Overbraid, Tinned copper, 8-14 mm",8,14,0.5,37.4
+85;90;95,,true,seed,HSL-OB-TC-20,overbraid,Tinned copper,"Overbraid, Tinned copper, 12-20 mm",12,20,0.5,54.4
+85;90;95,,true,seed,HSL-OB-TC-26,overbraid,Tinned copper,"Overbraid, Tinned copper, 16-26 mm",16,26,0.5,71.4
+85;90;95,,true,seed,HSL-OB-TC-34,overbraid,Tinned copper,"Overbraid, Tinned copper, 22-34 mm",22,34,0.5,95.2
+85;90;95,,true,seed,HSL-OB-TC-45,overbraid,Tinned copper,"Overbraid, Tinned copper, 30-45 mm",30,45,0.5,127.5
+85;90;95,,true,seed,HSL-OB-NC-06,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 3-6 mm",3,6,0.5,15.3
+85;90;95,,true,seed,HSL-OB-NC-10,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 5-10 mm",5,10,0.5,25.5
+85;90;95,,true,seed,HSL-OB-NC-14,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 8-14 mm",8,14,0.5,37.4
+85;90;95,,true,seed,HSL-OB-NC-20,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 12-20 mm",12,20,0.5,54.4
+85;90;95,,true,seed,HSL-OB-NC-26,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 16-26 mm",16,26,0.5,71.4
+85;90;95,,true,seed,HSL-OB-NC-34,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 22-34 mm",22,34,0.5,95.2
+85;90;95,,true,seed,HSL-OB-NC-45,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 30-45 mm",30,45,0.5,127.5
+85;90;95,,false,seed,HSL-OB-SS-06,overbraid,Stainless steel,"Overbraid, Stainless steel, 3-6 mm",3,6,0.45,13.5
+85;90;95,,false,seed,HSL-OB-SS-10,overbraid,Stainless steel,"Overbraid, Stainless steel, 5-10 mm",5,10,0.45,22.5
+85;90;95,,false,seed,HSL-OB-SS-14,overbraid,Stainless steel,"Overbraid, Stainless steel, 8-14 mm",8,14,0.45,33
+85;90;95,,false,seed,HSL-OB-SS-20,overbraid,Stainless steel,"Overbraid, Stainless steel, 12-20 mm",12,20,0.45,48
+85;90;95,,false,seed,HSL-OB-SS-26,overbraid,Stainless steel,"Overbraid, Stainless steel, 16-26 mm",16,26,0.45,63
+85;90;95,,false,seed,HSL-OB-SS-34,overbraid,Stainless steel,"Overbraid, Stainless steel, 22-34 mm",22,34,0.45,84
+85;90;95,,false,seed,HSL-OB-SS-45,overbraid,Stainless steel,"Overbraid, Stainless steel, 30-45 mm",30,45,0.45,112.5
+85;90;95,,true,seed,HSL-OB-MF-06,overbraid,Metal-clad fiber (lightweight),"Overbraid, Metal-clad fiber (lightweight), 3-6 mm",3,6,0.35,5
+85;90;95,,true,seed,HSL-OB-MF-10,overbraid,Metal-clad fiber (lightweight),"Overbraid, Metal-clad fiber (lightweight), 5-10 mm",5,10,0.35,8.3
+85;90;95,,true,seed,HSL-OB-MF-14,overbraid,Metal-clad fiber (lightweight),"Overbraid, Metal-clad fiber (lightweight), 8-14 mm",8,14,0.35,12.1
+85;90;95,,true,seed,HSL-OB-MF-20,overbraid,Metal-clad fiber (lightweight),"Overbraid, Metal-clad fiber (lightweight), 12-20 mm",12,20,0.35,17.6
+85;90;95,,true,seed,HSL-OB-MF-26,overbraid,Metal-clad fiber (lightweight),"Overbraid, Metal-clad fiber (lightweight), 16-26 mm",16,26,0.35,23.1
+85;90;95,,true,seed,HSL-OB-MF-34,overbraid,Metal-clad fiber (lightweight),"Overbraid, Metal-clad fiber (lightweight), 22-34 mm",22,34,0.35,30.8
+85;90;95,,true,seed,HSL-OB-MF-45,overbraid,Metal-clad fiber (lightweight),"Overbraid, Metal-clad fiber (lightweight), 30-45 mm",30,45,0.35,41.3

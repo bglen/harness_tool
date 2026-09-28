@@ -1,0 +1,10 @@
+dash,inside_diameter,cross_section,inside_tolerance,cross_section_tolerance,unit,source,page
+019,0.801,0.070,0.009,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,3
+022,0.989,0.070,0.010,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,3
+024,1.114,0.070,0.010,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,3
+026,1.239,0.070,0.011,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,3
+028,1.364,0.070,0.013,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,3
+128,1.487,0.103,0.012,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,4
+130,1.612,0.103,0.015,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,4
+132,1.737,0.103,0.015,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,4
+134,1.862,0.103,0.015,0.003,in,MIL-DTL-25988-1B Table I referenced by MIL-DTL-25988-3A,4

@@ -1,0 +1,14 @@
+# schema=1; potting compounds and molds (generic seed catalog)
+pn,kind,description,cure_hours,density_g_per_cc,shell_sizes
+HSP-PU-2,compound,"Polyurethane potting compound, 2-part",24,1.1,
+HSP-EP-2,compound,"Epoxy potting compound, 2-part",24,1.25,
+HSP-SI-2,compound,"Silicone potting compound, 2-part",24,1.05,
+HSP-MB-09,mold,"Potting boot / mold, shell 9",0,,9
+HSP-MB-11,mold,"Potting boot / mold, shell 11",0,,11
+HSP-MB-13,mold,"Potting boot / mold, shell 13",0,,13
+HSP-MB-15,mold,"Potting boot / mold, shell 15",0,,15
+HSP-MB-17,mold,"Potting boot / mold, shell 17",0,,17
+HSP-MB-19,mold,"Potting boot / mold, shell 19",0,,19
+HSP-MB-21,mold,"Potting boot / mold, shell 21",0,,21
+HSP-MB-23,mold,"Potting boot / mold, shell 23",0,,23
+HSP-MB-25,mold,"Potting boot / mold, shell 25",0,,25

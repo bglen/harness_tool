@@ -1,0 +1,14 @@
+# schema=1; compatibility: connector series + cavity size + gender -> contact PN
+series,size,gender,contact_pn
+38999 III,23,pin,M39029/122-670
+38999 III,23,socket,M39029/121-663
+38999 III,22D,pin,M39029/58-360
+38999 III,22D,socket,M39029/56-348
+38999 III,20,pin,M39029/58-363
+38999 III,20,socket,M39029/56-351
+38999 III,16,pin,M39029/58-364
+38999 III,16,socket,M39029/56-352
+38999 III,12,pin,M39029/58-365
+38999 III,12,socket,M39029/56-353
+38999 III,10,pin,TBD-S10-PIN
+38999 III,10,socket,TBD-S10-SKT

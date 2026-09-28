@@ -1,0 +1,13 @@
+{
+  "id": "overbraided",
+  "name": "Overbraided",
+  "description": "EMI backshells, PTFE tape under a tinned-copper overbraid on every segment, 360° band clamps at every backshell, connector and wire ID labels.",
+  "steps": [
+    { "action": "backshells", "params": { "style": "emiBand" } },
+    { "action": "tape", "params": { "material": "PTFE" } },
+    { "action": "overbraid", "params": { "material": "Tinned copper", "coveragePct": 85 } },
+    { "action": "bandClamps", "params": {} },
+    { "action": "connectorLabels", "params": {} },
+    { "action": "wireIdLabels", "params": {} }
+  ]
+}
