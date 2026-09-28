@@ -5,7 +5,21 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" },
-  "scripts": { "typecheck": "tsc -p tsconfig.json" },
-  "dependencies": {"@hs/model":"workspace:*","@hs/ops":"workspace:*","@hs/dfm":"workspace:*","@hs/ui-tokens":"workspace:*","@react-pdf/renderer":"^4.1.6","react":"^18.3.1"}
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hs/dfm": "workspace:*",
+    "@hs/model": "workspace:*",
+    "@hs/ops": "workspace:*",
+    "@hs/ui-tokens": "workspace:*",
+    "@react-pdf/renderer": "^4.1.6",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31"
+  }
 }

@@ -7,5 +7,17 @@
   "types": "./src/index.ts",
   "exports": { ".": "./src/index.ts" },
   "scripts": { "typecheck": "tsc -p tsconfig.json" },
-  "dependencies": {"@hs/model":"workspace:*","@hs/ops":"workspace:*","@hs/dfm":"workspace:*","papaparse":"^5.4.1","js-yaml":"^4.1.0","jszip":"^3.10.1","xlsx":"^0.18.5"}
+  "dependencies": {
+    "@hs/dfm": "workspace:*",
+    "@hs/model": "workspace:*",
+    "@hs/ops": "workspace:*",
+    "js-yaml": "^4.1.0",
+    "jszip": "^3.10.1",
+    "papaparse": "^5.4.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/papaparse": "^5.3.15"
+  }
 }

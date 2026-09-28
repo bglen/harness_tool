@@ -1,0 +1,158 @@
+import { currentHarness, formatDiameter, formatLength, setAccessory, setBackshell, type Accessory } from "@hs/model";
+import { Check, X } from "lucide-react";
+import { dispatch, useProject } from "../store/project";
+import { useUi } from "../store/ui";
+import { useDerived } from "../store/analysis";
+import { svc } from "../lib/services";
+import { Button, cx, DemoTag, Field, Floating, inputCls, Section, Toggle } from "../ui/primitives";
+import { FaceLegend, FaceView } from "../canvas/FaceView";
+
+const STYLE_LABEL: Record<string, string> = { strainRelief: "Strain relief", emiBand: "EMI/RFI with band-clamp platform", shieldRing: "Shield-termination ring", pottingBoot: "Potting boot adapter" };
+
+export function BackshellPopover({ x, y, connectorId }: { x: number; y: number; connectorId: string }) {
+  const ui = useUi();
+  const project = useProject((s) => s.project)!;
+  const h = currentHarness(project);
+  const d = useDerived();
+  const c = h.connectors.find((cc) => cc.id === connectorId);
+  const cat = svc().cat;
+  const part = c && cat.connector(c.pn);
+  if (!c || !part) return null;
+  const node = h.nodes.find((n) => n.connectorId === c.id);
+  const od = (node && d.nodeOdMm.get(node.id)) ?? 0;
+  const opts = cat.backshellsFor(part.shellSize);
+  const cur = c.backshell && cat.backshell(c.backshell.pn);
+  return (
+    <Floating x={x} y={y} onClose={() => ui.openPopover(null)} width={460} className="p-3">
+      <div className="mb-1 text-sm font-semibold">Backshell for {c.refDes}</div>
+      <div className="mb-3 text-xs text-text-secondary">
+        Shell {part.shellSize} · bundle at connector {od ? formatDiameter(od, project.units) : "—"}. Options are filtered by series and shell size; the clamp range is checked against the computed bundle diameter.
+      </div>
+      <div className="flex flex-col gap-1">
+        <button className={cx("rounded-control border px-2 py-1.5 text-left text-sm", !c.backshell ? "border-accent bg-bg-hover" : "border-border-subtle hover:border-border-control")} onClick={() => dispatch(setBackshell({ id: c.id, backshell: null }))}>
+          None
+        </button>
+        {opts.map((b) => {
+          const fits = !od || (od >= b.clampMinMm && od <= b.clampMaxMm);
+          const on = cur?.pn === b.pn;
+          const sup = cat.supply(b.pn);
+          return (
+            <button key={b.pn} onClick={() => dispatch(setBackshell({ id: c.id, backshell: { pn: b.pn, clockingDeg: c.backshell?.clockingDeg ?? 0, auto: true } }))} className={cx("flex items-center gap-2 rounded-control border px-2 py-1.5 text-left", on ? "border-accent bg-bg-hover" : "border-border-subtle hover:border-border-control")}>
+              <div className="flex-1">
+                <div className="text-sm">
+                  {STYLE_LABEL[b.style]} · {b.angle === 0 ? "straight" : `${b.angle}°`}
+                </div>
+                <div className="mono text-2xs text-text-tertiary">
+                  {b.pn} · clamp {formatLength(b.clampMinMm, project.units)}–{formatLength(b.clampMaxMm, project.units)}
+                  {b.bandPlatform ? " · band platform" : ""}
+                </div>
+              </div>
+              <span className={cx("flex items-center gap-1 text-2xs", fits ? "text-status-pass" : "text-status-warning")}>
+                {fits ? <Check size={12} /> : <X size={12} />}
+                {fits ? "fits" : "clamp range"}
+              </span>
+              <span className="tnum w-14 text-right text-xs">${sup?.breaks[0]!.price.toFixed(0) ?? "—"}</span>
+            </button>
+          );
+        })}
+      </div>
+      {c.backshell && cur && cur.angle !== 0 && (
+        <div className="mt-3">
+          <Field label="Angle clocking: which way the backshell points (shown on the glyph and drawing)">
+            <select className={inputCls} value={c.backshell.clockingDeg} onChange={(e) => dispatch(setBackshell({ id: c.id, backshell: { ...c.backshell!, clockingDeg: Number(e.target.value) } }))}>
+              {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+                <option key={a} value={a}>
+                  {a}°
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+      )}
+      <div className="mt-2 flex items-center justify-between text-2xs text-text-tertiary">
+        <span>{c.backshell?.auto ? "Size follows the design (auto)" : ""}</span>
+        <DemoTag />
+      </div>
+    </Floating>
+  );
+}
+
+export function AccessoriesPopover({ x, y, connectorId }: { x: number; y: number; connectorId: string }) {
+  const ui = useUi();
+  const project = useProject((s) => s.project)!;
+  const h = currentHarness(project);
+  const c = h.connectors.find((cc) => cc.id === connectorId);
+  const cat = svc().cat;
+  const part = c && cat.connector(c.pn);
+  if (!c || !part) return null;
+  const avail = cat.accessoriesFor(part.shellSize, part.kind);
+  const kinds: { kind: Accessory["kind"]; label: string }[] = [
+    { kind: "dustCap", label: "Dust cap / cover" },
+    ...(part.kind === "receptacle" && part.mount === "jam nut" ? [{ kind: "jamNut" as const, label: "Jam nut" }, { kind: "oRing" as const, label: "O-ring" }] : []),
+    ...(part.kind === "receptacle" && part.mount !== "jam nut" ? [{ kind: "gasket" as const, label: "Flange gasket" }] : []),
+    { kind: "groundingRing", label: "Grounding ring" },
+  ];
+  return (
+    <Floating x={x} y={y} onClose={() => ui.openPopover(null)} width={380} className="p-3">
+      <div className="mb-2 text-sm font-semibold">Accessories for {c.refDes}</div>
+      <div className="flex flex-col gap-2">
+        {kinds.map(({ kind, label }) => {
+          const has = c.accessories.find((a) => a.kind === kind);
+          const parts = avail.filter((a) => a.kind === kind);
+          const def = parts.find((p) => kind !== "dustCap" || p.lanyard) ?? parts[0];
+          return (
+            <div key={kind} className="flex flex-col gap-1">
+              <Toggle checked={!!has} onChange={(v) => dispatch(setAccessory({ id: c.id, kind, pn: v ? def?.pn ?? null : null }))} label={label} />
+              {has && parts.length > 1 && (
+                <select className={cx(inputCls, "ml-9")} value={has.pn} onChange={(e) => dispatch(setAccessory({ id: c.id, kind, pn: e.target.value }))}>
+                  {parts.map((p) => (
+                    <option key={p.pn} value={p.pn}>
+                      {p.pn}: {p.description}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {has && parts.length <= 1 && <div className="mono ml-9 text-2xs text-text-tertiary">{has.pn}</div>}
+            </div>
+          );
+        })}
+        <div className="border-t border-border-subtle pt-2 text-2xs text-text-tertiary">Unused cavities get sealing plugs automatically ({part.arrangement.contactCount - Object.values(c.pins).filter((p) => p.netId).length} on this connector).</div>
+      </div>
+    </Floating>
+  );
+}
+
+export function FacePopover({ x, y, connectorId }: { x: number; y: number; connectorId: string }) {
+  const ui = useUi();
+  const project = useProject((s) => s.project)!;
+  const h = currentHarness(project);
+  const c = h.connectors.find((cc) => cc.id === connectorId);
+  const part = c && svc().cat.connector(c.pn);
+  if (!c || !part) return null;
+  return (
+    <Floating x={x} y={y} onClose={() => ui.openPopover(null)} width={320} className="flex flex-col items-center gap-2 p-3">
+      <div className="text-sm font-semibold">
+        {c.refDes} · insert {part.arrangement.id} ({part.gender} face)
+      </div>
+      <FaceView
+        arrangement={part.arrangement}
+        gender={part.gender}
+        connector={c}
+        h={h}
+        size={280}
+        onCavity={(id) => {
+          ui.openPopover(null);
+          if (!c.showUnused && !c.pins[id]?.netId) dispatch({ type: "setConnectorProps", payload: { id: c.id, showUnused: true } });
+          ui.select("pin", [`${c.id}:${id}`]);
+          setTimeout(() => ui.setEditing({ connectorId: c.id, cavityId: id, col: "signal" }), 30);
+        }}
+      />
+      <FaceLegend />
+      {part.arrangement.status !== "verified" && <div className="text-center text-2xs text-status-warning">Unreviewed geometry (machine-extracted from MIL-STD-1560C). Verify before release.</div>}
+      <div className="text-2xs text-text-tertiary">Click a cavity to jump to its row.</div>
+      <Button size="sm" variant="ghost" onClick={() => ui.openPopover(null)}>
+        Close
+      </Button>
+    </Floating>
+  );
+}

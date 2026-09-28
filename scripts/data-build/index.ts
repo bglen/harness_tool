@@ -143,6 +143,14 @@ for (const s of SHELLS) if (!shells.some((x) => x.shell_size === s)) errors.push
 
 const cavByArr = new Map<string, typeof cavities>();
 for (const c of cavities) (cavByArr.get(c.arrangement) ?? cavByArr.set(c.arrangement, []).get(c.arrangement)!).push(c);
+// Natural cavity order: numbers numerically; letters uppercase A–Z before lowercase a–z (extraction interleaves table columns)
+const cavKey = (id: string) => (/^\d+$/.test(id) ? [0, Number(id), ""] : /^[A-Z]+$/.test(id) ? [1, id.length, id] : [2, id.length, id]) as [number, number, string];
+for (const list of cavByArr.values())
+  list.sort((a, b) => {
+    const x = cavKey(a.cavity_id);
+    const y = cavKey(b.cavity_id);
+    return x[0] - y[0] || x[1] - y[1] || x[2].localeCompare(y[2]);
+  });
 const knownSizes = new Set(contactSizes.map((c) => c.size));
 for (const a of arrangements) {
   const cs = cavByArr.get(a.arrangement) ?? [];
