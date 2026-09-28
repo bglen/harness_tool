@@ -516,7 +516,8 @@ export const RULE_TYPES: RuleType[] = [
             const cp = pn ? ctx.cat.contactsByPn.get(pn) : undefined;
             if (!sizes.includes(cav.size) || !cp?.machineInsertable) bad.push(e.cavityId);
           }
-        if (bad.length) out.push({ objectIds: [c.id], objectKind: "connector", message: `${c.refDes}: contacts at ${[...new Set(bad)].join(", ")} are inserted by hand.` });
+        const u = [...new Set(bad)];
+        if (u.length) out.push({ objectIds: [c.id], objectKind: "connector", message: `${c.refDes}: ${u.length} contact${u.length > 1 ? "s" : ""} (${u.slice(0, 6).join(", ")}${u.length > 6 ? ", …" : ""}) inserted by hand.` });
       }
       return out;
     },

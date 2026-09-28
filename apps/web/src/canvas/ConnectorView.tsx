@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { contactPnFor, formatWireColor, type CatalogIndex, type ConnectorInstance, type Harness, type Severity, type Wire } from "@hs/model";
+import { formatWireColor, type CatalogIndex, type ConnectorInstance, type Severity, type Wire } from "@hs/model";
 import { needsCasing, semantic, wireColor } from "@hs/ui-tokens";
 import { ROW_H, HEADER_H, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 
@@ -12,7 +12,8 @@ interface Props {
   c: ConnectorInstance;
   L: ConnLayout;
   level: ZoomLevel;
-  h: Harness;
+  /** cavityId → signal name for this connector (cached by content so unrelated edits don't re-render). */
+  names: Map<string, string>;
   cat: CatalogIndex;
   theme: "dark" | "light";
   selected: boolean;
@@ -109,7 +110,7 @@ function ColorRect({ color, x, y, theme }: { color: Wire["color"]; x: number; y:
   );
 }
 
-export const ConnectorView = memo(function ConnectorView({ c, L, level, h, cat, theme, selected, selectedPins, severity, editingCavity, dragTargets, dimmed, wiresByPin, potted, flash }: Props) {
+export const ConnectorView = memo(function ConnectorView({ c, L, level, names, cat, theme, selected, selectedPins, severity, editingCavity, dragTargets, dimmed, wiresByPin, potted, flash }: Props) {
   const part = cat.connector(c.pn);
   const { card } = L;
   const accent = semantic("accent", theme);
@@ -119,7 +120,6 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, h, cat, 
   const surface = semantic("bg.surface-2", theme);
   const border = semantic("border.subtle", theme);
   const statusCol = severity === "error" ? "var(--status-error)" : severity === "warning" ? "var(--status-warning)" : "var(--status-info)";
-  const netName = (id: string | null) => (id ? h.nets.find((n) => n.id === id)?.name ?? "" : "");
   const unreviewed = part && part.arrangement.status !== "verified";
 
   if (level === "overview") {
@@ -176,11 +176,11 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, h, cat, 
         const key = `${c.id}:${r.cavityId}`;
         const sel = selectedPins.has(key);
         const ds = dragTargets?.get(key);
-        const wires = wiresByPin.get(key) ?? [];
+        const wires = wiresByPin.get(r.cavityId) ?? [];
         const w = wires[0];
-        const name = netName(r.netId);
+        const name = names.get(r.cavityId) ?? "";
         const pin = c.pins[r.cavityId];
-        const contact = wide && (r.netId || pin?.filler) ? contactPnFor(h, cat, c.id, r.cavityId, w?.gauge) : undefined;
+        const contact = wide && (r.netId || pin?.filler) ? pin?.contactPn ?? (part ? cat.contactFor(r.size, part.gender, w?.gauge)?.pn : undefined) : undefined;
         const editing = editingCavity === r.cavityId;
         return (
           <g key={r.cavityId} data-hit="pin" data-id={key} opacity={ds && ds.valid === false ? 0.3 : 1} style={{ cursor: "crosshair" }}>

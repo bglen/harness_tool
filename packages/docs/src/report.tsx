@@ -2,7 +2,7 @@ import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { resolvePedigree, type NetClass } from "@hs/model";
 import { opLabel } from "@hs/ops";
 import type { DocData } from "./data";
-import { C, DEMO_FOOTER, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, money, s, Swatch, Table } from "./common";
+import { C, DEMO_FOOTER, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, money, pdfSafe, s, Swatch, Table } from "./common";
 import { Bar, FaceSvg, HarnessDiagram } from "./diagram";
 
 export const REPORT_SECTIONS = [
@@ -174,11 +174,11 @@ export function ReportDocument({ data, sections, hideQuote }: { data: DocData; s
                   const n = h.nodes.find((x) => x.id === nid)!;
                   return n.kind === "connector" ? h.connectors.find((c) => c.id === n.connectorId)?.refDes ?? "?" : `B${h.nodes.filter((x) => x.kind === "breakout").indexOf(n) + 1}`;
                 };
-                return [sg.label || `${name(sg.a)}–${name(sg.b)}`, fmtLen(sg.lengthMm, u), fmtLen(sg.toleranceMm, u), d.segWires.get(sg.id)?.length ?? 0, fmtLen(d.segOuterOdMm.get(sg.id) ?? 0, u, u === "in" ? 3 : 1), (d.segStack.get(sg.id) ?? []).map((l) => data.cat.layer(l.layer.pn)?.description ?? l.layer.type).join(" → ") || "—"];
+                return [sg.label || `${name(sg.a)}–${name(sg.b)}`, fmtLen(sg.lengthMm, u), fmtLen(sg.toleranceMm, u), d.segWires.get(sg.id)?.length ?? 0, fmtLen(d.segOuterOdMm.get(sg.id) ?? 0, u, u === "in" ? 3 : 1), (d.segStack.get(sg.id) ?? []).map((l) => data.cat.layer(l.layer.pn)?.description ?? l.layer.type).join(" / then ") || "—"];
               })}
             />
             {h.splices.length > 0 && <Text style={s.p}>Splices: {h.splices.map((sp) => `${sp.label} (${sp.type}, ${sp.pn}) for ${h.nets.find((n) => n.id === sp.netId)?.name}`).join("; ")}.</Text>}
-            {project.report.designNotes && (
+            {!!project.report.designNotes && (
               <>
                 <Text style={s.h2}>Design notes</Text>
                 <Text style={s.p}>{project.report.designNotes}</Text>
@@ -205,7 +205,23 @@ export function ReportDocument({ data, sections, hideQuote }: { data: DocData; s
                     {part && (
                       <View style={{ width: 170, alignItems: "center" }}>
                         <FaceSvg arr={part.arrangement} gender={part.gender} c={c} h={h} size={150} />
-                        <Text style={s.small}>Face view ({part.gender} side). ● power ● ground ● signal ● RF ○ spare</Text>
+                        <Text style={s.small}>Face view ({part.gender} side), cavities colored by net class:</Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", marginTop: 2 }}>
+                          {(
+                            [
+                              ["power", "#C4234F"],
+                              ["ground", "#16181D"],
+                              ["signal", "#0B7F92"],
+                              ["RF", "#7A3CC2"],
+                              ["spare", "#FFFFFF"],
+                            ] as const
+                          ).map(([l, col]) => (
+                            <View key={l} style={{ flexDirection: "row", alignItems: "center", marginRight: 5 }}>
+                              <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: col, border: `0.5pt solid ${C.text3}`, marginRight: 2 }} />
+                              <Text style={s.small}>{l}</Text>
+                            </View>
+                          ))}
+                        </View>
                       </View>
                     )}
                     <View style={{ flex: 1 }}>
@@ -299,16 +315,20 @@ export function ReportDocument({ data, sections, hideQuote }: { data: DocData; s
         {on("rules") && (
           <Section title="8 Design rules report">
             <Text style={s.p}>Applied rulesets: {project.rulesets.map((r) => `${r.name} v${r.version}${r.enforced ? " (enforced)" : ""}`).join(", ") || "none"}; {project.projectRules.length} project rules; pedigree requirements for {ped.name}.</Text>
-            <Table cols={[{ label: "Rule", w: 1, mono: true }, { label: "Source", w: 1.4 }, { label: "Title", w: 2.4 }, { label: "Result", w: 0.8 }]} rows={dfm.results.filter((r) => r.eff.source.layer !== "manufacturer").map((r) => [r.eff.rule.id, r.eff.source.name, r.eff.rule.title, r.status === "fail" ? `${r.violations.length} ${r.eff.severity}` : r.status])} />
+            {dfm.results.some((r) => r.eff.source.layer !== "manufacturer") ? (
+              <Table cols={[{ label: "Rule", w: 1, mono: true }, { label: "Source", w: 1.4 }, { label: "Title", w: 2.4 }, { label: "Result", w: 0.8 }]} rows={dfm.results.filter((r) => r.eff.source.layer !== "manufacturer").map((r) => [r.eff.rule.id, r.eff.source.name, r.eff.rule.title, r.status === "fail" ? `${r.violations.length} ${r.eff.severity}` : r.status])} />
+            ) : (
+              <Text style={s.p}>No team rulesets, project rules or pedigree process rules apply to this design. Only the Manufacturer rules (section 7) were evaluated.</Text>
+            )}
             {project.overrides.length > 0 && <Text style={s.p}>Project overrides: {project.overrides.map((o) => `${o.ruleId}${o.enabled === false ? " disabled" : ""}${o.severity ? ` → ${o.severity}` : ""}${o.note ? ` (${o.note})` : ""}`).join("; ")}.</Text>}
           </Section>
         )}
         {on("mfgtest") && (
           <Section title="9 Manufacturing & test">
             <Text style={s.p}>Workmanship: {ped.workmanship}.</Text>
-            <Table cols={[{ label: "Inspection / test", w: 2 }, { label: "Sampling", w: 1 }, { label: "Parameters", w: 2.5 }, { label: "Where", w: 0.8 }]} rows={ped.inspections.map((i) => { const t = data.inspections.find((x) => x.id === i.typeId); return [t?.name ?? i.typeId, i.sampling, Object.entries(i.params).filter(([, v]) => typeof v !== "object").map(([k, v]) => `${t?.params.find((p) => p.key === k)?.label ?? k} ${v}${t?.params.find((p) => p.key === k)?.unit ? " " + t!.params.find((p) => p.key === k)!.unit : ""}`).join(", ") || "—", t?.inHouse ? "in-house" : "outsourced"]; })} />
-            <Text style={s.p}>Parts policy: {[ped.partsPolicy.qplOnly && "QPL/approved parts only", ped.partsPolicy.noAlternates && "no alternates without approval", ped.partsPolicy.authorizedDistributionOnly && "authorized distribution only", ped.partsPolicy.bannedFinishes?.length && `banned shell classes ${ped.partsPolicy.bannedFinishes.join("/")}`, ped.partsPolicy.dateCodeMaxYears && `date codes ≤ ${ped.partsPolicy.dateCodeMaxYears} years`].filter(Boolean).join("; ") || "standard"}.</Text>
-            <Text style={s.p}>Process: {[ped.process.noSplices && "no splices", ped.process.noPotting && "no potting", ped.process.noManualRework && "no manual rework", ped.process.serializedLabels && "serialized labels", ped.process.doubleBandClamps && "double band clamps", ped.process.bendRadiusMultiple && `bend radius ≥ ${ped.process.bendRadiusMultiple}× OD`, ped.process.minBraidCoverage && `braid coverage ≥ ${ped.process.minBraidCoverage}%`].filter(Boolean).join("; ") || "standard"}.</Text>
+            <Table cols={[{ label: "Inspection / test", w: 2 }, { label: "Sampling", w: 1 }, { label: "Parameters", w: 2.5 }, { label: "Where", w: 0.8 }]} rows={ped.inspections.map((i) => { const t = data.inspections.find((x) => x.id === i.typeId); return [t?.name ?? i.typeId, i.sampling, pdfSafe(Object.entries(i.params).filter(([, v]) => typeof v !== "object").map(([k, v]) => `${t?.params.find((p) => p.key === k)?.label ?? k} ${v}${t?.params.find((p) => p.key === k)?.unit ? " " + t!.params.find((p) => p.key === k)!.unit : ""}`).join(", ") || "—"), t?.inHouse ? "in-house" : "outsourced"]; })} />
+            <Text style={s.p}>Parts policy: {[ped.partsPolicy.qplOnly && "QPL/approved parts only", ped.partsPolicy.noAlternates && "no alternates without approval", ped.partsPolicy.authorizedDistributionOnly && "authorized distribution only", ped.partsPolicy.bannedFinishes?.length && `banned shell classes ${ped.partsPolicy.bannedFinishes.join("/")}`, ped.partsPolicy.dateCodeMaxYears && `date codes at most ${ped.partsPolicy.dateCodeMaxYears} years old`].filter(Boolean).join("; ") || "standard"}.</Text>
+            <Text style={s.p}>Process: {[ped.process.noSplices && "no splices", ped.process.noPotting && "no potting", ped.process.noManualRework && "no manual rework", ped.process.serializedLabels && "serialized labels", ped.process.doubleBandClamps && "double band clamps", ped.process.bendRadiusMultiple && `bend radius at least ${ped.process.bendRadiusMultiple}× OD`, ped.process.minBraidCoverage && `braid coverage at least ${ped.process.minBraidCoverage}%`].filter(Boolean).join("; ") || "standard"}.</Text>
             <Text style={s.p}>Deliverables: {ped.documentation.join(", ") || "—"}. Markings: {ped.markings.map((m) => m.text).join(", ") || "—"}.</Text>
             <Text style={s.h2}>Pedigree comparison</Text>
             <Table cols={[{ label: "Pedigree", w: 1.2 }, { label: "Workmanship", w: 2 }, { label: "Inspections", w: 3 }]} rows={[...project.pedigreeScheme.pedigrees].sort((a, b) => a.rank - b.rank).map((p) => { const r = resolvePedigree(project.pedigreeScheme, p.id); return [`${p.code} ${p.name}`, r.workmanship, r.inspections.map((i) => `${data.inspections.find((t) => t.id === i.typeId)?.name ?? i.typeId} ${i.sampling}`).join(", ")]; })} />

@@ -133,7 +133,7 @@
             "pn": "D38999/20WD35PN",
             "position": {
               "x": 220,
-              "y": 360
+              "y": 540
             },
             "rotation": 0,
             "clocking": "N",
@@ -207,8 +207,8 @@
             "refDes": "P1",
             "pn": "D38999/26WB35SN",
             "position": {
-              "x": 1000,
-              "y": 180
+              "x": 1060,
+              "y": 120
             },
             "rotation": 180,
             "clocking": "N",
@@ -246,8 +246,8 @@
             "refDes": "P2",
             "pn": "D38999/26WC35SN",
             "position": {
-              "x": 1000,
-              "y": 380
+              "x": 1060,
+              "y": 560
             },
             "rotation": 180,
             "clocking": "N",
@@ -291,8 +291,8 @@
             "refDes": "P3",
             "pn": "D38999/26WA35SN",
             "position": {
-              "x": 1000,
-              "y": 580
+              "x": 1060,
+              "y": 960
             },
             "rotation": 180,
             "clocking": "N",
@@ -327,7 +327,7 @@
             "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
             "position": {
               "x": 220,
-              "y": 360
+              "y": 540
             }
           },
           {
@@ -335,8 +335,8 @@
             "kind": "connector",
             "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
             "position": {
-              "x": 1000,
-              "y": 180
+              "x": 1060,
+              "y": 120
             }
           },
           {
@@ -344,8 +344,8 @@
             "kind": "connector",
             "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
             "position": {
-              "x": 1000,
-              "y": 380
+              "x": 1060,
+              "y": 560
             }
           },
           {
@@ -353,16 +353,16 @@
             "kind": "connector",
             "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
             "position": {
-              "x": 1000,
-              "y": 580
+              "x": 1060,
+              "y": 960
             }
           },
           {
             "id": "5905cc84-229c-4256-a0fd-a5755dccccb5",
             "kind": "breakout",
             "position": {
-              "x": 620,
-              "y": 360
+              "x": 640,
+              "y": 540
             }
           }
         ],

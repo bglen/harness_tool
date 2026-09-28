@@ -22,7 +22,7 @@ import { dispatch, useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { useActiveAnalysis, useDerived } from "../store/analysis";
 import { svc } from "../lib/services";
-import { bundleWidth, layoutConnector, nodePos, projectOnSegment, zoomLevel, type ConnLayout } from "../lib/geometry";
+import { bundleWidth, layoutConnector, nodePos, projectOnSegment, zoomLevel, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 import { ConnectorView, type RowState } from "./ConnectorView";
 import { BundleLayer } from "./BundleLayer";
 import { WireLayer } from "./WireLayer";
@@ -83,6 +83,8 @@ export function Canvas() {
   const [lengthEdit, setLengthEdit] = useState<{ segId: string; screen: Point; value: string } | null>(null);
   const [hint, setHint] = useState<{ x: number; y: number; text: string } | null>(null);
   const level = zoomLevel(vp.k);
+  // Quantized zoom for text sizing inside memoized layers, so wheel zoom doesn't re-render every wire
+  const kq = Math.round(vp.k * 4) / 4 || 0.25;
 
   // Resize observer
   useEffect(() => {
@@ -144,12 +146,46 @@ export function Canvas() {
     };
   }, [h0, drag]);
 
-  const layouts = useMemo(() => new Map<string, ConnLayout>(h.connectors.map((c) => [c.id, layoutConnector(c, cat, level)])), [h.connectors, cat, level]);
-  const wiresByPin = useMemo(() => {
-    const m = new Map<string, Wire[]>();
-    for (const w of h.wires) for (const e of [w.from, w.to]) if (e.kind === "pin") (m.get(`${e.connectorId}:${e.cavityId}`) ?? m.set(`${e.connectorId}:${e.cavityId}`, []).get(`${e.connectorId}:${e.cavityId}`)!).push(w);
+  // Layout cached per connector object (Immer structural sharing keeps unchanged connectors identical)
+  const layoutCache = useRef(new WeakMap<object, { level: ZoomLevel; L: ConnLayout }>());
+  const layouts = useMemo(() => {
+    const m = new Map<string, ConnLayout>();
+    for (const c of h.connectors) {
+      const hit = layoutCache.current.get(c);
+      if (hit && hit.level === level) m.set(c.id, hit.L);
+      else {
+        const L = layoutConnector(c, cat, level);
+        layoutCache.current.set(c, { level, L });
+        m.set(c.id, L);
+      }
+    }
     return m;
-  }, [h.wires]);
+  }, [h.connectors, cat, level]);
+  // Per-connector pin → wires and pin → name maps, reused when content is unchanged so memoized cards skip re-render
+  const connCache = useRef(new Map<string, { wKey: string; wires: Map<string, Wire[]>; nKey: string; names: Map<string, string> }>());
+  const perConn = useMemo(() => {
+    const netName = new Map(h.nets.map((n) => [n.id, n.name]));
+    const byConn = new Map<string, Map<string, Wire[]>>();
+    for (const w of h.wires)
+      for (const e of [w.from, w.to]) {
+        if (e.kind !== "pin") continue;
+        const m = byConn.get(e.connectorId) ?? byConn.set(e.connectorId, new Map()).get(e.connectorId)!;
+        (m.get(e.cavityId) ?? m.set(e.cavityId, []).get(e.cavityId)!).push(w);
+      }
+    const out = new Map<string, { wires: Map<string, Wire[]>; names: Map<string, string> }>();
+    for (const c of h.connectors) {
+      const wires = byConn.get(c.id) ?? new Map<string, Wire[]>();
+      const wKey = [...wires].map(([k, ws]) => `${k}=${ws.map((w) => `${w.id}/${w.gauge}/${w.color.base}.${w.color.stripes.join(".")}/${w.label}`).join(",")}`).join("|");
+      const names = new Map<string, string>();
+      for (const [cav, p] of Object.entries(c.pins)) if (p.netId) names.set(cav, netName.get(p.netId) ?? "");
+      const nKey = [...names].map(([k, v]) => `${k}=${v}`).join("|");
+      const prev = connCache.current.get(c.id);
+      const entry = { wKey, wires: prev && prev.wKey === wKey ? prev.wires : wires, nKey, names: prev && prev.nKey === nKey ? prev.names : names };
+      connCache.current.set(c.id, entry);
+      out.set(c.id, entry);
+    }
+    return out;
+  }, [h.wires, h.nets, h.connectors]);
 
   const sel = ui.selection;
   const selSet = useMemo(() => new Set(sel.ids), [sel.ids]);
@@ -576,26 +612,26 @@ export function Canvas() {
             shieldView={ui.shieldView}
             harnessPN={project.partNumber}
             rev={rev.label}
-            k={vp.k}
+            k={kq}
             flash={flashSet}
           />
-          <WireLayer h={h} d={d} layouts={layouts} level={level} theme={theme} selected={sel.kind === "wire" ? selSet : EMPTY} hoverId={ui.hover?.id ?? null} sev={sev} focusNetId={focusNet} shieldView={ui.shieldView} colorLabels={ui.wireColorLabels} k={vp.k} flash={flashSet} />
+          <WireLayer h={h} d={d} layouts={layouts} level={level} theme={theme} selected={sel.kind === "wire" ? selSet : EMPTY} hoverId={ui.hover?.id ?? null} sev={sev} focusNetId={focusNet} shieldView={ui.shieldView} colorLabels={ui.wireColorLabels} k={kq} flash={flashSet} />
           {h.connectors.map((c) => (
             <ConnectorView
               key={c.id}
               c={c}
               L={layouts.get(c.id)!}
               level={level}
-              h={h}
+              names={perConn.get(c.id)!.names}
               cat={cat}
               theme={theme}
               selected={sel.kind === "connector" && selSet.has(c.id)}
-              selectedPins={selectedPins}
+              selectedPins={sel.kind === "pin" && sel.ids.some((k) => k.startsWith(`${c.id}:`)) ? selectedPins : EMPTY}
               severity={sev[c.id]?.severity}
               editingCavity={editing?.connectorId === c.id ? editing.cavityId : null}
               dragTargets={dragTargets}
               dimmed={dimAll || (!!focusNet && !h.nets.find((n) => n.id === focusNet)?.members.some((m) => m.connectorId === c.id))}
-              wiresByPin={wiresByPin}
+              wiresByPin={perConn.get(c.id)!.wires}
               potted={potted.has(c.id)}
               flash={flashSet.has(c.id)}
             />

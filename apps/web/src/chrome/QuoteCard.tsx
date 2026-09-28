@@ -43,13 +43,13 @@ export function QuoteCard() {
           <table className="w-full table-fixed text-right text-xs" aria-label="Price matrix: rows are lead time, columns are quantity">
             <thead>
               <tr className="bg-bg-surface-2 text-2xs text-text-tertiary">
-                <th className="w-[64px] p-1 text-left font-normal">Qty</th>
+                <th className="w-[54px] p-1 text-left font-normal">Qty</th>
                 {project.quote.quantities.map((n) => (
                   <th key={n} className="tnum p-1 font-medium">
                     {n}
                   </th>
                 ))}
-                <th className="w-6 p-0">
+                <th className="w-4 p-0">
                   {addQty == null ? (
                     <Tip label="Add a custom quantity">
                       <button aria-label="Add quantity" className="text-text-tertiary hover:text-text-primary" onClick={() => setAddQty("")}>
@@ -77,8 +77,8 @@ export function QuoteCard() {
             <tbody>
               {(q?.tiers ?? [{ id: "standard", name: "Standard", days: 15 }, { id: "expedited", name: "Expedited", days: 8 }, { id: "rush", name: "Rush", days: 4 }]).map((t) => (
                 <tr key={t.id} className="border-t border-border-subtle">
-                  <td className="p-1 text-left">
-                    <div className="text-xs">{t.name}</div>
+                  <td className="py-1 pl-1 text-left">
+                    <div className="truncate text-2xs" title={t.name}>{t.name}</div>
                     <div className="text-2xs text-text-tertiary">{t.days}&thinsp;d</div>
                   </td>
                   {project.quote.quantities.map((n) => {
@@ -86,9 +86,9 @@ export function QuoteCard() {
                     const on = sel.qty === n && sel.tier === t.id;
                     return (
                       <td key={n} className="p-0">
-                        <button onClick={() => dispatch(setQuoteSelection({ qty: n, tier: t.id }), "Select quote cell")} aria-pressed={on} className={cx("w-full px-1 py-1 text-right hover:bg-bg-hover", on && "bg-bg-hover outline outline-1 -outline-offset-1 outline-accent")}>
-                          <div className="tnum text-[12px] font-medium" title={c ? `${formatMoney(c.unit)} per unit` : undefined}>
-                            {c ? formatMoney(c.unit, c.unit >= 100 ? 0 : 2) : "—"}
+                        <button onClick={() => dispatch(setQuoteSelection({ qty: n, tier: t.id }), "Select quote cell")} aria-pressed={on} className={cx("w-full px-0.5 py-1 text-right hover:bg-bg-hover", on && "bg-bg-hover outline outline-1 -outline-offset-1 outline-accent")}>
+                          <div className="tnum truncate text-[11.5px] font-medium" title={c ? `${formatMoney(c.unit)} per unit` : undefined}>
+                            {c ? (c.unit >= 1000 ? `$${(c.unit / 1000).toFixed(2)}k` : formatMoney(c.unit, c.unit >= 100 ? 0 : 2)) : "—"}
                           </div>
                           <div className="tnum text-2xs text-text-tertiary" title={c ? `${formatMoney(c.total)} total` : undefined}>
                             {c ? compact(c.total) : ""}

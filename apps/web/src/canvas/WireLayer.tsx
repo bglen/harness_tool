@@ -54,6 +54,28 @@ function pointAlong(pts: Point[], dist: number, fromEnd = false): { p: Point; ux
   return null;
 }
 
+/** One wire. Primitive props so unchanged wires skip re-render on unrelated edits. True insulation color; state via halos only (§16.4). */
+const WireView = memo(function WireView({ id, path, unrouted, base, stripes, title, theme, sw, opacity, selected, hover, severity }: { id: string; path: string; unrouted: boolean; base: number; stripes: string; title: string; theme: "dark" | "light"; sw: number; opacity: number; selected: boolean; hover: boolean; severity?: Severity }) {
+  const col = wireColor(base, theme);
+  const casing = needsCasing(col, semantic("bg.canvas", theme));
+  const accent = semantic("accent", theme);
+  const st = stripes ? stripes.split(",").map(Number) : [];
+  return (
+    <g opacity={opacity} data-hit="wire" data-id={id} style={{ cursor: "pointer" }}>
+      <title>{title}</title>
+      <path d={path} stroke="transparent" strokeWidth={8} fill="none" />
+      {selected && <path d={path} stroke={accent} strokeWidth={sw + 4.5} fill="none" opacity={0.7} strokeLinecap="round" />}
+      {!selected && hover && <path d={path} stroke={accent} strokeWidth={sw + 2} fill="none" strokeLinecap="round" />}
+      {severity && severity !== "info" && <path d={path} stroke={severity === "error" ? "var(--status-error)" : "var(--status-warning)"} strokeWidth={sw + 3.5} strokeDasharray="5 3" fill="none" opacity={0.85} />}
+      {casing && <path d={path} stroke={semantic("wire.casing", theme)} strokeWidth={sw + 1.1} fill="none" strokeLinecap="round" />}
+      <path d={path} stroke={col} strokeWidth={selected ? sw + 0.5 : sw} fill="none" strokeLinecap="round" strokeDasharray={unrouted ? "4 3" : undefined} />
+      {st.map((sc, i) => (
+        <path key={i} d={path} stroke={wireColor(sc, theme)} strokeWidth={Math.max(0.8, sw * 0.6)} fill="none" strokeDasharray={`2.4 ${6 + st.length * 2.4}`} strokeDashoffset={-i * 3.2} />
+      ))}
+    </g>
+  );
+});
+
 export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, selected, hoverId, sev, focusNetId, shieldView, colorLabels, k, flash }: Props) {
   const lanes = useMemo(() => laneMap(h, d), [h, d]);
   const gap = level === "detail" ? LANE : LANE * 0.75;
@@ -75,30 +97,30 @@ export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, 
   }, [h, d, layouts, lanes, gap, level]);
 
   const rats = useMemo(() => ratsnest(h), [h]);
+  const netNames = useMemo(() => new Map(h.nets.map((n) => [n.id, n.name])), [h.nets]);
   const sw = level === "detail" ? 1.7 : 1.25;
   const netDim = (w: Wire) => (focusNetId && w.netId !== focusNetId ? 0.18 : shieldView && !w.shieldId && !w.cableId ? 0.15 : 1);
 
   return (
     <g>
       {geoms.map(({ w, path, unrouted }) => {
-        const base = wireColor(w.color.base, theme);
-        const casing = needsCasing(base, canvasBg);
-        const isSel = selected.has(w.id) || flash.has(w.id);
-        const isHover = hoverId === w.id;
-        const s = sev[w.id]?.severity;
+        const netName = netNames.get(w.netId) ?? "";
         return (
-          <g key={w.id} opacity={netDim(w)} data-hit="wire" data-id={w.id} style={{ cursor: "pointer" }}>
-            <title>{`Wire ${w.label}, net ${h.nets.find((n) => n.id === w.netId)?.name ?? ""}, ${w.gauge} AWG ${w.spec}, ${describeWireColor(w.color)} (${[w.color.base, ...w.color.stripes].join("-")})`}</title>
-            <path d={path} stroke="transparent" strokeWidth={8} fill="none" />
-            {isSel && <path d={path} stroke={accent} strokeWidth={sw + 4.5} fill="none" opacity={0.7} strokeLinecap="round" />}
-            {!isSel && isHover && <path d={path} stroke={accent} strokeWidth={sw + 2} fill="none" strokeLinecap="round" />}
-            {s && s !== "info" && <path d={path} stroke={s === "error" ? "var(--status-error)" : "var(--status-warning)"} strokeWidth={sw + 3.5} strokeDasharray="5 3" fill="none" opacity={0.85} />}
-            {casing && <path d={path} stroke={semantic("wire.casing", theme)} strokeWidth={sw + 1.1} fill="none" strokeLinecap="round" />}
-            <path d={path} stroke={base} strokeWidth={isSel ? sw + 0.5 : sw} fill="none" strokeLinecap="round" strokeDasharray={unrouted ? "4 3" : undefined} />
-            {w.color.stripes.map((sc, i) => (
-              <path key={i} d={path} stroke={wireColor(sc, theme)} strokeWidth={Math.max(0.8, sw * 0.6)} fill="none" strokeDasharray={`2.4 ${6 + w.color.stripes.length * 2.4}`} strokeDashoffset={-i * 3.2} />
-            ))}
-          </g>
+          <WireView
+            key={w.id}
+            id={w.id}
+            path={path}
+            unrouted={unrouted}
+            base={w.color.base}
+            stripes={w.color.stripes.join(",")}
+            title={`Wire ${w.label}, net ${netName}, ${w.gauge} AWG ${w.spec}, ${describeWireColor(w.color)} (${[w.color.base, ...w.color.stripes].join("-")})`}
+            theme={theme}
+            sw={sw}
+            opacity={netDim(w)}
+            selected={selected.has(w.id) || flash.has(w.id)}
+            hover={hoverId === w.id}
+            severity={sev[w.id]?.severity}
+          />
         );
       })}
       {/* twist marks near both ends of each twisted group */}

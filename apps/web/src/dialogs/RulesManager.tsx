@@ -70,7 +70,7 @@ export function RulesManager({ data }: { data: { ruleId?: string; importFile?: F
     <Dialog open onClose={close} title="Rules" width={1240} description="Manufacturer rules are always applied and can only be tightened. Team rulesets and project rules add your own standards.">
       <div className="grid h-[68vh] grid-cols-[220px_1fr_380px] gap-3">
         {/* Layers */}
-        <div className="scroll-thin flex flex-col gap-1 overflow-auto rounded-card border border-border-subtle p-2 text-sm">
+        <div className="scroll-thin flex flex-col items-stretch justify-start gap-1 overflow-auto rounded-card border border-border-subtle p-2 text-sm [&>*]:shrink-0">
           <LayerBtn on={layer.kind === "all"} onClick={() => setLayer({ kind: "all" })}>
             All layers <span className="text-text-tertiary">({allRules.length})</span>
           </LayerBtn>
@@ -288,7 +288,7 @@ export function RulesManager({ data }: { data: { ruleId?: string; importFile?: F
 
 function LayerBtn({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} className={cx("flex min-w-0 flex-1 items-center gap-1 rounded-control px-2 py-1 text-left", on ? "bg-bg-hover text-text-primary" : "text-text-secondary hover:bg-bg-hover")}>
+    <button onClick={onClick} className={cx("flex w-full min-w-0 items-center gap-1 rounded-control px-2 py-1 text-left", on ? "bg-bg-hover text-text-primary" : "text-text-secondary hover:bg-bg-hover")}>
       {children}
     </button>
   );

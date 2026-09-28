@@ -87,10 +87,10 @@ export function buildExamples(bundle: CatalogBundle, _caps: Record<string, unkno
     const P4 = uid();
     p = run(p, cat, [
       setProjectProps({ partNumber: "HS-2040" }),
-      addConnector({ id: J1, pn: "D38999/20WD35PN", position: { x: 220, y: 360 }, rotation: 0 }),
-      addConnector({ id: P2, pn: "D38999/26WB35SN", position: { x: 1000, y: 180 }, rotation: 180 }),
-      addConnector({ id: P3, pn: "D38999/26WC35SN", position: { x: 1000, y: 380 }, rotation: 180 }),
-      addConnector({ id: P4, pn: "D38999/26WA35SN", position: { x: 1000, y: 580 }, rotation: 180 }),
+      addConnector({ id: J1, pn: "D38999/20WD35PN", position: { x: 220, y: 540 }, rotation: 0 }),
+      addConnector({ id: P2, pn: "D38999/26WB35SN", position: { x: 1060, y: 120 }, rotation: 180 }),
+      addConnector({ id: P3, pn: "D38999/26WC35SN", position: { x: 1060, y: 560 }, rotation: 180 }),
+      addConnector({ id: P4, pn: "D38999/26WA35SN", position: { x: 1060, y: 960 }, rotation: 180 }),
     ]);
     const jc = cat.connector("D38999/20WD35PN")!.arrangement.cavities.map((c) => c.id);
     const c2 = cat.connector("D38999/26WB35SN")!.arrangement.cavities.map((c) => c.id);
@@ -113,7 +113,7 @@ export function buildExamples(bundle: CatalogBundle, _caps: Record<string, unkno
     const trunk = direct[0]!;
     const B1 = uid();
     const others = direct.slice(1);
-    p = run(p, cat, [addBreakout({ segmentId: trunk, t: 0.55, nodeId: B1, position: { x: 620, y: 360 } })]);
+    p = run(p, cat, [addBreakout({ segmentId: trunk, t: 0.55, nodeId: B1, position: { x: 640, y: 540 } })]);
     h = currentHarness(p);
     const nodeOf = (cid: string) => h.nodes.find((n) => n.connectorId === cid)!.id;
     // Branch from B1 to the other plugs first, then drop the auto-created direct runs (routes now exist via B1).

@@ -1,6 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import type { DocData } from "./data";
-import { C, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, s, Swatch, Table } from "./common";
+import { C, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, pdfSafe, s, Swatch, Table } from "./common";
 import { HarnessDiagram } from "./diagram";
 
 const SHEETS: Record<string, [number, number]> = {
@@ -43,7 +43,7 @@ export function drawingNotes(data: DocData): string[] {
   notes.push(`Checked against machine profile ${data.profile.version}${rs.length ? ` and design rulesets: ${rs.join(", ")}` : ""}${project.projectRules.length ? ` + ${project.projectRules.length} project rules` : ""}. DFM: ${dfm.manufacturability.errors} errors, ${dfm.manufacturability.warnings} warnings.`);
   for (const w of project.waivers) notes.push(`WAIVER ${w.ruleId}: ${w.note}${w.author ? ` (${w.author}, ${w.date})` : ` (${w.date})`}.`);
   for (const n of project.titleBlock.notes) notes.push(n);
-  return notes;
+  return notes.map(pdfSafe);
 }
 
 function TitleBlock({ data }: { data: DocData }) {

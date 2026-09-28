@@ -1,8 +1,10 @@
+import { current, isDraft } from "immer";
 import type { CatalogIndex } from "./catalog";
+import { sameColor } from "./colors";
 import { derive, diameterUnderLayer, shortestPath, buildAdjacency, type Derived } from "./derive";
-import { currentRevision, defaultColorFor, defaultGaugeForEnds, memberKey, nextLabel, pairKey, uid } from "./helpers";
+import { currentRevision, defaultColorFor, defaultGaugeForEnds, memberKey, nextLabel, pairKey, prune, uid } from "./helpers";
 import { resolvePedigree } from "./pedigree";
-import type { Harness, Label, Net, Project, Settings, Termination, WireEnd } from "./schema";
+import type { Harness, Label, Net, Project, Settings, Termination, Wire, WireEnd } from "./schema";
 
 export interface SyncContext {
   cat: CatalogIndex;
@@ -47,47 +49,52 @@ export function ratsnest(h: Harness): { netId: string; a: WireEnd; b: WireEnd }[
 
 function ensureConnectorNodes(h: Harness) {
   const connIds = new Set(h.connectors.map((c) => c.id));
-  h.nodes = h.nodes.filter((n) => n.kind !== "connector" || (n.connectorId && connIds.has(n.connectorId)));
+  prune(h, "nodes", (n) => n.kind !== "connector" || !!(n.connectorId && connIds.has(n.connectorId)));
   for (const c of h.connectors) {
     const n = h.nodes.find((x) => x.kind === "connector" && x.connectorId === c.id);
     if (!n) h.nodes.push({ id: uid(), kind: "connector", connectorId: c.id, position: { ...c.position } });
     else if (n.position.x !== c.position.x || n.position.y !== c.position.y) n.position = { ...c.position };
   }
   const nodeIds = new Set(h.nodes.map((n) => n.id));
-  h.segments = h.segments.filter((s) => nodeIds.has(s.a) && nodeIds.has(s.b) && s.a !== s.b);
+  prune(h, "segments", (s) => nodeIds.has(s.a) && nodeIds.has(s.b) && s.a !== s.b);
 }
 
 function cleanNets(h: Harness, cat: CatalogIndex) {
+  const snap = plain(h);
   const cavities = new Map<string, Set<string>>();
-  for (const c of h.connectors) {
+  for (const c of snap.connectors) {
     const part = cat.connector(c.pn);
     cavities.set(c.id, new Set(part ? part.arrangement.cavities.map((x) => x.id) : Object.keys(c.pins)));
   }
+  // 1. Drop invalid / duplicate members (only touch nets that change)
   const seen = new Set<string>();
-  for (const n of h.nets) {
-    n.members = n.members.filter((m) => {
+  snap.nets.forEach((n, i) => {
+    const keep = n.members.filter((m) => {
       const k = memberKey(m);
       if (seen.has(k) || !cavities.get(m.connectorId)?.has(m.cavityId)) return false;
       seen.add(k);
       return true;
     });
-  }
-  h.nets = h.nets.filter((n) => n.members.length > 0);
-  // Pins mirror net membership.
-  for (const c of h.connectors) {
+    if (keep.length !== n.members.length) h.nets[i]!.members = keep;
+  });
+  prune(h, "nets", (n) => n.members.length > 0);
+  // 2. Pins mirror net membership: compute desired netId per pin, write only differences.
+  const want = new Map<string, string>();
+  for (const n of plain(h).nets) for (const m of n.members) want.set(`${m.connectorId}:${m.cavityId}`, n.id);
+  snap.connectors.forEach((c, ci) => {
+    const dc = h.connectors[ci]!;
     for (const [cav, pin] of Object.entries(c.pins)) {
-      if (!cavities.get(c.id)?.has(cav)) delete c.pins[cav];
-      else pin.netId = null;
+      const key = `${c.id}:${cav}`;
+      const w = want.get(key) ?? null;
+      if (!cavities.get(c.id)?.has(cav) || (!w && !pin.contactPn && !pin.filler)) delete dc.pins[cav];
+      else if (pin.netId !== w) dc.pins[cav]!.netId = w;
     }
-  }
-  for (const n of h.nets) {
-    for (const m of n.members) {
-      const c = h.connectors.find((x) => x.id === m.connectorId)!;
-      const pin = c.pins[m.cavityId] ?? (c.pins[m.cavityId] = { netId: null });
-      pin.netId = n.id;
+    for (const [key, netId] of want) {
+      if (!key.startsWith(`${c.id}:`)) continue;
+      const cav = key.slice(c.id.length + 1);
+      if (!c.pins[cav]) dc.pins[cav] = { netId };
     }
-  }
-  for (const c of h.connectors) for (const [cav, pin] of Object.entries(c.pins)) if (!pin.netId && !pin.contactPn && !pin.filler) delete c.pins[cav];
+  });
 }
 
 /** Choose the graph node minimising total path length to all members (splice host). */
@@ -115,7 +122,8 @@ function bestSpliceNode(h: Harness, net: Net): string | undefined {
 
 function syncSplices(h: Harness, cat: CatalogIndex) {
   const spliceNets = new Set(h.nets.filter((n) => n.topology === "splice" && n.members.length >= 3).map((n) => n.id));
-  h.splices = h.splices.filter((s) => spliceNets.has(s.netId) && h.nodes.some((n) => n.id === s.nodeId));
+  const nodeSet = new Set(plain(h).nodes.map((n) => n.id));
+  prune(h, "splices", (s) => spliceNets.has(s.netId) && nodeSet.has(s.nodeId));
   for (const n of h.nets) {
     if (!spliceNets.has(n.id)) continue;
     if (!h.splices.some((s) => s.netId === n.id)) {
@@ -127,37 +135,68 @@ function syncSplices(h: Harness, cat: CatalogIndex) {
 }
 
 function syncWires(h: Harness, settings: Settings, cat: CatalogIndex, create: boolean) {
+  // Read from a plain snapshot (fast) and write only real changes to the draft.
+  const snap = plain(h);
   const desired = new Map<string, { netId: string; a: WireEnd; b: WireEnd }>();
-  for (const n of h.nets) for (const [a, b] of desiredPairs(h, n)) desired.set(pairKey(a, b), { netId: n.id, a, b });
-  const kept = h.wires.filter((w) => desired.has(pairKey(w.from, w.to)));
-  const have = new Set(kept.map((w) => pairKey(w.from, w.to)));
-  h.wires = kept;
+  for (const n of snap.nets) for (const [a, b] of desiredPairs(snap, n)) desired.set(pairKey(a, b), { netId: n.id, a, b });
+  prune(h, "wires", (w) => desired.has(pairKey(w.from, w.to)));
+  const have = new Set(snap.wires.map((w) => pairKey(w.from, w.to)));
+  const netById = new Map(snap.nets.map((n) => [n.id, n]));
+  const gaugeCache = new Map<string, number>();
+  const gaugeFor = (a: WireEnd, b: WireEnd) => {
+    const k = pairKey(a, b);
+    if (!gaugeCache.has(k)) gaugeCache.set(k, defaultGaugeForEnds(snap, cat, [a, b]));
+    return gaugeCache.get(k)!;
+  };
   // Update derived (unpinned) fields.
-  for (const w of h.wires) {
-    const d = desired.get(pairKey(w.from, w.to))!;
-    w.netId = d.netId;
-    const net = h.nets.find((n) => n.id === w.netId);
-    if (!w.pinned.includes("spec") && !w.cableId) w.spec = settings.defaultWireSpec;
-    if (!w.pinned.includes("gauge") && !w.cableId) w.gauge = defaultGaugeForEnds(h, cat, [w.from, w.to]);
-    if (!w.pinned.includes("color") && !w.cableId) w.color = defaultColorFor(settings, net);
-  }
+  let draftById: Map<string, Wire> | undefined;
+  snap.wires.forEach((sw) => {
+    const d = desired.get(pairKey(sw.from, sw.to));
+    if (!d) return;
+    const need: Partial<Wire> = {};
+    if (sw.netId !== d.netId) need.netId = d.netId;
+    if (!sw.cableId) {
+      if (!sw.pinned.includes("spec") && sw.spec !== settings.defaultWireSpec) need.spec = settings.defaultWireSpec;
+      if (!sw.pinned.includes("gauge")) {
+        const g = gaugeFor(sw.from, sw.to);
+        if (sw.gauge !== g) need.gauge = g;
+      }
+      if (!sw.pinned.includes("color")) {
+        const c = defaultColorFor(settings, netById.get(d.netId));
+        if (!sameColor(c, sw.color)) need.color = c;
+      }
+    }
+    if (Object.keys(need).length) {
+      draftById ??= new Map(h.wires.map((w) => [w.id, w]));
+      Object.assign(draftById.get(sw.id)!, need);
+    }
+  });
   if (!create) return;
+  const labels = new Set(snap.wires.map((w) => w.label));
+  let next = 1;
   for (const [key, d] of desired) {
     if (have.has(key)) continue;
-    const net = h.nets.find((n) => n.id === d.netId);
+    while (labels.has(`W${next}`)) next++;
+    const label = `W${next}`;
+    labels.add(label);
     h.wires.push({
       id: uid(),
-      label: nextLabel(h.wires.map((w) => w.label), "W"),
+      label,
       netId: d.netId,
       from: d.a,
       to: d.b,
       spec: settings.defaultWireSpec,
-      gauge: defaultGaugeForEnds(h, cat, [d.a, d.b]),
-      color: defaultColorFor(settings, net),
+      gauge: gaugeFor(d.a, d.b),
+      color: defaultColorFor(settings, netById.get(d.netId)),
       pinned: [],
       extraLengthMm: 0,
     });
   }
+}
+
+/** Plain (non-proxy) view of a possibly-drafted value, for fast reads. */
+function plain<T>(v: T): T {
+  return isDraft(v) ? current(v) : v;
 }
 
 /** When a wire has no route, auto-create a direct segment between its end nodes (§4.2). */
@@ -177,30 +216,44 @@ function ensureRoutes(h: Harness, settings: Settings) {
 }
 
 function cleanRefs(h: Harness) {
-  const wireIds = new Set(h.wires.map((w) => w.id));
-  const segIds = new Set(h.segments.map((s) => s.id));
-  const nodeIds = new Set(h.nodes.map((n) => n.id));
-  const connIds = new Set(h.connectors.map((c) => c.id));
-  h.twistGroups = h.twistGroups.map((t) => ({ ...t, wireIds: t.wireIds.filter((id) => wireIds.has(id)) })).filter((t) => t.wireIds.length >= 2);
-  const tg = new Set(h.twistGroups.map((t) => t.id));
-  h.cables = h.cables.map((c) => ({ ...c, wireIds: c.wireIds.filter((id) => wireIds.has(id)) })).filter((c) => c.wireIds.length > 0);
-  const cab = new Set(h.cables.map((c) => c.id));
-  h.shields = h.shields.map((s) => ({ ...s, wireIds: s.wireIds.filter((id) => wireIds.has(id)) })).filter((s) => s.wireIds.length > 0 && (!s.cableId || cab.has(s.cableId)));
-  const sh = new Set(h.shields.map((s) => s.id));
-  for (const w of h.wires) {
-    if (w.twistGroupId && !tg.has(w.twistGroupId)) delete w.twistGroupId;
-    if (w.cableId && !cab.has(w.cableId)) delete w.cableId;
-    if (w.shieldId && !sh.has(w.shieldId)) delete w.shieldId;
-  }
-  for (const t of h.twistGroups) for (const id of t.wireIds) h.wires.find((w) => w.id === id)!.twistGroupId = t.id;
-  for (const s of h.shields) for (const id of s.wireIds) h.wires.find((w) => w.id === id)!.shieldId = s.id;
-  for (const c of h.cables) for (const id of c.wireIds) h.wires.find((w) => w.id === id)!.cableId = c.id;
-  for (const l of h.layers) l.extents = l.extents.filter((e) => segIds.has(e.segmentId));
-  h.layers = h.layers.filter((l) => l.extents.length > 0);
-  h.hardware = h.hardware.filter((x) => segIds.has(x.segmentId));
-  h.boots = h.boots.filter((b) => nodeIds.has(b.nodeId));
-  h.potting = h.potting.filter((p) => (p.targetKind === "connector" ? connIds.has(p.targetId) : h.splices.some((s) => s.id === p.targetId)));
-  h.labels = h.labels.filter((l) => {
+  const snap = plain(h);
+  const wireIds = new Set(snap.wires.map((w) => w.id));
+  const segIds = new Set(snap.segments.map((s) => s.id));
+  const nodeIds = new Set(snap.nodes.map((n) => n.id));
+  const connIds = new Set(snap.connectors.map((c) => c.id));
+  const spliceIds = new Set(snap.splices.map((s) => s.id));
+  for (const t of h.twistGroups) prune(t, "wireIds", (id) => wireIds.has(id));
+  prune(h, "twistGroups", (t) => t.wireIds.length >= 2);
+  for (const c of h.cables) prune(c, "wireIds", (id) => wireIds.has(id));
+  prune(h, "cables", (c) => c.wireIds.length > 0);
+  const cab = new Set(plain(h).cables.map((c) => c.id));
+  for (const s of h.shields) prune(s, "wireIds", (id) => wireIds.has(id));
+  prune(h, "shields", (s) => s.wireIds.length > 0 && (!s.cableId || cab.has(s.cableId)));
+  // Wire back-references: compute wanted values, write only differences
+  const p2 = plain(h);
+  const wantTg = new Map<string, string>();
+  const wantSh = new Map<string, string>();
+  const wantCab = new Map<string, string>();
+  for (const t of p2.twistGroups) for (const id of t.wireIds) wantTg.set(id, t.id);
+  for (const s of p2.shields) for (const id of s.wireIds) wantSh.set(id, s.id);
+  for (const c of p2.cables) for (const id of c.wireIds) wantCab.set(id, c.id);
+  p2.wires.forEach((w, i) => {
+    const fix = (key: "twistGroupId" | "shieldId" | "cableId", want?: string) => {
+      if (w[key] === want) return;
+      const dw = h.wires[i]!;
+      if (want) dw[key] = want;
+      else delete dw[key];
+    };
+    fix("twistGroupId", wantTg.get(w.id));
+    fix("shieldId", wantSh.get(w.id));
+    fix("cableId", wantCab.get(w.id));
+  });
+  for (const l of h.layers) prune(l, "extents", (e) => segIds.has(e.segmentId));
+  prune(h, "layers", (l) => l.extents.length > 0);
+  prune(h, "hardware", (x) => segIds.has(x.segmentId));
+  prune(h, "boots", (b) => nodeIds.has(b.nodeId));
+  prune(h, "potting", (p) => (p.targetKind === "connector" ? connIds.has(p.targetId) : spliceIds.has(p.targetId)));
+  prune(h, "labels", (l) => {
     const t = l.attachedTo;
     if (t.kind === "wire") return wireIds.has(t.id);
     if (t.kind === "segment") return segIds.has(t.id);
@@ -258,7 +311,7 @@ function syncTerminations(h: Harness, d: Derived, cat: CatalogIndex) {
   }
   const key = (t: { targetId: string; nodeId: string }) => `${t.targetId}@${t.nodeId}`;
   const wantKeys = new Set(want.map(key));
-  h.terminations = h.terminations.filter((t) => wantKeys.has(key(t)));
+  prune(h, "terminations", (t) => wantKeys.has(key(t)));
   const have = new Set(h.terminations.map(key));
   for (const w of want) if (!have.has(key(w))) h.terminations.push({ id: uid(), targetId: w.targetId, nodeId: w.nodeId, method: w.defaultMethod, partPns: [], auto: true });
   // Drain-to-pin terminations need a pin; keep only valid refs.
@@ -267,7 +320,7 @@ function syncTerminations(h: Harness, d: Derived, cat: CatalogIndex) {
 
 function syncClamps(h: Harness, d: Derived, cat: CatalogIndex, doubleBand: boolean) {
   const termIds = new Set(h.terminations.map((t) => t.id));
-  h.clamps = h.clamps.filter((c) => !c.terminationId || termIds.has(c.terminationId));
+  prune(h, "clamps", (c) => !c.terminationId || termIds.has(c.terminationId));
   for (const t of h.terminations) {
     const needs = t.method === "band360" || t.method === "junction";
     const existing = h.clamps.find((c) => c.terminationId === t.id);
@@ -372,7 +425,7 @@ function autoSizeParts(h: Harness, d: Derived, cat: CatalogIndex) {
 }
 
 function syncRuleBoots(h: Harness, cat: CatalogIndex, requireBoots: boolean) {
-  h.boots = h.boots.filter((b) => b.rule !== "pedigree" || requireBoots);
+  prune(h, "boots", (b) => b.rule !== "pedigree" || requireBoots);
   if (!requireBoots) return;
   for (const c of h.connectors) {
     if (!c.backshell) continue;
@@ -410,7 +463,7 @@ function syncLabels(h: Harness, settings: Settings, markings: { text: string; ty
   const k = (l: Pick<Label, "rule" | "attachedTo">) => `${l.rule}|${l.attachedTo.kind}|${l.attachedTo.id}|${l.attachedTo.nodeId ?? ""}`;
   const wantMap = new Map(want.map((w) => [k(w), w]));
   // Remove unpinned auto labels no longer wanted.
-  h.labels = h.labels.filter((l) => !l.auto || l.pinned || wantMap.has(k(l)));
+  prune(h, "labels", (l) => !l.auto || l.pinned || wantMap.has(k(l)));
   const have = new Set(h.labels.filter((l) => l.auto).map(k));
   for (const [key, w] of wantMap) {
     if (have.has(key) || h.suppressedAuto.includes(`label:${key}`)) continue;
@@ -428,19 +481,27 @@ export function normalize(p: Project, ctx: SyncContext): void {
   const rev = currentRevision(p);
   const h = rev.harness;
   const { cat } = ctx;
-  ensureConnectorNodes(h);
-  cleanNets(h, cat);
-  syncSplices(h, cat);
-  syncWires(h, p.settings, cat, p.settings.autoCommit);
-  ensureRoutes(h, p.settings);
-  cleanRefs(h);
+  const T = (globalThis as { __hsProf?: Record<string, number> }).__hsProf;
+  const tm = <R>(name: string, f: () => R): R => {
+    if (!T) return f();
+    const t0 = performance.now();
+    const r = f();
+    T[name] = (T[name] ?? 0) + performance.now() - t0;
+    return r;
+  };
+  tm("nodes", () => ensureConnectorNodes(h));
+  tm("nets", () => cleanNets(h, cat));
+  tm("splices", () => syncSplices(h, cat));
+  tm("wires", () => syncWires(h, p.settings, cat, p.settings.autoCommit));
+  tm("routes", () => ensureRoutes(h, p.settings));
+  tm("refs", () => cleanRefs(h));
   const ped = resolvePedigree(p.pedigreeScheme, rev.activePedigreeId);
-  let d = derive(h, cat, p.settings);
-  syncTerminations(h, d, cat);
-  syncRuleBoots(h, cat, !!ped.process.requireBoots);
-  autoSizeParts(h, d, cat);
-  d = derive(h, cat, p.settings);
-  syncClamps(h, d, cat, !!ped.process.doubleBandClamps);
-  syncLabels(h, p.settings, ped.markings);
-  autoSizeParts(h, d, cat);
+  let d = tm("derive1", () => derive(plain(h), cat, p.settings));
+  tm("terms", () => syncTerminations(h, d, cat));
+  tm("boots", () => syncRuleBoots(h, cat, !!ped.process.requireBoots));
+  tm("size1", () => autoSizeParts(h, d, cat));
+  d = tm("derive2", () => derive(plain(h), cat, p.settings));
+  tm("clamps", () => syncClamps(h, d, cat, !!ped.process.doubleBandClamps));
+  tm("labels", () => syncLabels(h, p.settings, ped.markings));
+  tm("size2", () => autoSizeParts(h, d, cat));
 }

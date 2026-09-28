@@ -185,9 +185,10 @@ export function resolveConnectorPn(input: string | undefined, cat: CatalogIndex,
     if (uniq.length) return { input: raw, status: "fuzzy", pn: uniq[0], candidates: uniq };
   }
   // No PN: suggest the smallest insert that has all needed pin ids
+  const machine = (a: { special?: string; sizes: Record<string, number> }) => !a.special && Object.keys(a.sizes).every((s) => ["22D", "20", "16", "12"].includes(s));
   const fits = [...cat.arrangements.values()]
     .filter((a) => !a.inactive && pinsNeeded.every((pin) => a.cavities.some((c) => c.id === pin)) && a.contactCount >= pinsNeeded.length)
-    .sort((a, b) => a.contactCount - b.contactCount || a.shellSize - b.shellSize)
+    .sort((a, b) => Number(machine(b)) - Number(machine(a)) || Number(b.status === "verified") - Number(a.status === "verified") || a.contactCount - b.contactCount || a.shellSize - b.shellSize)
     .slice(0, 5)
     .map((a) => buildD38999({ slash: "26", finish: "W", shellSize: a.shellSize, insert: a.insert, contactStyle: "S", keying: "N" }));
   return { input: raw, status: "none", pn: fits[0], candidates: fits };
@@ -204,17 +205,29 @@ export function buildImportCommands(project: Project, cat: CatalogIndex, imp: Ma
   const idOf = new Map<string, string>();
   const newConns = imp.connectors.filter((c) => !h.connectors.some((x) => x.refDes === c.refDes));
   const x0 = h.connectors.length ? Math.max(...h.connectors.map((c) => c.position.x)) + 500 : 0;
-  const n = newConns.length;
-  newConns.forEach((c, i) => {
-    const id = uid();
-    idOf.set(c.refDes, id);
-    const pn = pns[c.refDes] ?? c.pn ?? "";
-    const left = n <= 2 ? i === 0 : i < Math.ceil(n / 2);
-    const idxInCol = n <= 2 ? 0 : left ? i : i - Math.ceil(n / 2);
-    const colCount = n <= 2 ? 1 : left ? Math.ceil(n / 2) : Math.floor(n / 2);
-    const y = (idxInCol - (colCount - 1) / 2) * 380;
-    commands.push(addConnector({ id, pn, position: { x: x0 + (left ? 0 : 800), y }, rotation: left ? 0 : 180, refDes: c.refDes }));
-  });
+  // Sources (mostly "from") go in the left column, destinations on the right.
+  const fromCount = new Map<string, number>();
+  for (const r of imp.rows) {
+    fromCount.set(r.from.conn, (fromCount.get(r.from.conn) ?? 0) + 1);
+    fromCount.set(r.to.conn, (fromCount.get(r.to.conn) ?? 0) - 1);
+  }
+  let leftCol = newConns.filter((c) => (fromCount.get(c.refDes) ?? 0) > 0);
+  let rightCol = newConns.filter((c) => !leftCol.includes(c));
+  if (!leftCol.length || !rightCol.length) {
+    const half = Math.ceil(newConns.length / 2);
+    leftCol = newConns.slice(0, half);
+    rightCol = newConns.slice(half);
+  }
+  const place = (list: typeof newConns, left: boolean) =>
+    list.forEach((c, i) => {
+      const id = uid();
+      idOf.set(c.refDes, id);
+      const pn = pns[c.refDes] ?? c.pn ?? "";
+      const y = (i - (list.length - 1) / 2) * 420;
+      commands.push(addConnector({ id, pn, position: { x: x0 + (left ? 0 : 900), y }, rotation: left ? 0 : 180, refDes: c.refDes }));
+    });
+  place(leftCol, true);
+  place(rightCol, false);
   for (const c of h.connectors) idOf.set(c.refDes, c.id);
   // Signals: each row puts its signal (or a generated name) on both pins
   const byConn = new Map<string, { cavityId: string; name: string }[]>();

@@ -1,6 +1,20 @@
 import type { CatalogIndex } from "./catalog";
 import type { ConnectorInstance, Harness, Net, NetMember, Project, Revision, Settings, WireEnd } from "./schema";
 
+/**
+ * Filter an array property, assigning only when something is removed.
+ * Avoids whole-array replace patches (large undo entries) on no-op normalization passes.
+ */
+export function prune<T, K extends keyof T>(obj: T, key: K, keep: (x: T[K] extends (infer E)[] ? E : never) => boolean): void {
+  const arr = obj[key] as unknown as unknown[];
+  let drop = false;
+  for (const x of arr) if (!keep(x as never)) {
+    drop = true;
+    break;
+  }
+  if (drop) obj[key] = arr.filter((x) => keep(x as never)) as unknown as T[K];
+}
+
 let uidGen: () => string = () => globalThis.crypto.randomUUID();
 
 export function uid(): string {

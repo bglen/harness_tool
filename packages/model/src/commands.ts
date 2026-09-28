@@ -6,7 +6,7 @@ function snapshot<T>(v: T): T {
 }
 import type { CatalogIndex } from "./catalog";
 import { derive } from "./derive";
-import { connectorById, currentHarness, currentRevision, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, uid } from "./helpers";
+import { connectorById, currentHarness, currentRevision, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, prune, uid } from "./helpers";
 import { normalizePn } from "./pn38999";
 import type {
   Accessory,
@@ -119,7 +119,7 @@ function H(p: Project): Harness {
 }
 
 function setPinNet(h: Harness, m: NetMember, netId: string | null) {
-  for (const n of h.nets) n.members = n.members.filter((x) => !(x.connectorId === m.connectorId && x.cavityId === m.cavityId));
+  for (const n of h.nets) prune(n, "members", (x) => !(x.connectorId === m.connectorId && x.cavityId === m.cavityId));
   if (netId) h.nets.find((n) => n.id === netId)!.members.push({ ...m });
 }
 

@@ -364,8 +364,13 @@ export class CatalogIndex {
     return part;
   }
 
+  private cavityMaps = new Map<string, Map<string, Cavity>>();
   cavity(pn: string, cavityId: string): Cavity | undefined {
-    return this.connector(pn)?.arrangement.cavities.find((c) => c.id === cavityId);
+    const part = this.connector(pn);
+    if (!part) return undefined;
+    let m = this.cavityMaps.get(part.arrangement.id);
+    if (!m) this.cavityMaps.set(part.arrangement.id, (m = new Map(part.arrangement.cavities.map((c) => [c.id, c]))));
+    return m.get(cavityId);
   }
 
   wire(spec: string, gauge: number): WireSpec | undefined {

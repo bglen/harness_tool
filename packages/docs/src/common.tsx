@@ -103,6 +103,11 @@ export function ExportBanner({ text }: { text: string }) {
 
 export const DEMO_FOOTER = "Demo pricing — not a quotation";
 
+/** Replace glyphs missing from the embedded Latin font subset (Ω, arrows, ≤/≥). */
+export function pdfSafe(s: string): string {
+  return s.replace(/MΩ/g, "Mohm").replace(/mΩ/g, "mohm").replace(/Ω/g, "ohm").replace(/→/g, "/").replace(/≤/g, "<=").replace(/≥/g, ">=");
+}
+
 export function fmtLen(mm: number, units: "mm" | "in", dec?: number) {
   return units === "in" ? `${(mm / 25.4).toFixed(dec ?? 2)} in` : `${mm.toFixed(dec ?? 0)} mm`;
 }

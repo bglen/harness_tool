@@ -34,6 +34,7 @@ root.render(
     const p = last ? await s.store.load(last).catch(() => undefined) : undefined;
     if (p) useProject.getState().init(p);
     else createNewProject();
+    if (import.meta.env.DEV) (window as unknown as Record<string, unknown>).__hs = { useProject, useUi, services: s, openExample: (await import("./lib/projects")).openExample };
     root.render(
       <StrictMode>
         <App />
