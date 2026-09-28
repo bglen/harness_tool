@@ -21,7 +21,7 @@ export const REPORT_SECTIONS = [
 ] as const;
 export type SectionId = (typeof REPORT_SECTIONS)[number]["id"];
 
-const STATUS_TEXT = { ready: "Ready for automated build", manual: "Buildable with manual steps", notBuildable: "Not buildable" } as const;
+const STATUS_TEXT = { ready: "Ready for automated build", manual: "Buildable with manual steps", incomplete: "Needs review: not all checks could be confirmed", notBuildable: "Not buildable" } as const;
 
 /** Deterministic, template-based summary paragraph (not LLM-generated) (§13.2). */
 export function autoSummary(data: DocData): string {
@@ -55,7 +55,15 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function ReportDocument({ data, sections, hideQuote }: { data: DocData; sections?: Partial<Record<SectionId, boolean>>; hideQuote?: boolean }) {
+/** Audience redaction applied to every section (feedback §7): prices/costs and supply (stock, lead times). */
+export interface Redaction {
+  pricing?: boolean;
+  supply?: boolean;
+}
+
+export function ReportDocument({ data, sections, hideQuote: hideQuoteIn, redact = {} }: { data: DocData; sections?: Partial<Record<SectionId, boolean>>; hideQuote?: boolean; redact?: Redaction }) {
+  const hideQuote = hideQuoteIn || !!redact.pricing;
+  const hideSupply = !!redact.supply;
   const { project, rev, ped, dfm, bom, quote, d } = data;
   const u = project.units;
   const h = rev.harness;
@@ -68,7 +76,7 @@ export function ReportDocument({ data, sections, hideQuote }: { data: DocData; s
   const summary = project.report.summary || autoSummary(data);
   const maxOd = Math.max(0, ...[...d.segOuterOdMm.values()]);
   const status = STATUS_TEXT[dfm.manufacturability.status];
-  const stampColor = dfm.manufacturability.status === "ready" ? C.pass : dfm.manufacturability.status === "manual" ? C.warning : C.error;
+  const stampColor = dfm.manufacturability.status === "ready" ? C.pass : dfm.manufacturability.status === "manual" || dfm.manufacturability.status === "incomplete" ? C.warning : C.error;
   const pageStyle = { padding: 42, paddingBottom: 48, fontFamily: fontUi(), fontSize: 8.5, color: C.text };
   const footer = (priced: boolean) => (
     <View fixed style={{ position: "absolute", bottom: 18, left: 42, right: 42, flexDirection: "row", justifyContent: "space-between" }}>
@@ -269,17 +277,25 @@ export function ReportDocument({ data, sections, hideQuote }: { data: DocData; s
         )}
         {on("components") && (
           <Section title="5 Components & supply chain">
-            <Text style={s.p}>Material cost {money(bom.materialCost)} per unit at {sel.qty} units; {bom.lines.length} BOM lines. Prices and stock as of {bom.asOf} (demo data).</Text>
-            {[...catCost].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([c, v]) => (
-              <View key={c} style={{ flexDirection: "row", alignItems: "center", marginBottom: 1 }}>
-                <Text style={{ width: 90, fontSize: 7.5 }}>{c}</Text>
-                <Bar w={(v / catMax) * 300} h={6} fill={C.accent} />
-                <Text style={{ fontSize: 7.5, marginLeft: 4 }}>{money(v)}</Text>
-              </View>
-            ))}
-            <Text style={s.h2}>Lead-time analysis</Text>
-            {quote?.criticalPart && <Text style={s.p}>Critical path: {quote.criticalPart.pn} sets the ship date ({quote.criticalPart.leadDays} days).</Text>}
-            <Table cols={[{ label: "Part number", w: 2, mono: true }, { label: "Lead", w: 0.6, align: "right" }, { label: "Stock", w: 0.6, align: "right" }, { label: "Lifecycle", w: 0.8 }, { label: "Alternate", w: 2, mono: true }]} rows={leadRank.map((l) => [l.pn, `${l.leadDays} d`, l.stock, l.lifecycle, l.alternates[0] ? `${l.alternates[0].alternate} (${l.alternates[0].relationship})` : "—"])} />
+            <Text style={s.p}>
+              {bom.lines.length} BOM lines.{hideQuote ? "" : ` Material cost ${money(bom.materialCost)} per unit at ${sel.qty} units.`}
+              {hideQuote && hideSupply ? "" : ` Supply data as of ${bom.asOfRange.oldest}${bom.asOfRange.newest !== bom.asOfRange.oldest ? ` to ${bom.asOfRange.newest}` : ""} (demo data).`}
+            </Text>
+            {!hideQuote &&
+              [...catCost].filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]).map(([c, v]) => (
+                <View key={c} style={{ flexDirection: "row", alignItems: "center", marginBottom: 1 }}>
+                  <Text style={{ width: 90, fontSize: 7.5 }}>{c}</Text>
+                  <Bar w={(v / catMax) * 300} h={6} fill={C.accent} />
+                  <Text style={{ fontSize: 7.5, marginLeft: 4 }}>{money(v)}</Text>
+                </View>
+              ))}
+            {!hideSupply && (
+              <>
+                <Text style={s.h2}>Lead-time analysis</Text>
+                <Text style={s.p}>{bom.criticalPath ? `Critical path at ${sel.qty} units: ${bom.criticalPath.pn} (${bom.criticalPath.stock} in stock, ${bom.criticalPath.leadDays} days).` : `Stock covers ${sel.qty} units for every line.`}</Text>
+                <Table cols={[{ label: "Part number", w: 2, mono: true }, { label: "Lead", w: 0.6, align: "right" }, { label: "Stock", w: 0.6, align: "right" }, { label: "Covers order", w: 0.7 }, { label: "Lifecycle", w: 0.8 }, { label: "Alternate", w: 2, mono: true }]} rows={leadRank.map((l) => [l.pn, `${l.leadDays} d`, l.stock, l.stockSufficient ? "yes" : "no", l.lifecycle, l.alternates[0] ? `${l.alternates[0].alternate} (${l.alternates[0].relationship})` : "—"])} />
+              </>
+            )}
             {bom.lines.some((l) => l.customerFurnished) && <Text style={s.p}>Customer-furnished: {bom.lines.filter((l) => l.customerFurnished).map((l) => l.pn).join(", ")}.</Text>}
           </Section>
         )}
@@ -344,7 +360,7 @@ export function ReportDocument({ data, sections, hideQuote }: { data: DocData; s
           <Section title="Appendix A — wire list, BOM, passed checks, metadata">
             <Table cols={[{ label: "Wire", w: 0.6, mono: true }, { label: "Net", w: 1.5, mono: true }, { label: "From", w: 0.9, mono: true }, { label: "To", w: 0.9, mono: true }, { label: "AWG", w: 0.4 }, { label: "Color", w: 1.6 }, { label: "Length", w: 0.8, align: "right" }]} rows={data.wireRows.map((w) => [w.id, w.net, w.from, w.to, w.gauge, <Swatch key="s" codes={w.colorCode} text={w.color} wire={data.printWire} />, fmtLen(w.lengthMm, u)])} />
             <Text style={s.h2}>BOM</Text>
-            <Table cols={[{ label: "#", w: 0.3 }, { label: "Part number", w: 1.8, mono: true }, { label: "Description", w: 3 }, { label: "Qty", w: 0.5, align: "right" }, { label: "UoM", w: 0.4 }, ...(hideQuote ? [] : [{ label: "Ext. (demo)", w: 0.8, align: "right" as const }])]} rows={bom.lines.map((l) => [l.line, l.pn, l.description, l.uom === "ea" ? l.qty : l.qty.toFixed(2), l.uom, ...(hideQuote ? [] : [money(l.extCost)])])} />
+            <Table cols={[{ label: "#", w: 0.3 }, { label: "Part number", w: 1.8, mono: true }, { label: "Description", w: 3 }, { label: "Qty", w: 0.5, align: "right" }, { label: "UoM", w: 0.4 }, ...(hideQuote ? [] : [{ label: "Ext. (demo)", w: 0.8, align: "right" as const }])]} rows={bom.lines.map((l) => [l.line, l.pn, l.description, l.uom === "ea" ? l.qty : (Math.ceil(l.qty * 1000 - 1e-9) / 1000).toFixed(3), l.uom, ...(hideQuote ? [] : [money(l.extCost)])])} />
             <Text style={s.h2}>Passed checks</Text>
             <Text style={{ ...s.small, lineHeight: 1.4 }}>{dfm.results.filter((r) => r.status === "pass").map((r) => `${r.eff.rule.id} ${r.eff.rule.title}`).join(" · ")}</Text>
             <Text style={s.h2}>Report metadata</Text>

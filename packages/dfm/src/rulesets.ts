@@ -18,7 +18,10 @@ export interface ParsedRuleset {
 }
 
 /** Parse and validate a .harnessrules.json file. Only data (and declarative custom rules) are accepted, never code. */
+export const RULESET_LIMITS = { bytes: 1_000_000, rules: 1000, conditionsPerRule: 20 };
+
 export function parseRulesetFile(text: string): ParsedRuleset {
+  if (text.length > RULESET_LIMITS.bytes) return { errors: [`File is larger than ${RULESET_LIMITS.bytes / 1e6} MB.`] };
   let json: unknown;
   try {
     json = JSON.parse(text);
@@ -28,6 +31,9 @@ export function parseRulesetFile(text: string): ParsedRuleset {
   if (/"(function|eval|script)"\s*:|=>|function\s*\(/.test(text)) return { errors: ["Rulesets may contain data only (no executable code)."] };
   const r = RulesetSchema.safeParse(json);
   if (!r.success) return { errors: r.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`) };
+  if (r.data.rules.length > RULESET_LIMITS.rules) return { errors: [`More than ${RULESET_LIMITS.rules} rules.`] };
+  const big = r.data.rules.find((x) => x.custom && x.custom.where.length + x.custom.require.length > RULESET_LIMITS.conditionsPerRule);
+  if (big) return { errors: [`Rule ${big.id} has more than ${RULESET_LIMITS.conditionsPerRule} conditions.`] };
   return { ruleset: r.data, errors: [] };
 }
 

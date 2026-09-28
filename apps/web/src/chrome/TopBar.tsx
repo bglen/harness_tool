@@ -1,10 +1,10 @@
 import * as DM from "@radix-ui/react-dropdown-menu";
 import { currentRevision, formatMoney, resolvePedigree, setActivePedigree, setProjectProps } from "@hs/model";
-import { Check, ChevronDown, CircleAlert, Cloud, CloudOff, Download, FileInput, Loader2, Redo2, Share2, Undo2 } from "lucide-react";
+import { Check, ChevronDown, CircleAlert, CloudOff, Download, FileInput, HardDrive, Loader2, Redo2, Share2, Undo2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { dispatch, useProject } from "../store/project";
 import { useUi } from "../store/ui";
-import { useActiveQuote, useAnalysis } from "../store/analysis";
+import { activePedigreeOf, useActiveQuote, useAnalysis } from "../store/analysis";
 import { cx, IconButton, Kbd, Tip } from "../ui/primitives";
 import { runAction } from "../lib/actions";
 import { EXPORTS } from "../lib/exports";
@@ -43,7 +43,9 @@ function PedigreeSwitcher() {
   const byPed = useAnalysis((s) => s.byPedigree);
   const quotes = useAnalysis((s) => s.quotes);
   const [hover, setHover] = useState<string | null>(null);
-  const active = byPed[rev.activePedigreeId];
+  const activeId = activePedigreeOf(project);
+  const released = rev.frozen;
+  const active = byPed[activeId];
   const sel = project.quote.selected;
   const cell = (pid: string) => quotes[pid]?.cells.find((c) => c.qty === sel.qty && c.tier === sel.tier);
   const preview = (pid: string) => {
@@ -52,10 +54,10 @@ function PedigreeSwitcher() {
     const errs = a.dfm.manufacturability.errors + a.dfm.design.errors - (active.dfm.manufacturability.errors + active.dfm.design.errors);
     const warns = a.dfm.manufacturability.warnings + a.dfm.design.warnings - (active.dfm.manufacturability.warnings + active.dfm.design.warnings);
     const pa = resolvePedigree(project.pedigreeScheme, pid);
-    const pb = resolvePedigree(project.pedigreeScheme, rev.activePedigreeId);
+    const pb = resolvePedigree(project.pedigreeScheme, activeId);
     const added = pa.inspections.filter((i) => !pb.inspections.some((j) => j.typeId === i.typeId && j.sampling === i.sampling)).map((i) => `${svc().inspections.find((t) => t.id === i.typeId)?.name ?? i.typeId} ${i.sampling}`);
     const c1 = cell(pid);
-    const c0 = cell(rev.activePedigreeId);
+    const c0 = cell(activeId);
     const parts: string[] = [];
     parts.push(`${errs >= 0 ? "+" : ""}${errs} errors, ${warns >= 0 ? "+" : ""}${warns} warnings`);
     if (added.length) parts.push(`adds ${added.slice(0, 3).join(", ")}${added.length > 3 ? "…" : ""}`);
@@ -69,10 +71,10 @@ function PedigreeSwitcher() {
   };
   return (
     <DM.Root onOpenChange={(o) => !o && setHover(null)}>
-      <Tip label="Pedigree (build class): switch to re-run checks, quote and documents" side="bottom">
+      <Tip label={released ? "Released revision: its build class is fixed. Use Compare to see other classes." : "Pedigree (build class): switch to re-run checks, quote and documents"} side="bottom">
         <DM.Trigger className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent" aria-label="Pedigree">
           <span className="inline-flex items-center gap-1">
-            <PedigreePill id={rev.activePedigreeId} />
+            <PedigreePill id={activeId} />
             <ChevronDown size={12} className="text-text-tertiary" />
           </span>
         </DM.Trigger>
@@ -80,15 +82,16 @@ function PedigreeSwitcher() {
       <DM.Portal>
         <DM.Content className={cx(menuCls, "w-[380px]")} sideOffset={6} align="start">
           <DM.Label className="label-caps px-2 py-1">Pedigree: {project.pedigreeScheme.name}</DM.Label>
+          {released && <div className="px-2 pb-1 text-2xs text-text-secondary">Rev {rev.label} was released as this class and can't be switched. Hover a class to preview its differences.</div>}
           {[...project.pedigreeScheme.pedigrees]
             .sort((a, b) => a.rank - b.rank)
             .map((p) => (
-              <DM.Item key={p.id} className={cx(itemCls, "flex-col items-start")} onSelect={() => dispatch(setActivePedigree({ id: p.id }), `Switch pedigree to ${p.name}`)} onMouseEnter={() => setHover(p.id)}>
+              <DM.Item key={p.id} className={cx(itemCls, "flex-col items-start")} onSelect={(e) => (released ? e.preventDefault() : dispatch(setActivePedigree({ id: p.id }), `Switch pedigree to ${p.name}`))} onMouseEnter={() => setHover(p.id)}>
                 <span className="flex w-full items-center gap-2">
                   <PedigreePill id={p.id} />
-                  {p.id === rev.activePedigreeId && <Check size={14} className="ml-auto text-accent" />}
+                  {p.id === activeId && <Check size={14} className="ml-auto text-accent" />}
                 </span>
-                {hover === p.id && p.id !== rev.activePedigreeId && <span className="pl-1 text-2xs text-text-secondary">{preview(p.id)}</span>}
+                {hover === p.id && p.id !== activeId && <span className="pl-1 text-2xs text-text-secondary">{preview(p.id)}</span>}
               </DM.Item>
             ))}
           <DM.Separator className="my-1 h-px bg-border-subtle" />
@@ -100,14 +103,43 @@ function PedigreeSwitcher() {
   );
 }
 
+/** Honest persistence state: local to this browser; nothing is uploaded in Phase 1 (feedback §6). */
 function SaveState() {
   const s = useProject((x) => x.saveState);
-  const map = { saved: { icon: <Cloud size={14} />, text: "Saved" }, saving: { icon: <Loader2 size={14} className="animate-spin" />, text: "Saving…" }, unsaved: { icon: <Cloud size={14} />, text: "Unsaved" }, error: { icon: <CloudOff size={14} />, text: "Save failed" } }[s];
+  const err = useProject((x) => x.saveError);
+  const conflict = useProject((x) => x.conflict);
+  const map = {
+    saved: { icon: <HardDrive size={14} />, text: "Saved on this device" },
+    saving: { icon: <Loader2 size={14} className="animate-spin" />, text: "Saving on this device…" },
+    unsaved: { icon: <HardDrive size={14} />, text: "Not saved yet" },
+    error: { icon: <CloudOff size={14} />, text: "Not saved: storage failed" },
+    conflict: { icon: <CircleAlert size={14} />, text: "Changed in another tab" },
+  }[s];
+  const tip = s === "error" ? `${err ?? "Storage failed"} Your edits are still open here; Ctrl+S downloads a copy.` : s === "conflict" ? `Another tab saved this project at ${conflict?.updated.slice(11, 19) ?? "?"}. Autosave is paused so neither copy is lost.` : "Autosaved in this browser's storage only (IndexedDB). Nothing is uploaded. Ctrl+S downloads a .harness.json file.";
+  if (s === "conflict" || s === "error")
+    return (
+      <DM.Root>
+        <DM.Trigger className={cx("flex items-center gap-1 rounded-control px-1 text-xs", "text-status-error hover:bg-bg-hover")} aria-label={map.text} title={tip}>
+          {map.icon}
+          {map.text}
+          <ChevronDown size={12} />
+        </DM.Trigger>
+        <DM.Portal>
+          <DM.Content className={cx(menuCls, "w-[300px]")} sideOffset={6} align="start">
+            <div className="px-2 py-1 text-2xs text-text-secondary">{tip}</div>
+            {s === "conflict" && <Item onSelect={() => void useProject.getState().reloadFromStorage()}>Load the other tab's version (discard mine)</Item>}
+            <Item onSelect={() => void useProject.getState().saveNow({ force: true })}>{s === "conflict" ? "Keep mine (overwrite the other tab's save)" : "Retry save"}</Item>
+            <Item onSelect={() => runAction("save")}>Download a copy (.harness.json)</Item>
+          </DM.Content>
+        </DM.Portal>
+      </DM.Root>
+    );
   return (
-    <Tip label="Autosaved in this browser (IndexedDB). Ctrl+S downloads a .harness.json file." side="bottom">
-      <span className={cx("flex items-center gap-1 text-xs", s === "error" ? "text-status-error" : "text-text-tertiary")}>
+    <Tip label={tip} side="bottom">
+      <span className="flex items-center gap-1 whitespace-nowrap text-xs text-text-tertiary">
         {map.icon}
-        {map.text}
+        <span className="hidden xl:inline">{map.text}</span>
+        <span className="xl:hidden">{s === "saved" ? "Saved locally" : s === "saving" ? "Saving…" : "Not saved"}</span>
       </span>
     </Tip>
   );
@@ -128,7 +160,7 @@ export function OrderButton({ compact }: { compact?: boolean }) {
   return (
     <Tip label={disabledReason ?? (cell ? `${sel.qty} units · ${tier?.name} · ships ${new Date(cell.shipDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })} (demo)` : "Calculating…")} side="bottom">
       <span>
-        <button disabled={!!disabledReason} onClick={() => ui.openDialog("order")} className="flex h-8 items-center gap-2 rounded-control bg-accent px-3 text-sm font-semibold text-accent-on hover:brightness-110 disabled:opacity-50">
+        <button disabled={!!disabledReason} onClick={() => ui.openDialog("order")} className="flex h-8 items-center gap-2 whitespace-nowrap rounded-control bg-accent px-3 text-sm font-semibold text-accent-on hover:brightness-110 disabled:opacity-50">
           {label}
           {!compact && cell && !empty && (
             <span className={cx("tnum border-l border-accent-on/30 pl-2", updating && "opacity-60")}>
@@ -155,7 +187,7 @@ export function TopBar() {
           <rect width="32" height="32" rx="7" fill="var(--bg-surface-2)" />
           <path d="M6 16h7l3-6 3 12 3-6h4" stroke="var(--accent)" strokeWidth="2.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <span className="hidden text-sm font-semibold lg:inline">Harness Studio</span>
+        <span className="hidden whitespace-nowrap text-sm font-semibold 2xl:inline">Harness Studio</span>
       </div>
       <div className="h-5 w-px bg-border-subtle" />
       {/* Project */}
@@ -164,8 +196,8 @@ export function TopBar() {
       ) : (
         <DM.Root>
           <DM.Trigger className="flex items-center gap-1 rounded-control px-1.5 py-1 text-sm hover:bg-bg-hover" aria-label="Project menu">
-            <span className="max-w-[220px] truncate font-medium">{project.name}</span>
-            <span className="mono text-xs text-text-tertiary">{project.partNumber}</span>
+            <span className="max-w-[200px] truncate font-medium">{project.name}</span>
+            <span className="mono whitespace-nowrap text-xs text-text-tertiary">{project.partNumber}</span>
             <ChevronDown size={12} className="text-text-tertiary" />
           </DM.Trigger>
           <DM.Portal>
@@ -187,8 +219,8 @@ export function TopBar() {
       )}
       <DM.Root>
         <DM.Trigger className="flex items-center gap-1 rounded-control px-1.5 py-1 text-sm hover:bg-bg-hover" aria-label="Revision">
-          <span className="mono">Rev {rev.label}</span>
-          {rev.frozen && <span className="text-2xs text-text-tertiary">(frozen)</span>}
+          <span className="mono whitespace-nowrap">Rev {rev.label}</span>
+          {rev.frozen && <span className="whitespace-nowrap text-2xs text-text-tertiary">(released)</span>}
           <ChevronDown size={12} className="text-text-tertiary" />
         </DM.Trigger>
         <DM.Portal>

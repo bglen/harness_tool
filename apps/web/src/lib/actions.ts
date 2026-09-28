@@ -1,5 +1,7 @@
 import {
+  addBreakout,
   addNote,
+  combineSegments,
   commitRatsnest,
   currentHarness,
   currentRevision,
@@ -27,6 +29,7 @@ import { useUi, type SelKind } from "../store/ui";
 import { copySelection, pasteClipboard } from "./clipboard";
 import { downloadProject, openProjectFile } from "./files";
 import { zoomToFit, screenToCanvas } from "./viewport";
+import { nodePos } from "./geometry";
 
 export interface ActionCtx {
   kind: SelKind | null;
@@ -48,6 +51,13 @@ export interface Action {
   danger?: boolean;
   when?: (c: ActionCtx) => boolean;
   run: (c: ActionCtx) => void;
+}
+
+function sharedNode(h: Harness, a: string, b: string): string | undefined {
+  const s1 = h.segments.find((x) => x.id === a);
+  const s2 = h.segments.find((x) => x.id === b);
+  if (!s1 || !s2) return undefined;
+  return [s1.a, s1.b].find((n) => n === s2.a || n === s2.b);
 }
 
 const pop = (kind: string, c: ActionCtx, data?: unknown) => useUi.getState().openPopover({ kind, screen: c.anchor, data: data ?? { ids: c.ids, kind: c.kind } });
@@ -214,6 +224,51 @@ export const ACTIONS: Action[] = [
   { id: "sLength", label: "Length", group: "Segment", icon: "ruler", bar: ["segment"], menu: ["segment"], when: (c) => c.ids.length === 1, run: (c) => pop("segmentLength", c) },
   { id: "sCovering", label: "Covering", group: "Segment", icon: "layers", bar: ["segment"], menu: ["segment"], run: (c) => pop("covering", c) },
   { id: "sTies", label: "Tie-downs", group: "Segment", icon: "anchor", bar: ["segment"], menu: ["segment"], when: (c) => c.ids.length === 1, run: (c) => pop("tiedowns", c) },
+  {
+    id: "sBreakout",
+    label: "Add breakout",
+    group: "Segment",
+    icon: "git-branch",
+    bar: ["segment"],
+    menu: ["segment"],
+    when: (c) => c.ids.length === 1,
+    run: (c) => {
+      const s = c.h.segments.find((x) => x.id === c.ids[0]);
+      if (!s) return;
+      const a = nodePos(c.h, s.a);
+      const b = nodePos(c.h, s.b);
+      const nodeId = uid();
+      if (dispatch(addBreakout({ segmentId: s.id, t: 0.5, nodeId, position: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }), "Add breakout")) {
+        useUi.getState().select("node", [nodeId]);
+        useUi.getState().toast({ kind: "info", text: "Breakout added. Drag it to move it, drop it on a connector or another breakout to join them, or drag from a bundle to branch off here." });
+      }
+    },
+  },
+  {
+    id: "sCombine",
+    label: "Combine into trunk",
+    group: "Segment",
+    icon: "git-merge",
+    bar: ["segment"],
+    menu: ["segment"],
+    when: (c) => c.ids.length === 2 && !!sharedNode(c.h, c.ids[0]!, c.ids[1]!),
+    run: (c) => {
+      const [s1, s2] = c.ids.map((id) => c.h.segments.find((x) => x.id === id)!) as [Harness["segments"][0], Harness["segments"][0]];
+      const shared = sharedNode(c.h, s1.id, s2.id)!;
+      const far = (s: typeof s1) => nodePos(c.h, s.a === shared ? s.b : s.a);
+      const p0 = nodePos(c.h, shared);
+      const f1 = far(s1);
+      const f2 = far(s2);
+      const frac = 0.4;
+      const trunkMm = Math.max(5, Math.round((Math.min(s1.lengthMm, s2.lengthMm) * frac) / 5) * 5);
+      const position = { x: p0.x + ((f1.x + f2.x) / 2 - p0.x) * frac, y: p0.y + ((f1.y + f2.y) / 2 - p0.y) * frac };
+      const nodeId = uid();
+      if (dispatch(combineSegments({ segmentIds: [s1.id, s2.id], nodeId, trunkMm, position }), "Combine into trunk")) {
+        useUi.getState().select("node", [nodeId]);
+        useUi.getState().toast({ kind: "info", text: `Combined into a common trunk (${trunkMm} mm, taken out of both branches so wire lengths are kept). Click the trunk's length to set it.` });
+      }
+    },
+  },
   { id: "nBoot", label: "Boot / transition", group: "Node", icon: "triangle", bar: ["node"], menu: ["node", "connector"], when: (c) => c.ids.length === 1, run: (c) => pop("boot", c) },
   { id: "nTerm", label: "Terminations", group: "Node", icon: "circle-slash", menu: ["node", "connector"], when: (c) => c.ids.length === 1, run: (c) => pop("terminations", c) },
 

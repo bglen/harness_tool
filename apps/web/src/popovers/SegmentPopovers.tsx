@@ -8,6 +8,7 @@ import {
   formatLength,
   layerTypeName,
   parseLength,
+  reattachSegment,
   removeHardware,
   removeLayers,
   reorderLayers,
@@ -212,10 +213,55 @@ export function SegmentLengthPopover({ x, y, segmentId }: { x: number; y: number
       <Field label="Label">
         <input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} onKeyDown={(e) => e.key === "Enter" && apply()} />
       </Field>
+      <div className="text-2xs text-text-tertiary">
+        Length is {s.lengthSource === "confirmed" ? "confirmed" : s.lengthSource === "estimated" ? "estimated (imported/derived)" : "a default placeholder"}.{" "}
+        {s.lengthSource !== "confirmed" && (
+          <button className="text-accent hover:underline" onClick={() => dispatch(setSegmentProps({ ids: [s.id], lengthSource: "confirmed" }))}>
+            Confirm as is
+          </button>
+        )}
+      </div>
       <Button variant="primary" size="sm" onClick={apply}>
         Apply
       </Button>
+      <SegmentEnds segmentId={s.id} />
     </Floating>
+  );
+}
+
+/** Keyboard-accessible branch editing: choose what each end of a bundle attaches to (same as dragging its end handle). */
+function SegmentEnds({ segmentId }: { segmentId: string }) {
+  const project = useProject((s) => s.project)!;
+  const h = currentHarness(project);
+  const s = h.segments.find((x) => x.id === segmentId);
+  if (!s) return null;
+  const nodeName = (id: string) => {
+    const n = h.nodes.find((x) => x.id === id);
+    if (!n) return "?";
+    return n.kind === "connector" ? h.connectors.find((c) => c.id === n.connectorId)?.refDes ?? "?" : `Breakout B${h.nodes.filter((x) => x.kind === "breakout").indexOf(n) + 1}`;
+  };
+  const options = h.nodes.map((n) => ({ id: n.id, name: nodeName(n.id) })).sort((a, b) => a.name.localeCompare(b.name, "en", { numeric: true }));
+  return (
+    <Section title="Bundle ends">
+      {(["a", "b"] as const).map((end) => (
+        <label key={end} className="flex items-center justify-between gap-2 text-xs">
+          <span className="text-text-secondary">End {end.toUpperCase()}</span>
+          <select
+            className={cx(inputCls, "h-7 flex-1 text-xs")}
+            value={s[end]}
+            onChange={(e) => dispatch(reattachSegment({ segmentId: s.id, end, toNodeId: e.target.value }), "Re-attach bundle")}
+            aria-label={`Bundle end ${end.toUpperCase()} attaches to`}
+          >
+            {options.map((o) => (
+              <option key={o.id} value={o.id} disabled={o.id === (end === "a" ? s.b : s.a)}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
+      <div className="text-2xs text-text-tertiary">Re-attaching changes topology only; the length stays {formatLength(s.lengthMm, project.units)}.</div>
+    </Section>
   );
 }
 

@@ -1,6 +1,6 @@
 import { currentRevision, formatMass, formatTotalLength } from "@hs/model";
 import { useProject } from "../store/project";
-import { useActiveAnalysis, useDerived } from "../store/analysis";
+import { activePedigreeOf, useActiveAnalysis, useDerived } from "../store/analysis";
 import { useUi } from "../store/ui";
 import { SeverityIcon } from "../ui/primitives";
 import { PedigreePill } from "./TopBar";
@@ -27,7 +27,7 @@ export function StatusBar() {
       {a && <span className="text-text-tertiary">DFM {Math.round(a.ms)}&thinsp;ms</span>}
       <div className="flex-1" />
       <span className="text-text-tertiary">Units: {project.units === "in" ? "inches" : "mm"}</span>
-      <PedigreePill id={rev.activePedigreeId} className="py-0 text-2xs" />
+      <PedigreePill id={activePedigreeOf(project)} className="py-0 text-2xs" />
       <span className="text-text-tertiary">Phase 1: designs stay in this browser; nothing is uploaded</span>
     </footer>
   );

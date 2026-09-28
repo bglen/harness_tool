@@ -4,7 +4,9 @@ import {
   addPotting,
   applyBatch,
   applyPreset,
+  buildReleaseSnapshot,
   currentRevision,
+  derive,
   formatLength,
   formatMoney,
   freezeRevision,
@@ -15,14 +17,16 @@ import {
   WIRE_COLORS,
   type FinishingPreset,
 } from "@hs/model";
-import { buildQuoteSummary, computeBom, deriveOperations } from "@hs/ops";
+import { computeBom, deriveOperations } from "@hs/ops";
+import { makeQuoteSummary } from "../lib/summary";
+import { releaseOutputHashes, TOOL_VERSION } from "../lib/docs";
 import { runDfm } from "@hs/dfm";
 import { resolvePedigree } from "@hs/model";
 import { dispatch, getProject, useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { useActiveQuote, useAnalysis } from "../store/analysis";
 import { ACTIONS, actionCtx } from "../lib/actions";
-import { svc } from "../lib/services";
+import { previewPrice, svc } from "../lib/services";
 import { createNewProject, openExample } from "../lib/projects";
 import { openProjectFile } from "../lib/files";
 import { Icon } from "../ui/icons";
@@ -147,9 +151,13 @@ export function OpenDialog() {
                 <button
                   className="text-left hover:text-accent"
                   onClick={async () => {
-                    const pr = await svc().store.load(p.id);
-                    if (pr) useProject.getState().init(pr);
-                    close();
+                    try {
+                      const pr = await svc().store.load(p.id);
+                      if (pr) useProject.getState().init(pr);
+                      close();
+                    } catch (e) {
+                      ui.toast({ kind: "error", text: `${(e as Error).message}. The stored copy is kept unchanged.` });
+                    }
                   }}
                 >
                   {p.name} <span className="mono text-xs text-text-tertiary">{p.partNumber}</span>
@@ -202,19 +210,28 @@ export function FreezeDialog() {
             onClick={async () => {
               const p = getProject();
               const s = svc();
-              const ped = resolvePedigree(p.pedigreeScheme, rev.activePedigreeId);
+              const at = new Date().toISOString();
+              const r = currentRevision(p);
+              const d = derive(r.harness, s.cat, p.settings, { breakoutAllowanceMm: s.profile.capabilities.breakoutAllowanceMm });
               const dfm = runDfm({ project: p, cat: s.cat, profile: s.profile });
-              const snapshot = {
-                rulesets: p.rulesets.map((r) => ({ id: r.id, name: r.name, version: r.version })),
-                machineProfile: s.profile.version,
-                catalog: s.cat.version,
-                pedigree: ped,
-                pedigreeSchemeVersion: p.pedigreeScheme.version,
-                dfm: { manufacturability: dfm.manufacturability, design: { ...dfm.design }, hash: dfm.hash },
-                // Pricing/stock snapshot stored with the frozen revision (§13.3)
-                quote: useAnalysis.getState().quotes[rev.activePedigreeId] ?? null,
-              };
-              if (dispatch(freezeRevision({ notes, newRevisionId: uid(), snapshot, at: new Date().toISOString() }), `Freeze Rev ${rev.label}`)) {
+              const bom = computeBom(p, r, s.cat, d, p.quote.selected.qty);
+              // Typed release record (FIX-01): inputs, versions, content hashes and results as released.
+              const release = buildReleaseSnapshot(p, {
+                at,
+                tool: TOOL_VERSION,
+                cat: s.cat,
+                profile: s.profile,
+                inspections: s.inspections,
+                results: {
+                  dfm: { status: dfm.manufacturability.status, errors: dfm.manufacturability.errors, warnings: dfm.manufacturability.warnings, incomplete: dfm.manufacturability.incomplete, review: dfm.manufacturability.review, hash: dfm.hash, designErrors: dfm.design.errors },
+                  bom: bom.lines.map((l) => ({ pn: l.pn, qty: l.qty, uom: l.uom })),
+                  wireLengthsMm: Object.fromEntries(r.harness.wires.map((w) => [w.label, d.wireLengthMm.get(w.id) ?? 0])),
+                  // Pricing/stock snapshot stored with the frozen revision (§13.3)
+                  quote: useAnalysis.getState().quotes[rev.activePedigreeId] ?? undefined,
+                },
+              });
+              release.outputs = releaseOutputHashes({ ...p, revisions: p.revisions.map((x) => (x.id === r.id ? { ...x, frozen: true, frozenAt: at, release } : x)) }, r.id);
+              if (dispatch(freezeRevision({ notes, newRevisionId: uid(), release, at }), `Freeze Rev ${rev.label}`)) {
                 ui.toast({ kind: "success", text: `Rev ${rev.label} frozen. You're now editing the next revision. Its release package is in Outputs → Package.` });
                 close();
               }
@@ -352,9 +369,9 @@ export function FinishDialog({ segmentIds }: { segmentIds?: string[] }) {
       const bom = computeBom(p2, rev, s.cat, undefined, p2.quote.selected.qty);
       const ops = deriveOperations(p2, rev, s.cat, s.profile, ped, s.inspections);
       const dfm = runDfm({ project: p2, cat: s.cat, profile: s.profile });
-      const sum = buildQuoteSummary(bom, ops, ped, { mfgErrors: dfm.manufacturability.errors, mfgWarnings: dfm.manufacturability.warnings, designErrors: dfm.design.errors, hash: dfm.hash, nonStock: 0 }, { connectors: rev.harness.connectors.length, uniqueConnectors: new Set(rev.harness.connectors.map((c) => c.pn)).size, wires: rev.harness.wires.length, wireLengthM: 0, massG: bom.massG });
-      const priced = s.quote.price(sum, [p2.quote.selected.qty], "preview");
-      const cell = priced.cells.find((c) => c.tier === p2.quote.selected.tier);
+      const sum = makeQuoteSummary(p2, rev.harness, bom, ops, ped, dfm, 0);
+      const priced = previewPrice(sum, [p2.quote.selected.qty], "preview");
+      const cell = priced?.cells.find((c) => c.tier === p2.quote.selected.tier);
       const h0 = currentRevision(project).harness;
       const h1 = rev.harness;
       return { unit: cell?.unit, layers: h1.layers.length - h0.layers.length, clamps: h1.clamps.length - h0.clamps.length, labels: h1.labels.length - h0.labels.length, boots: h1.boots.length - h0.boots.length, backshells: h1.connectors.filter((c) => c.backshell).length - h0.connectors.filter((c) => c.backshell).length };

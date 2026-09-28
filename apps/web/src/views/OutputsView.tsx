@@ -162,9 +162,10 @@ function PackageTab() {
             {PACKAGE_PRESETS.map((p) => (
               <button key={p.id} onClick={() => (setPreset(p), setItems(p.items))} className={cx("rounded-control border px-3 py-2 text-left text-sm", preset.id === p.id ? "border-accent bg-bg-hover" : "border-border-subtle hover:border-border-control")}>
                 {p.name}
-                {p.hideQuote && <span className="ml-1 text-2xs text-text-tertiary">(quote section hidden)</span>}
+                {(p.redact.pricing || p.redact.supply) && <span className="ml-1 text-2xs text-text-tertiary">(removes {[p.redact.pricing && "prices", p.redact.supply && "stock/lead times"].filter(Boolean).join(" and ")} from every file)</span>}
               </button>
             ))}
+            <div className="text-2xs text-text-tertiary">Redaction applies to the report, BOM, DFM results and the native design file, not just the quote section.</div>
           </Section>
           <Section title="Contents">
             {(Object.keys(LABELS) as PackageItem[]).map((k) => (
@@ -183,9 +184,10 @@ function PackageTab() {
           onClick={async () => {
             setBusy(true);
             try {
-              const r = await buildOutputPackage(items, { revisionId: revId, hideQuote: preset.hideQuote || !items.includes("pricing") });
+              const r = await buildOutputPackage(items, { revisionId: revId, redact: preset.redact });
               downloadBlob(r.name, new Blob([r.zip as BlobPart], { type: "application/zip" }));
               setManifest(r.manifest);
+              if (r.releaseCheck && !r.releaseCheck.ok) ui.toast({ kind: "error", text: `Regenerated ${r.releaseCheck.differences.join(", ")} differ from Rev ${rev.label} as released (catalog or tool changed since release). The manifest records this.` });
             } catch (e) {
               console.error(e);
               ui.toast({ kind: "error", text: `Package failed: ${(e as Error).message}` });
@@ -210,8 +212,14 @@ function PackageTab() {
               </tbody>
             </table>
             <div className="text-2xs text-text-tertiary">
-              Design hash {manifest.designHash} · pedigree {manifest.pedigree.code} · profile {manifest.versions.machineProfile} · catalog {manifest.versions.catalog} · generated {manifest.generatedAt}
+              Design SHA-256 {manifest.designHash.slice(0, 16)}… · pedigree {manifest.pedigree.code} · profile {manifest.versions.machineProfile} · catalog {manifest.versions.catalog} · generated {manifest.generatedAt}
+              {manifest.redaction && (manifest.redaction.pricing || manifest.redaction.supply) ? ` · redacted: ${[manifest.redaction.pricing && "pricing", manifest.redaction.supply && "supply"].filter(Boolean).join(", ")}` : ""}
             </div>
+            {manifest.release && (
+              <div className={cx("text-2xs", manifest.release.outputsMatchRelease === false ? "text-status-error" : "text-text-tertiary")}>
+                Released {manifest.release.releasedAt.slice(0, 10)} · inputs {manifest.release.inputsSha256.slice(0, 12)}… · {manifest.release.outputsMatchRelease === null ? "no output hashes recorded at release" : manifest.release.outputsMatchRelease ? "wire list, pinouts and BOM match the release record" : `differs from release: ${manifest.release.differences.join(", ")}`}
+              </div>
+            )}
           </Section>
         )}
         <Section title="Verify a package">

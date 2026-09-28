@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { formatMass, formatMoney, normalizePn, replacePart, setCustomerFurnished } from "@hs/model";
-import type { BomLine } from "@hs/ops";
+import { purchaseQty, type BomLine } from "@hs/ops";
 import { ArrowRightLeft, Check } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
 import { useBom } from "../store/analysis";
@@ -33,15 +33,16 @@ export default function BomView() {
   const total = byCat.reduce((s, [, v]) => s + v, 0) || 1;
   const drivers = [...bom.lines].sort((a, b) => b.extCost - a.extCost).slice(0, 5);
   const byLead = [...bom.lines].filter((l) => !l.customerFurnished).sort((a, b) => b.leadDays - a.leadDays);
-  const crit = byLead.find((l) => l.stock < l.qty * qty) ?? byLead[0];
-  const nextLead = byLead.filter((l) => l !== crit && l.stock < l.qty * qty)[0];
+  // Critical path is judged on stock sufficiency for the order quantity, never just the longest lead.
+  const crit = bom.criticalPath;
+  const nextLead = byLead.filter((l) => l !== crit && !l.stockSufficient)[0];
   const maxLead = Math.max(1, ...byLead.map((l) => l.leadDays));
   return (
     <div className="scroll-thin h-full overflow-auto p-4">
       <div className="mb-4 flex items-center gap-3">
         <h1 className="text-lg font-semibold">Bill of materials</h1>
         <span className="text-sm text-text-secondary">
-          {bom.lines.length} lines · material {formatMoney(bom.materialCost)} / unit at {qty} units · est. {formatMass(bom.massG)} · stock as of {bom.asOf}
+          {bom.lines.length} lines · material {formatMoney(bom.materialCost)} / unit at {qty} units · est. {formatMass(bom.massG)} · supply data as of {bom.asOfRange.oldest}{bom.asOfRange.newest !== bom.asOfRange.oldest ? ` to ${bom.asOfRange.newest}` : ""}
         </span>
         <DemoTag />
       </div>
@@ -82,15 +83,13 @@ export default function BomView() {
           </ol>
         </Section>
         <Section title="Lead time">
-          {crit && (
+          {crit ? (
             <div className="rounded-control border border-border-subtle p-2 text-sm">
-              <span className="mono">{crit.pn}</span> is setting ship date: {crit.stock >= crit.qty * qty ? "in stock" : `${Math.ceil(crit.leadDays / 7)} weeks (${crit.leadDays} d)`}.
-              {nextLead ? (
-                <span className="text-text-secondary"> Replacing it would bring the part-driven date to {nextLead.leadDays} d ({nextLead.pn}).</span>
-              ) : (
-                crit.stock < crit.qty * qty && <span className="text-text-secondary"> Replacing it would make all other parts ship from stock.</span>
-              )}
+              <span className="mono">{crit.pn}</span> is setting the ship date: {crit.stock} in stock is short for {qty} units, {Math.ceil(crit.leadDays / 7)} weeks ({crit.leadDays} d) to get more.
+              {nextLead ? <span className="text-text-secondary"> Replacing it would bring the part-driven date to {nextLead.leadDays} d ({nextLead.pn}).</span> : <span className="text-text-secondary"> Every other line is covered by stock.</span>}
             </div>
+          ) : (
+            <div className="rounded-control border border-border-subtle p-2 text-sm text-text-secondary">Stock covers {qty} units for every line (demo data); parts don't set the ship date.</div>
           )}
           <div className="mt-1 flex flex-col gap-0.5">
             {byLead.slice(0, 8).map((l) => (
@@ -99,7 +98,7 @@ export default function BomView() {
                 <svg className="flex-1" height={10} aria-hidden>
                   <rect width={`${(l.leadDays / maxLead) * 100}%`} height={10} rx={3} fill="var(--chart-0)" opacity={l === crit ? 1 : 0.55} />
                 </svg>
-                <span className="tnum w-24 text-right text-text-secondary">{l.stock >= l.qty * qty ? "stock" : `${l.leadDays} d`}</span>
+                <span className="tnum w-24 text-right text-text-secondary">{l.stockSufficient ? "stock" : `${l.leadDays} d`}</span>
               </div>
             ))}
           </div>
@@ -122,7 +121,10 @@ export default function BomView() {
                 {!l.known && <span className="ml-1 text-status-error">(not in catalog)</span>}
               </td>
               <td className="max-w-[320px] truncate p-1.5 text-text-secondary" title={`${l.description}${l.refs.length ? ` · ${l.refs.join(", ")}` : ""}`}>{l.description}</td>
-              <td className="tnum p-1.5">{l.uom === "ea" ? l.qty : l.qty.toFixed(2)}</td>
+              <td className="tnum p-1.5" title={l.uom === "ea" ? undefined : `${l.qty} ${l.uom} per harness (exact); buy ${purchaseQty(l, qty)} ${l.uom} for ${qty}`}>
+                {l.uom === "ea" ? l.qty : (Math.ceil(l.qty * 1000 - 1e-9) / 1000).toFixed(3)}
+                {l.dataStatus !== "verified" && <span className="ml-1 text-2xs text-text-tertiary" title={`${l.dataFields ?? "Catalog data"}: ${l.dataStatus}`}>{l.dataStatus}</span>}
+              </td>
               <td className="p-1.5">{l.uom}</td>
               <td className="tnum p-1.5">{formatMoney(l.unitCost)}</td>
               <td className="tnum p-1.5">{l.customerFurnished ? "—" : formatMoney(l.extCost)}</td>
@@ -137,7 +139,22 @@ export default function BomView() {
                 )}
               </td>
               <td className="p-1.5">
-                <input type="checkbox" checked={l.customerFurnished} aria-label="Customer-furnished" onChange={(e) => dispatch(setCustomerFurnished({ pn: l.pn, furnished: e.target.checked }))} />
+                <span className="flex items-center gap-1">
+                  <input type="checkbox" checked={l.customerFurnished} aria-label="Customer-furnished" onChange={(e) => dispatch(setCustomerFurnished({ pn: l.pn, furnished: e.target.checked }))} />
+                  {l.customerFurnished && (
+                    <input
+                      className="tnum h-6 w-14 rounded-chip border border-border-control bg-bg-surface-1 px-1 text-2xs"
+                      placeholder="arrival d"
+                      aria-label={`${l.pn}: days until the customer's parts arrive`}
+                      title="Days after order until the customer's parts arrive (blank = unknown; the quote states its assumption)"
+                      defaultValue={project.quote.customerFurnishedArrivalDays[l.pn] ?? ""}
+                      onBlur={(e) => {
+                        const v = e.target.value.trim();
+                        dispatch(setCustomerFurnished({ pn: l.pn, furnished: true, arrivalDays: v === "" ? null : Math.max(0, Math.round(Number(v)) || 0) }));
+                      }}
+                    />
+                  )}
+                </span>
               </td>
             </tr>
           ))}

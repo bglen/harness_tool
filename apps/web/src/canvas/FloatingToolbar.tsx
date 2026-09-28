@@ -14,10 +14,7 @@ export function FloatingToolbar() {
       <IconButton label="Add connector" shortcut="C" onClick={() => runAction("addConnector")}>
         <Plus size={20} />
       </IconButton>
-      <IconButton
-        label="Add breakout: drag from the middle of a bundle"
-        onClick={() => ui.toast({ kind: "info", text: "Drag from the middle of a bundle to pull out a breakout; drop it on a connector to route the branch there." })}
-      >
+      <IconButton label="Add breakout: click a bundle to split it (B)" shortcut="B" active={ui.tool === "breakout"} onClick={() => ui.setTool(ui.tool === "breakout" ? null : "breakout")}>
         <GitBranch size={18} />
       </IconButton>
       <IconButton label="Add note" shortcut="N" onClick={() => runAction("addNote")}>

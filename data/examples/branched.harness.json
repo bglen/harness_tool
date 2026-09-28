@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "161a3b67-7e44-45ca-a979-39e42fb1da81",
   "name": "Avionics branch harness (example)",
   "partNumber": "HS-2040",
@@ -116,7 +116,8 @@
       "qty": 10,
       "tier": "standard"
     },
-    "customerFurnished": []
+    "customerFurnished": [],
+    "customerFurnishedArrivalDays": {}
   },
   "revisions": [
     {
@@ -372,6 +373,7 @@
             "a": "e42bfb32-a4a6-4eec-aa03-8fc7437c2c61",
             "b": "5905cc84-229c-4256-a0fd-a5755dccccb5",
             "lengthMm": 762,
+            "lengthSource": "confirmed",
             "toleranceMm": 10,
             "label": ""
           },
@@ -380,6 +382,7 @@
             "a": "5905cc84-229c-4256-a0fd-a5755dccccb5",
             "b": "48087b9c-012f-43b8-a18b-cddd1be83d65",
             "lengthMm": 457.2,
+            "lengthSource": "confirmed",
             "toleranceMm": 10,
             "label": ""
           },
@@ -388,6 +391,7 @@
             "a": "5905cc84-229c-4256-a0fd-a5755dccccb5",
             "b": "ad82e8bd-f7aa-4e1a-ac46-6004a0e04569",
             "lengthMm": 457.2,
+            "lengthSource": "confirmed",
             "toleranceMm": 10,
             "label": ""
           },
@@ -396,6 +400,7 @@
             "a": "5905cc84-229c-4256-a0fd-a5755dccccb5",
             "b": "27e2359f-6af5-4f2e-a862-1752f6751281",
             "lengthMm": 457.2,
+            "lengthSource": "confirmed",
             "toleranceMm": 10,
             "label": ""
           }
@@ -406,6 +411,7 @@
             "name": "+28V_SENSOR",
             "cls": "power",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -423,6 +429,7 @@
             "name": "SENSOR_RTN",
             "cls": "ground",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -439,6 +446,7 @@
             "name": "SENS_A+",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -455,6 +463,7 @@
             "name": "SENS_A-",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -471,6 +480,7 @@
             "name": "SENS_B+",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -487,6 +497,7 @@
             "name": "SENS_B-",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -503,6 +514,7 @@
             "name": "+28V_ACT",
             "cls": "power",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -520,6 +532,7 @@
             "name": "ACT_RTN",
             "cls": "ground",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -536,6 +549,7 @@
             "name": "CAN_H",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -552,6 +566,7 @@
             "name": "CAN_L",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -568,6 +583,7 @@
             "name": "ACT_EN",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -584,6 +600,7 @@
             "name": "ACT_FLT",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -600,6 +617,7 @@
             "name": "ACT_POS+",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -616,6 +634,7 @@
             "name": "ACT_POS-",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -632,6 +651,7 @@
             "name": "+5V_AUX",
             "cls": "power",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -649,6 +669,7 @@
             "name": "AUX_RTN",
             "cls": "ground",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -665,6 +686,7 @@
             "name": "AUX_TX",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -681,6 +703,7 @@
             "name": "AUX_RX",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "d8ea94f6-9e66-45c4-afdb-16fb383ed021",
@@ -1202,7 +1225,7 @@
               },
               {
                 "segmentId": "1094bfd7-4d75-4506-a322-bed22863a3c9",
-                "pn": "HSL-OB-TC-06"
+                "pn": "HSL-OB-TC-03"
               }
             ],
             "stackOrder": 2,

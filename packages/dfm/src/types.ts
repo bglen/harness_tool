@@ -13,6 +13,8 @@ export interface ParamDef {
   stricter?: "higher" | "lower";
   help?: string;
   default?: unknown;
+  /** Blank is meaningful (the rule has a documented fallback); otherwise a missing number is `missingInput`. */
+  optional?: boolean;
 }
 
 export interface Fix {
@@ -53,6 +55,8 @@ export interface RuleType {
   depends: EntityKind[];
   /** Failing this rule means a manual operation (drives "Buildable with manual steps"). */
   manual?: boolean;
+  /** Violations mean unapproved/unreviewed reference data: the design can't be claimed ready until reviewed (FIX-10). */
+  review?: boolean;
   /** Scope filter supported (netClass / namePattern). */
   scoped?: boolean;
   evaluate(ctx: RuleCtx, params: Record<string, any>, rule: RuleInstance): Violation[];
@@ -80,7 +84,16 @@ export interface EffectiveRule {
   severityByPedigree: Record<string, Severity>;
 }
 
-export type RuleStatus = "pass" | "fail" | "waived" | "off" | "error" | "superseded";
+/**
+ * Rule outcome (feedback §4). A rule that could not run is never a pass:
+ * - notApplicable: nothing in the design the rule applies to
+ * - missingInput: required input (catalog record, parameter) is absent
+ * - engineError: the rule threw, or its type is unknown
+ * - notEvaluated: evaluation was skipped (e.g. worker failure)
+ */
+export type RuleStatus = "pass" | "fail" | "waived" | "off" | "notApplicable" | "notEvaluated" | "missingInput" | "engineError";
+
+export const INCOMPLETE_STATUSES: RuleStatus[] = ["notEvaluated", "missingInput", "engineError"];
 
 export interface RuleResult {
   eff: EffectiveRule;
@@ -91,16 +104,33 @@ export interface RuleResult {
   ms: number;
 }
 
-export type BuildStatus = "ready" | "manual" | "notBuildable";
+/** "incomplete" = can't be claimed ready: a required check didn't run, or reference data is unreviewed. */
+export type BuildStatus = "ready" | "manual" | "incomplete" | "notBuildable";
 
 export interface DfmSummary {
   pedigreeId: string;
   pedigreeName: string;
-  manufacturability: { status: BuildStatus; checks: number; errors: number; warnings: number; infos: number; passed: number };
-  design: { checks: number; errors: number; warnings: number; infos: number; passed: number; rulesets: string[] };
+  manufacturability: {
+    status: BuildStatus;
+    checks: number;
+    errors: number;
+    warnings: number;
+    infos: number;
+    passed: number;
+    /** Enabled rules that didn't produce a result (engineError / missingInput / notEvaluated). */
+    incomplete: number;
+    /** Findings on unreviewed / unapproved reference data. */
+    review: number;
+    /** Human-readable reasons the status isn't "ready". */
+    blockers: string[];
+  };
+  design: { checks: number; errors: number; warnings: number; infos: number; passed: number; incomplete: number; rulesets: string[] };
   results: RuleResult[];
   /** objectId → worst severity + rule ids */
   byObject: Record<string, { severity: Severity; ruleIds: string[] }>;
   durationMs: number;
+  /** Identity of the result (rule ids × outcomes). */
   hash: string;
+  /** Identity of every input this result was computed from (design, settings, rules, profile, catalog, pedigree, qty/tier). */
+  inputHash: string;
 }

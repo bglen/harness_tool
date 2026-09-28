@@ -35,6 +35,8 @@ export interface Toast {
   kind: "info" | "error" | "success";
   text: string;
   action?: { label: string; run: () => void };
+  /** Extra lines shown under the text (e.g. every repair a command made). */
+  detail?: string[];
 }
 
 type Theme = "dark" | "light" | "system";
@@ -72,6 +74,8 @@ interface UiState {
   contextMenu: { screen: { x: number; y: number } } | null;
   dialogs: Partial<Record<DialogId, any>>;
   shieldView: boolean;
+  /** Active canvas tool: "breakout" = next click on a bundle inserts a breakout there. */
+  tool: "breakout" | null;
   cvd: CvdType | null;
   wireColorLabels: "detail" | "always" | "hover";
   colorblindAssist: boolean;
@@ -96,6 +100,7 @@ interface UiState {
   openDialog(d: DialogId, data?: any): void;
   closeDialog(d: DialogId): void;
   toggleShieldView(): void;
+  setTool(t: UiState["tool"]): void;
   setCvd(c: CvdType | null): void;
   setWireColorLabels(v: UiState["wireColorLabels"]): void;
   setColorblindAssist(v: boolean): void;
@@ -131,6 +136,7 @@ export const useUi = create<UiState>((set, get) => ({
   contextMenu: null,
   dialogs: {},
   shieldView: false,
+  tool: null,
   cvd: null,
   wireColorLabels: LS.get("wireColorLabels", "detail"),
   colorblindAssist: LS.get("colorblindAssist", false),
@@ -174,6 +180,7 @@ export const useUi = create<UiState>((set, get) => ({
     set({ dialogs: x });
   },
   toggleShieldView: () => set({ shieldView: !get().shieldView }),
+  setTool: (tool) => set({ tool }),
   setCvd: (cvd) => set({ cvd }),
   setWireColorLabels(v) {
     LS.set("wireColorLabels", v);
@@ -193,7 +200,7 @@ export const useUi = create<UiState>((set, get) => ({
   toast(t) {
     const id = toastId++;
     set({ toasts: [...get().toasts, { ...t, id }].slice(-4) });
-    setTimeout(() => get().dismissToast(id), t.action ? 7000 : 4000);
+    setTimeout(() => get().dismissToast(id), t.action || t.detail ? 8000 : 4000);
   },
   dismissToast: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),
   setEditing: (editing) => set({ editing }),

@@ -84,11 +84,32 @@ export interface ContactPart {
   removalTool: string;
   machineInsertable: boolean;
   currentA: number;
+  /** Row status (PN, size, gender, gauge range). */
   status: DataStatus;
+  /** Tooling fields (crimp tool, positioner, insertion/removal tools) are approved separately (FIX-10). */
+  toolingStatus?: DataStatus;
+}
+
+/** Explicit qualified-source evidence (FIX-08). Missing record = unverified; never inferred from a PN. */
+export interface QualificationRecord {
+  /** PN or prefix* pattern. */
+  pn: string;
+  specification: string;
+  /** Qualified manufacturer / QPL listing. */
+  source: string;
+  evidence: string;
+  validUntil?: string;
+  reviewedBy: string;
+}
+
+export interface QualificationStatus {
+  status: "qualified" | "expired" | "unverified";
+  source: string;
 }
 
 export interface SealingPlug {
   pn: string;
+  status?: DataStatus;
   size: string;
   color: string;
 }
@@ -144,6 +165,7 @@ export interface BackshellPart {
 
 export interface AccessoryPart {
   pn: string;
+  status?: DataStatus;
   kind: "dustCap" | "jamNut" | "oRing" | "gasket" | "groundingRing" | "sealingPlug";
   description: string;
   shellSizes: number[];
@@ -171,6 +193,7 @@ export interface LayerPart {
 
 export interface ClampPart {
   pn: string;
+  status?: DataStatus;
   description: string;
   minDiaMm: number;
   maxDiaMm: number;
@@ -181,6 +204,7 @@ export interface ClampPart {
 
 export interface BootPart {
   pn: string;
+  status?: DataStatus;
   shape: "straight" | "90" | "Y" | "T" | "multi";
   description: string;
   minDiaMm: number;
@@ -190,6 +214,7 @@ export interface BootPart {
 
 export interface LabelPart {
   pn: string;
+  status?: DataStatus;
   type: "sleeve" | "flag" | "wrap" | "direct";
   description: string;
   minDiaMm: number;
@@ -200,6 +225,7 @@ export interface LabelPart {
 
 export interface SplicePart {
   pn: string;
+  status?: DataStatus;
   type: "solderSleeve" | "crimp" | "ultrasonic";
   description: string;
   gaugeMin: number;
@@ -210,6 +236,7 @@ export interface SplicePart {
 
 export interface PottingPart {
   pn: string;
+  status?: DataStatus;
   kind: "compound" | "mold";
   description: string;
   cureHours: number;
@@ -219,6 +246,7 @@ export interface PottingPart {
 
 export interface HardwarePart {
   pn: string;
+  status?: DataStatus;
   type: "cushionClamp" | "spotTie" | "lacing";
   description: string;
   minDiaMm: number;
@@ -264,6 +292,7 @@ export interface CatalogBundle {
   hardware: HardwarePart[];
   alternates: Alternate[];
   supply: SupplyRow[];
+  qualifications?: QualificationRecord[];
 }
 
 /** A resolved connector part (built from the PN + style + arrangement). */
@@ -343,7 +372,8 @@ export class CatalogIndex {
           ...p,
           pn: built,
           key: normalizePn(built),
-          manufacturer: "MIL-DTL-38999 (QPL)",
+          // A spec designation isn't a manufacturer or a qualified source (FIX-08).
+          manufacturer: "Per MIL-DTL-38999 (source not selected)",
           series: `38999 ${style.series}`,
           kind: style.kind,
           mount: style.mount,
@@ -353,7 +383,8 @@ export class CatalogIndex {
           arrangement: arr,
           shell,
           description: `${style.description}, shell ${p.shellSize}, insert ${arr.id} (${arr.contactCount}× ${Object.keys(arr.sizes).join("/")}), ${gender}s, ${fin.material} ${fin.finish}, key ${p.keying}`,
-          machineReady: style.machineReady && !arr.inactive && !arr.special && Object.keys(arr.sizes).every((s) => ["22D", "20", "16", "12"].includes(s)),
+          // Machine readiness needs approved (reviewed) geometry, not just geometry that exists (FIX-10).
+          machineReady: style.machineReady && arr.status === "verified" && !arr.inactive && !arr.special && Object.keys(arr.sizes).every((s) => ["22D", "20", "16", "12"].includes(s)),
           fixtureId: `${style.fixturePrefix}-${p.shellSize}`,
           massG: style.massBySize[String(p.shellSize)] ?? 20,
           lifecycle: fin.lifecycle !== "active" ? fin.lifecycle : arr.inactive ? "inactive" : style.lifecycle,
@@ -482,6 +513,21 @@ export class CatalogIndex {
       } else if (pat === key) return s;
     }
     return best;
+  }
+
+  /** Qualified-source evidence for a PN (exact match, else longest prefix* pattern). */
+  qualification(pn: string, today = new Date().toISOString().slice(0, 10)): QualificationStatus {
+    const key = normalizePn(pn);
+    let best: QualificationRecord | undefined;
+    let bestLen = -1;
+    for (const q of this.bundle.qualifications ?? []) {
+      const pat = normalizePn(q.pn);
+      const len = pat.endsWith("*") ? (key.startsWith(pat.slice(0, -1)) ? pat.length - 1 : -1) : pat === key ? Infinity : -1;
+      if (len > bestLen) (best = q), (bestLen = len);
+    }
+    if (!best) return { status: "unverified", source: "" };
+    if (best.validUntil && best.validUntil < today) return { status: "expired", source: best.source };
+    return { status: "qualified", source: best.source };
   }
 
   alternates(pn: string): Alternate[] {

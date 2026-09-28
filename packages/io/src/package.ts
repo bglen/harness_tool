@@ -16,6 +16,10 @@ export interface Manifest {
   pedigree: { id: string; name: string; code: string; schemeVersion: string };
   versions: { tool: string; machineProfile: string; catalog: string; rulesets: { id: string; name: string; version: string }[] };
   demoPricing: boolean;
+  /** Audience redaction applied to every file in the package. */
+  redaction?: { pricing: boolean; supply: boolean };
+  /** For released revisions: release identity and whether regenerated deterministic outputs match the release record. */
+  release?: { releasedAt: string; inputsSha256: string; catalogAtRelease: string; outputsMatchRelease: boolean | null; differences: string[] };
   files: { path: string; bytes: number; sha256: string }[];
 }
 

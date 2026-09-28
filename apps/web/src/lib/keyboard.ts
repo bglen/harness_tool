@@ -26,11 +26,13 @@ export function useKeyboard() {
         if (ui.picker) return ui.openPicker(null);
         if (ui.popover) return ui.openPopover(null);
         if (ui.contextMenu) return ui.openContextMenu(null);
+        if (ui.tool) return ui.setTool(null);
         if (ui.shieldView) return ui.toggleShieldView();
         return ui.clearSelection();
       }
       if (e.key === "Delete" || e.key === "Backspace") return runAction("delete");
       if (ui.view !== "design" && !["1", "2", "3", "?"].includes(e.key)) return;
+      if (k === "b") return e.preventDefault(), ui.setTool(ui.tool === "breakout" ? null : "breakout");
       const map: Record<string, string> = { c: "addConnector", n: "addNote", f: "zoomFit", r: e.shiftKey ? "cFlip" : "commit", g: "shieldView", l: "wireList", t: "wTwist", "1": "viewDesign", "2": "viewBom", "3": "viewOutputs", "?": "shortcuts" };
       const id = map[k] ?? map[e.key];
       if (id) {

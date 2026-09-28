@@ -58,6 +58,7 @@ coverage_options,shrink_ratio,machine_ready,status,pn,type,material,description,
 ,,false,seed,HSL-CV-NY-127,conduit,Nylon,"Convoluted tubing, nylon, 12.7 mm ID",6.3,12.7,2.1,37.2
 ,,false,seed,HSL-CV-NY-191,conduit,Nylon,"Convoluted tubing, nylon, 19.1 mm ID",9.6,19.1,2.35,52.4
 ,,false,seed,HSL-CV-NY-254,conduit,Nylon,"Convoluted tubing, nylon, 25.4 mm ID",12.7,25.4,3,69.1
+85;90;95,,false,seed,HSL-OB-TC-03,overbraid,Tinned copper,"Shield braid, Tinned copper, 1.5-3.5 mm (individual wire groups)",1.5,3.5,0.3,8.5
 85;90;95,,true,seed,HSL-OB-TC-06,overbraid,Tinned copper,"Overbraid, Tinned copper, 3-6 mm",3,6,0.5,15.3
 85;90;95,,true,seed,HSL-OB-TC-10,overbraid,Tinned copper,"Overbraid, Tinned copper, 5-10 mm",5,10,0.5,25.5
 85;90;95,,true,seed,HSL-OB-TC-14,overbraid,Tinned copper,"Overbraid, Tinned copper, 8-14 mm",8,14,0.5,37.4
@@ -65,6 +66,7 @@ coverage_options,shrink_ratio,machine_ready,status,pn,type,material,description,
 85;90;95,,true,seed,HSL-OB-TC-26,overbraid,Tinned copper,"Overbraid, Tinned copper, 16-26 mm",16,26,0.5,71.4
 85;90;95,,true,seed,HSL-OB-TC-34,overbraid,Tinned copper,"Overbraid, Tinned copper, 22-34 mm",22,34,0.5,95.2
 85;90;95,,true,seed,HSL-OB-TC-45,overbraid,Tinned copper,"Overbraid, Tinned copper, 30-45 mm",30,45,0.5,127.5
+85;90;95,,false,seed,HSL-OB-NC-03,overbraid,Nickel-plated copper,"Shield braid, Nickel-plated copper, 1.5-3.5 mm (individual wire groups)",1.5,3.5,0.3,8.5
 85;90;95,,true,seed,HSL-OB-NC-06,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 3-6 mm",3,6,0.5,15.3
 85;90;95,,true,seed,HSL-OB-NC-10,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 5-10 mm",5,10,0.5,25.5
 85;90;95,,true,seed,HSL-OB-NC-14,overbraid,Nickel-plated copper,"Overbraid, Nickel-plated copper, 8-14 mm",8,14,0.5,37.4

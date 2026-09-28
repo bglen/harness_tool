@@ -1,5 +1,5 @@
 import { createStore, del, get, keys, set, type UseStore } from "idb-keyval";
-import { ProjectSchema, type CatalogIndex, type Project } from "@hs/model";
+import { safeParseProject, type CatalogIndex, type Project } from "@hs/model";
 import type { OrderProvider, OrderRequest, ProjectMeta, ProjectStore, SupplyInfo, SupplyProvider } from "./interfaces";
 
 /** Phase 1 ProjectStore: designs live only in the browser (IndexedDB) and in files the user saves (§4.3, §14.3). */
@@ -16,8 +16,9 @@ export class LocalProjectStore implements ProjectStore {
   async load(id: string) {
     const raw = await get(id, this.store);
     if (!raw) return undefined;
-    const r = ProjectSchema.safeParse(raw);
-    return r.success ? r.data : undefined;
+    const r = safeParseProject(raw);
+    if (!r.ok) throw new Error(`Stored project ${id} can't be read: ${r.error}`);
+    return r.project;
   }
   async list(): Promise<ProjectMeta[]> {
     const ids = (await keys(this.store)) as string[];

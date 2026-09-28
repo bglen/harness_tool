@@ -1,4 +1,4 @@
-import { derive, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
+import { cavityStates, derive, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
 
 export type OpKind =
   | "connectorLoad"
@@ -35,10 +35,15 @@ export interface Operation {
   automated: boolean;
   reason?: string;
   refs: string[];
-  /** For inspections */
+  /** For inspections / tests */
   inspectionId?: string;
   sampling?: string;
+  /** Resolved test parameters (limits, voltages, …): part of the requirement's identity (FIX-07). */
+  params?: Record<string, unknown>;
+  /** Performed by the manufacturer (vs outsourced). Independent of `automated`. */
   inHouse?: boolean;
+  /** Required inspection the inspection catalog doesn't know: needs review, never dropped. */
+  unsupported?: boolean;
   cureHours?: number;
 }
 
@@ -48,6 +53,8 @@ export interface OperationsList {
   manualCount: number;
   manualReasons: string[];
   cureHours: number;
+  /** Required inspections that can't be planned or priced (unknown type). */
+  unsupportedInspections: string[];
 }
 
 const OP_LABEL: Record<OpKind, string> = {
@@ -98,9 +105,6 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
     } else ops.push({ kind, qty, automated, refs: [...refs], reason, ...extra });
   };
 
-  const pinWires = new Map<string, number>();
-  for (const w of h.wires) for (const e of [w.from, w.to]) if (e.kind === "pin") pinWires.set(`${e.connectorId}:${e.cavityId}`, (pinWires.get(`${e.connectorId}:${e.cavityId}`) ?? 0) + 1);
-
   for (const c of h.connectors) {
     const part = cat.connector(c.pn);
     const ok = !!part?.machineReady && caps.connectorSlashes.includes(part.slash);
@@ -108,19 +112,27 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
     if (c.backshell) push("backshell", 1, caps.automatedFinishing.includes("backshell") && !!cat.backshell(c.backshell.pn)?.machineReady, [c.refDes], cat.backshell(c.backshell.pn)?.machineReady ? undefined : "Potting-boot backshells are fitted by hand");
     if (c.accessories.length) push("accessory", c.accessories.length, false, [c.refDes], "Accessories fitted by hand");
     if (!part) continue;
-    for (const cav of part.arrangement.cavities) {
-      const n = pinWires.get(`${c.id}:${cav.id}`) ?? 0;
-      if (cav.special) continue;
-      if (n === 0) {
-        if (!c.pins[cav.id]?.filler) push("sealingPlug", 1, caps.automatedFinishing.includes("sealingPlug"), [c.refDes]);
-        else push("contactCrimpInsert", 1, false, [`${c.refDes}-${cav.id}`], "Wired spare (filler) contacts inserted by hand");
+    for (const s of cavityStates(h, cat, c.id)) {
+      if (s.fill === "unsupported") continue;
+      if (s.fill === "plug") {
+        push("sealingPlug", 1, caps.automatedFinishing.includes("sealingPlug"), [c.refDes]);
         continue;
       }
-      const cpn = c.pins[cav.id]?.contactPn;
-      const contact = cpn ? cat.contactsByPn.get(cpn) : cat.contactFor(cav.size, part.gender);
-      const auto = !!contact?.machineInsertable && caps.contactSizes.includes(cav.size) && n === 1;
-      push("contactCrimpInsert", 1, auto, [`${c.refDes}-${cav.id}`], auto ? undefined : n > 1 ? "Two wires in one contact (daisy chain)" : `Size ${cav.size} contact inserted by hand`);
-      if (n > 1) push("daisyChain", 1, caps.supportsDaisyChain, [`${c.refDes}-${cav.id}`], caps.supportsDaisyChain ? undefined : "Daisy-chain double crimps are manual");
+      const ref = `${c.refDes}-${s.cavityId}`;
+      if (s.reason === "filler") {
+        push("contactCrimpInsert", 1, false, [ref], "Wired spare (filler) contacts inserted by hand");
+        continue;
+      }
+      if (s.reason === "drain") {
+        push("contactCrimpInsert", 1, false, [ref], "Drain contacts are crimped and inserted by hand");
+        continue;
+      }
+      const n = s.gauges.length;
+      const cpn = c.pins[s.cavityId]?.contactPn;
+      const contact = cpn ? cat.contactsByPn.get(cpn) : cat.contactFor(s.size, part.gender);
+      const auto = !!contact?.machineInsertable && caps.contactSizes.includes(s.size) && n === 1;
+      push("contactCrimpInsert", 1, auto, [ref], auto ? undefined : n > 1 ? "Two wires in one contact (daisy chain)" : `Size ${s.size} contact inserted by hand`);
+      if (n > 1) push("daisyChain", 1, caps.supportsDaisyChain, [ref], caps.supportsDaisyChain ? undefined : "Daisy-chain double crimps are manual");
     }
   }
 
@@ -133,14 +145,21 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
     push("wireCutStrip", 1, auto, [w.label], auto ? undefined : w.cableId ? "Cable conductors are prepared by hand" : "Wire gauge or length outside cutter range");
     layM += len / 1000;
   }
-  push("wireLayPerM", +layM.toFixed(2), true);
   for (const t of h.twistGroups) push("twist", 1, !t.wireIds.some((id) => h.wires.find((w) => w.id === id)?.cableId), [], undefined);
   for (const c of h.cables) push("cableStrip", 2, false, [c.label], "Cable jacket/shield strip-back is manual");
 
   for (const t of h.terminations) {
     if (t.method === "band360" || t.method === "emiRing" || t.method === "junction") push("shieldTermination", 1, t.method !== "emiRing", [], t.method === "emiRing" ? "EMI ring termination is manual" : undefined);
-    else if (t.method === "drainToPin") push("drainTermination", 1, false, [], "Drain-to-pin solder sleeves are manual");
+    else if (t.method === "drainToPin") {
+      push("drainTermination", 1, false, [], "Drain-to-pin solder sleeves are manual");
+      // The drain pigtail is its own conductor: cut, strip and lay it (FIX-05).
+      if (t.drain) {
+        push("wireCutStrip", 1, false, ["drain"], "Drain pigtails are prepared by hand");
+        layM += t.drain.lengthMm / 1000;
+      }
+    }
   }
+  push("wireLayPerM", +layM.toFixed(3), true);
 
   const metres = (layerId: string) => {
     const l = h.layers.find((x) => x.id === layerId)!;
@@ -174,12 +193,32 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
   const ties = h.hardware.filter((x) => x.type !== "cushionClamp").length + h.segments.reduce((s, seg) => s + (seg.tieSpacingMm ? Math.floor(seg.lengthMm / seg.tieSpacingMm) : 0), 0);
   push("tieDown", ties, false, [], "Spot ties and lacing are manual");
 
-  // Tests and inspections from the pedigree (§10.3)
-  push("test", 1, true);
+  // Tests and inspections from the pedigree (§10.3). The continuity test runs on the machine jig; its
+  // limits come from the pedigree's continuity requirement and stay attached to the operation (FIX-07).
+  const cont = ped.inspections.find((r) => r.typeId === "continuity");
+  const contType = inspections.find((i) => i.id === "continuity");
+  push("test", 1, true, [], undefined, { inspectionId: "continuity", sampling: cont?.sampling ?? "100%", params: { ...defaultParams(contType), ...(cont?.params ?? {}) }, inHouse: true });
+  const unsupported: string[] = [];
   for (const req of ped.inspections) {
+    if (req.typeId === "continuity") continue;
     const t = inspections.find((i) => i.id === req.typeId);
-    if (!t || t.id === "continuity") continue;
-    ops.push({ kind: "inspection", qty: 1, automated: t.inHouse, refs: [], inspectionId: t.id, sampling: req.sampling, inHouse: t.inHouse, reason: t.inHouse ? undefined : `${t.name} is outsourced` });
+    if (!t) {
+      // Unknown required inspection: never dropped; it blocks automatic acceptance until reviewed.
+      unsupported.push(req.typeId);
+      ops.push({ kind: "inspection", qty: 1, automated: false, refs: [], inspectionId: req.typeId, sampling: req.sampling, params: { ...req.params }, unsupported: true, reason: `Inspection "${req.typeId}" isn't in the inspection catalog: requires review` });
+      continue;
+    }
+    ops.push({
+      kind: "inspection",
+      qty: 1,
+      automated: !!t.automated,
+      inHouse: t.inHouse,
+      refs: [],
+      inspectionId: t.id,
+      sampling: req.sampling,
+      params: { ...defaultParams(t), ...req.params },
+      reason: t.inHouse ? undefined : `${t.name} is outsourced`,
+    });
   }
 
   for (const o of ops) o.qty = +o.qty.toFixed(3);
@@ -190,5 +229,10 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
     manualCount: manual.reduce((s, o) => s + (o.kind.endsWith("PerM") ? 1 : o.qty), 0),
     manualReasons: [...new Set(manual.map((o) => o.reason).filter(Boolean) as string[])],
     cureHours: cure,
+    unsupportedInspections: unsupported,
   };
+}
+
+function defaultParams(t?: InspectionType): Record<string, unknown> {
+  return Object.fromEntries((t?.params ?? []).filter((p) => p.default !== undefined).map((p) => [p.key, p.default]));
 }

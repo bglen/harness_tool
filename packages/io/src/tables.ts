@@ -44,12 +44,19 @@ export function pinoutTable(project: Project, cat: CatalogIndex, rev: Revision =
   return { name: "Pinouts", header: ["RefDes", "Connector PN", "Cavity", "Contact size", "Signal", "Status", "Wire ID", "Gauge (AWG)", "Color", "Contact / plug PN"], rows };
 }
 
-export function bomTable(bom: Bom, opts: { pricing: boolean } = { pricing: true }): Table {
-  const header = ["Line", "Part number", "Description", "Category", "Qty", "UoM", "Refs", "Mass (g)", "Machine-ready", "Customer-furnished"];
-  if (opts.pricing) header.push("Unit cost (USD, demo)", "Ext. cost (USD, demo)", "Stock (demo)", "Lead time (days, demo)", "Lifecycle", "As of");
+/** Quantity for output: exact to 1e-6, rounded UP (a requirement is never rounded down). */
+const qtyOut = (q: number) => Math.ceil(q * 1e6 - 1e-6) / 1e6;
+
+/** BOM export. `pricing` and `supply` implement the audience redaction policy (feedback §7). */
+export function bomTable(bom: Bom, opts: { pricing: boolean; supply?: boolean } = { pricing: true }): Table {
+  const supply = opts.supply ?? opts.pricing;
+  const header = ["Line", "Part number", "Description", "Category", "Qty per harness", "UoM", "Refs", "Mass (g)", "Machine-ready", "Customer-furnished", "Data status", "Qualification"];
+  if (opts.pricing) header.push("Unit cost (USD, demo)", "Ext. cost (USD, demo)");
+  if (supply) header.push("Stock (demo)", "Covers order", "Lead time (days, demo)", "Lifecycle", "As of");
   const rows = bom.lines.map((l) => {
-    const r: (string | number)[] = [l.line, l.pn, l.description, l.category, l.qty, l.uom, l.refs.join(" "), r3(l.massG), l.machineReady ? "yes" : "no", l.customerFurnished ? "yes" : ""];
-    if (opts.pricing) r.push(l.unitCost, l.extCost, l.stock, l.leadDays, l.lifecycle, l.asOf);
+    const r: (string | number)[] = [l.line, l.pn, l.description, l.category, qtyOut(l.qty), l.uom, l.refs.join(" "), r3(l.massG), l.machineReady ? "yes" : "no", l.customerFurnished ? "yes" : "", l.dataStatus, l.qualification.status];
+    if (opts.pricing) r.push(l.unitCost, l.extCost);
+    if (supply) r.push(l.stock, l.stockSufficient ? "yes" : "no", l.leadDays, l.lifecycle, l.asOf);
     return r;
   });
   return { name: "BOM", header, rows };

@@ -25,6 +25,7 @@ import type {
   PedigreeScheme,
   Point,
   Project,
+  ReleaseSnapshot,
   RuleInstance,
   RuleOverride,
   Ruleset,
@@ -47,6 +48,8 @@ export interface Command<P = any> {
 export interface CommandContext {
   cat: CatalogIndex;
   now?: () => string;
+  /** Filled by applyCommand: side effects worth telling the user about. */
+  repairs?: string[];
 }
 
 export interface CommandResult {
@@ -54,7 +57,12 @@ export interface CommandResult {
   patches: Patch[];
   inverse: Patch[];
   label: string;
+  /** Changes normalization made beyond the command itself (reported to the user, never silent). */
+  repairs: string[];
 }
+
+/** A command refused at the model boundary because it would create an invalid construction. */
+export class CommandRejectedError extends Error {}
 
 type Handler<P> = {
   label: (p: P) => string;
@@ -76,30 +84,42 @@ export class FrozenRevisionError extends Error {
   }
 }
 
+/**
+ * Released (frozen) revisions are read-only and are never normalized against current settings or catalog
+ * data (FIX-01). Commands allowed while a frozen revision is open only touch project-level records.
+ */
+function normalizeIfDraft(draft: Project, ctx: CommandContext, repairs: string[]) {
+  if (currentRevision(draft).frozen) return;
+  normalize(draft, { cat: ctx.cat, repairs });
+}
+
 export function applyCommand(project: Project, cmd: Command, ctx: CommandContext): CommandResult {
   const h = handlers[cmd.type];
   if (!h) throw new Error(`Unknown command ${cmd.type}`);
   if (currentRevision(project).frozen && !h.allowFrozen) throw new FrozenRevisionError();
+  const repairs: string[] = [];
   const [next, patches, inverse] = produceWithPatches(project, (draft) => {
-    h.run(draft as Project, cmd.payload, ctx);
-    normalize(draft as Project, { cat: ctx.cat });
+    h.run(draft as Project, cmd.payload, { ...ctx, repairs });
+    normalizeIfDraft(draft as Project, ctx, repairs);
     (draft as Project).updated = ctx.now ? ctx.now() : new Date().toISOString();
   });
-  return { project: next, patches, inverse, label: h.label(cmd.payload) };
+  return { project: next, patches, inverse, label: h.label(cmd.payload), repairs };
 }
 
 export function applyBatch(project: Project, cmds: Command[], ctx: CommandContext, label?: string): CommandResult {
   if (currentRevision(project).frozen && cmds.some((c) => !handlers[c.type]?.allowFrozen)) throw new FrozenRevisionError();
+  const repairs: string[] = [];
   const [next, patches, inverse] = produceWithPatches(project, (draft) => {
     for (const cmd of cmds) {
       const h = handlers[cmd.type];
       if (!h) throw new Error(`Unknown command ${cmd.type}`);
-      h.run(draft as Project, cmd.payload, ctx);
-      normalize(draft as Project, { cat: ctx.cat });
+      if (currentRevision(draft as Project).frozen && !h.allowFrozen) throw new FrozenRevisionError();
+      h.run(draft as Project, cmd.payload, { ...ctx, repairs });
+      normalizeIfDraft(draft as Project, ctx, repairs);
     }
     (draft as Project).updated = ctx.now ? ctx.now() : new Date().toISOString();
   });
-  return { project: next, patches, inverse, label: label ?? (cmds.length === 1 ? handlers[cmds[0]!.type]!.label(cmds[0]!.payload) : `${cmds.length} changes`) };
+  return { project: next, patches, inverse, label: label ?? (cmds.length === 1 ? handlers[cmds[0]!.type]!.label(cmds[0]!.payload) : `${cmds.length} changes`), repairs };
 }
 
 export { applyPatches };
@@ -137,7 +157,7 @@ function connectTwo(h: Harness, a: NetMember, b: NetMember) {
   else if (na) setPinNet(h, b, na.id);
   else if (nb) setPinNet(h, a, nb.id);
   else {
-    const net: Net = { id: uid(), name: nextNetName(h), cls: "signal", topology: "daisy", members: [{ ...a }, { ...b }] };
+    const net: Net = { id: uid(), name: nextNetName(h), cls: "signal", topology: "daisy", topologyConfirmed: false, members: [{ ...a }, { ...b }] };
     h.nets.push(net);
   }
 }
@@ -321,9 +341,20 @@ export const setAccessory = def<{ id: string; kind: Accessory["kind"]; pn: strin
 
 export const setPinContact = def<{ connectorId: string; cavityIds: string[]; contactPn: string | null; filler?: boolean }>("setPinContact", {
   label: () => "Change contact",
-  run(proj, p) {
+  run(proj, p, { cat }) {
     const c = connectorById(H(proj), p.connectorId);
     if (!c) return;
+    // Validate at the model boundary, independent of picker filtering (FIX-06).
+    if (p.contactPn) {
+      const part = cat.connector(c.pn);
+      const cp = cat.contactsByPn.get(p.contactPn) ?? cat.bundle.contacts.find((x) => normalizePn(x.pn) === normalizePn(p.contactPn!));
+      if (!cp) throw new CommandRejectedError(`${p.contactPn} isn't in the contact catalog.`);
+      for (const cav of p.cavityIds) {
+        const cv = cat.cavity(c.pn, cav);
+        if (part && cp.gender !== part.gender) throw new CommandRejectedError(`${cp.pn} is a ${cp.gender} contact; ${c.refDes} (${part.pn}) takes ${part.gender} contacts.`);
+        if (cv && cv.size !== cp.size) throw new CommandRejectedError(`${cp.pn} is size ${cp.size}; ${c.refDes}-${cav} is a size ${cv.size} cavity.`);
+      }
+    }
     for (const cav of p.cavityIds) {
       const pin = c.pins[cav] ?? (c.pins[cav] = { netId: null });
       if (p.contactPn === null) delete pin.contactPn;
@@ -352,7 +383,7 @@ function assignSignal(h: Harness, m: NetMember, rawName: string, cls?: NetClass)
     cur.name = name; // sole member: rename the net
     return;
   }
-  const net: Net = { id: uid(), name, cls: cls ?? guessNetClass(name), topology: "daisy", members: [] };
+  const net: Net = { id: uid(), name, cls: cls ?? guessNetClass(name), topology: "daisy", topologyConfirmed: false, members: [] };
   h.nets.push(net);
   setPinNet(h, m, net.id);
 }
@@ -442,8 +473,15 @@ export const setNetProps = def<{ ids: string[]; cls?: NetClass; currentA?: numbe
       const n = H(proj).nets.find((x) => x.id === id);
       if (!n) continue;
       if (p.cls) n.cls = p.cls;
-      if (p.currentA !== undefined) n.currentA = p.currentA ?? undefined;
-      if (p.topology) n.topology = p.topology;
+      if (p.currentA !== undefined) {
+        if (p.currentA != null && (!Number.isFinite(p.currentA) || p.currentA < 0 || p.currentA > 500)) throw new CommandRejectedError(`Current ${p.currentA} A is out of range.`);
+        n.currentA = p.currentA ?? undefined;
+      }
+      if (p.topology) {
+        n.topology = p.topology;
+        // Choosing the construction explicitly (either way) resolves the "assumed daisy chain" finding.
+        n.topologyConfirmed = true;
+      }
     }
   },
 });
@@ -644,6 +682,23 @@ export const setTermination = def<{ id: string; method: Termination["method"]; d
   },
 });
 
+/** Edit the drain/pigtail conductor of a drain-to-pin termination. */
+export const setDrain = def<{ id: string; lengthMm?: number; gauge?: number; spec?: string; lengthSource?: "default" | "estimated" | "confirmed" }>("setDrain", {
+  label: () => "Edit drain wire",
+  run(proj, p) {
+    const t = H(proj).terminations.find((x) => x.id === p.id);
+    if (!t?.drain) return;
+    if (p.lengthMm !== undefined) {
+      if (!(p.lengthMm > 0 && p.lengthMm < 10000)) throw new CommandRejectedError(`Drain length ${p.lengthMm} mm is out of range.`);
+      t.drain.lengthMm = p.lengthMm;
+      t.drain.lengthSource = "confirmed";
+    }
+    if (p.gauge !== undefined) t.drain.gauge = p.gauge;
+    if (p.spec) t.drain.spec = p.spec;
+    if (p.lengthSource) t.drain.lengthSource = p.lengthSource;
+  },
+});
+
 // ─── Cables ────────────────────────────────────────────────────────────────
 
 export const createCable = def<{ id: string; wireIds: string[]; wireCode: string; gauge: number; shield: string; jacket: string }>("createCable", {
@@ -704,7 +759,7 @@ export const setCableProps = def<{ id: string; stripJacketMm?: number; stripShie
 /** Split a segment at fraction t with a new breakout node; optionally add a branch to a connector or free point (§5.4). */
 export const addBreakout = def<{ segmentId: string; t: number; nodeId: string; position: Point; branch?: { toConnectorId?: string; toPosition?: Point; newNodeId?: string; lengthMm?: number } }>("addBreakout", {
   label: (p) => (p.branch ? "Add branch" : "Add breakout"),
-  run(proj, p) {
+  run(proj, p, { repairs }) {
     const h = H(proj);
     const s = h.segments.find((x) => x.id === p.segmentId);
     if (!s) return;
@@ -712,7 +767,7 @@ export const addBreakout = def<{ segmentId: string; t: number; nodeId: string; p
     const la = Math.max(1, Math.round(s.lengthMm * t));
     const lb = Math.max(1, Math.round(s.lengthMm - la));
     h.nodes.push({ id: p.nodeId, kind: "breakout", position: p.position });
-    const s2 = { id: uid(), a: p.nodeId, b: s.b, lengthMm: lb, toleranceMm: s.toleranceMm, label: "" };
+    const s2 = { id: uid(), a: p.nodeId, b: s.b, lengthMm: lb, lengthSource: s.lengthSource, toleranceMm: s.toleranceMm, label: "" };
     // Split layer extents that covered the whole segment.
     for (const l of h.layers) {
       const e = l.extents.find((x) => x.segmentId === s.id);
@@ -732,26 +787,69 @@ export const addBreakout = def<{ segmentId: string; t: number; nodeId: string; p
     h.segments.push(s2);
     if (p.branch) {
       const len = p.branch.lengthMm ?? proj.settings.defaultSegmentMm;
+      // A branch length derived from where it was dropped on the schematic is a placeholder, not a dimension.
+      const lengthSource = "default" as const;
       if (p.branch.toConnectorId) {
         const cn = h.nodes.find((n) => n.connectorId === p.branch!.toConnectorId);
         if (cn) {
-          // Re-route: drop direct segments from this connector that bypass the new breakout.
-          h.segments.push({ id: uid(), a: p.nodeId, b: cn.id, lengthMm: len, toleranceMm: 10, label: "" });
+          const newSeg = { id: uid(), a: p.nodeId, b: cn.id, lengthMm: len, lengthSource, toleranceMm: 10, label: "" };
+          h.segments.push(newSeg);
+          // The connector now branches off here: drop its other bundles that became redundant parallel paths.
+          dropRedundantSegments(h, cn.id, newSeg.id, repairs);
         }
       } else if (p.branch.toPosition && p.branch.newNodeId) {
         h.nodes.push({ id: p.branch.newNodeId, kind: "breakout", position: p.branch.toPosition });
-        h.segments.push({ id: uid(), a: p.nodeId, b: p.branch.newNodeId, lengthMm: len, toleranceMm: 10, label: "" });
+        h.segments.push({ id: uid(), a: p.nodeId, b: p.branch.newNodeId, lengthMm: len, lengthSource, toleranceMm: 10, label: "" });
       }
     }
   },
 });
 
-export const addSegment = def<{ id: string; a: string; b: string; lengthMm?: number }>("addSegment", {
+/** Is the segment graph connected between all nodes that currently have segments, ignoring `skip`? */
+function connectedWithout(h: Harness, skip: Set<string>): boolean {
+  const adj = new Map<string, string[]>();
+  for (const s of h.segments) {
+    if (skip.has(s.id)) continue;
+    (adj.get(s.a) ?? adj.set(s.a, []).get(s.a)!).push(s.b);
+    (adj.get(s.b) ?? adj.set(s.b, []).get(s.b)!).push(s.a);
+  }
+  const all = new Set<string>();
+  for (const s of h.segments) all.add(s.a), all.add(s.b);
+  const start = all.values().next().value;
+  if (start === undefined) return true;
+  const seen = new Set([start]);
+  const q = [start];
+  while (q.length) for (const n of adj.get(q.pop()!) ?? []) if (!seen.has(n)) seen.add(n), q.push(n);
+  return seen.size === all.size;
+}
+
+function segName(h: Harness, s: { a: string; b: string; label: string }): string {
+  if (s.label) return s.label;
+  const nm = (id: string) => {
+    const n = h.nodes.find((x) => x.id === id);
+    return n?.kind === "connector" ? (h.connectors.find((c) => c.id === n.connectorId)?.refDes ?? "?") : `B${h.nodes.filter((x) => x.kind === "breakout").indexOf(n!) + 1}`;
+  };
+  return `${nm(s.a)}–${nm(s.b)}`;
+}
+
+function dropRedundantSegments(h: Harness, nodeId: string, keepId: string, repairs?: string[]) {
+  for (const s of [...h.segments]) {
+    if (s.id === keepId || (s.a !== nodeId && s.b !== nodeId)) continue;
+    if (connectedWithout(h, new Set([s.id]))) {
+      repairs?.push(`Removed bundle ${segName(h, s)}: the connector now routes through the new branch.`);
+      h.segments = h.segments.filter((x) => x.id !== s.id);
+      for (const l of h.layers) l.extents = l.extents.filter((e) => e.segmentId !== s.id);
+    }
+  }
+  h.nodes = h.nodes.filter((n) => n.kind === "connector" || h.segments.some((s) => s.a === n.id || s.b === n.id));
+}
+
+export const addSegment = def<{ id: string; a: string; b: string; lengthMm?: number; lengthSource?: "default" | "estimated" | "confirmed" }>("addSegment", {
   label: () => "Add segment",
   run(proj, p) {
     const h = H(proj);
     if (p.a === p.b) return;
-    h.segments.push({ id: p.id, a: p.a, b: p.b, lengthMm: p.lengthMm ?? proj.settings.defaultSegmentMm, toleranceMm: 10, label: "" });
+    h.segments.push({ id: p.id, a: p.a, b: p.b, lengthMm: p.lengthMm ?? proj.settings.defaultSegmentMm, lengthSource: p.lengthSource ?? (p.lengthMm ? "estimated" : "default"), toleranceMm: 10, label: "" });
   },
 });
 
@@ -761,34 +859,121 @@ export const addNode = def<{ id: string; position: Point; connectTo?: string; le
   run(proj, p) {
     const h = H(proj);
     h.nodes.push({ id: p.id, kind: "breakout", position: p.position });
-    if (p.connectTo) h.segments.push({ id: uid(), a: p.connectTo, b: p.id, lengthMm: p.lengthMm ?? proj.settings.defaultSegmentMm, toleranceMm: 10, label: "" });
+    if (p.connectTo) h.segments.push({ id: uid(), a: p.connectTo, b: p.id, lengthMm: p.lengthMm ?? proj.settings.defaultSegmentMm, lengthSource: p.lengthMm ? "estimated" : "default", toleranceMm: 10, label: "" });
   },
 });
 
-/** Merge a node onto another (drop a free breakout onto a connector). */
+/** Merge a node onto another: drop a breakout onto a connector or onto another breakout. */
 export const mergeNodes = def<{ from: string; into: string }>("mergeNodes", {
   label: () => "Connect branch",
-  run(proj, p) {
+  run(proj, p, { repairs }) {
     const h = H(proj);
     if (p.from === p.into) return;
+    const from = h.nodes.find((n) => n.id === p.from);
+    if (!from || from.kind === "connector") throw new CommandRejectedError("Only breakouts can be merged onto another node.");
     for (const s of h.segments) {
       if (s.a === p.from) s.a = p.into;
       if (s.b === p.from) s.b = p.into;
     }
+    const loops = h.segments.filter((s) => s.a === s.b);
+    for (const s of loops) repairs?.push(`Removed bundle ${segName(h, s)}: its ends were merged into one point.`);
     h.segments = h.segments.filter((s) => s.a !== s.b);
+    for (const l of h.layers) l.extents = l.extents.filter((e) => h.segments.some((s) => s.id === e.segmentId));
     for (const b of h.boots) if (b.nodeId === p.from) b.nodeId = p.into;
     for (const s of h.splices) if (s.nodeId === p.from) s.nodeId = p.into;
-    h.nodes = h.nodes.filter((n) => n.id !== p.from || n.kind === "connector");
+    h.nodes = h.nodes.filter((n) => n.id !== p.from);
   },
 });
 
-export const setSegmentProps = def<{ ids: string[]; lengthMm?: number; toleranceMm?: number; label?: string; tieSpacingMm?: number | null }>("setSegmentProps", {
-  label: (p) => (p.lengthMm ? "Set segment length" : "Edit segment"),
+/**
+ * Re-attach one end of a bundle segment to another node, or detach it to a new free breakout (branch editing).
+ * Lengths are unchanged: moving schematic geometry never changes physical dimensions.
+ */
+export const reattachSegment = def<{ segmentId: string; end: "a" | "b"; toNodeId?: string; toPosition?: Point; newNodeId?: string }>("reattachSegment", {
+  label: () => "Re-attach bundle",
+  run(proj, p, { repairs }) {
+    const h = H(proj);
+    const s = h.segments.find((x) => x.id === p.segmentId);
+    if (!s) return;
+    const old = s[p.end];
+    const other = p.end === "a" ? s.b : s.a;
+    let target = p.toNodeId;
+    if (!target) {
+      if (!p.toPosition || !p.newNodeId) return;
+      h.nodes.push({ id: p.newNodeId, kind: "breakout", position: p.toPosition });
+      target = p.newNodeId;
+    }
+    if (!h.nodes.some((n) => n.id === target)) throw new CommandRejectedError("That point no longer exists.");
+    if (target === other) throw new CommandRejectedError("A bundle can't start and end at the same point.");
+    if (target === old) return;
+    if (h.segments.some((x) => x.id !== s.id && ((x.a === target && x.b === other) || (x.b === target && x.a === other)))) throw new CommandRejectedError("Those two points are already joined by a bundle.");
+    s[p.end] = target;
+    // Partial layer extents are measured from end A; re-attaching A keeps them relative to the same physical end.
+    const oldNode = h.nodes.find((n) => n.id === old);
+    if (oldNode?.kind === "breakout" && !h.segments.some((x) => x.a === old || x.b === old)) {
+      h.nodes = h.nodes.filter((n) => n.id !== old);
+      h.splices = h.splices.filter((sp) => sp.nodeId !== old);
+    }
+    if (!connectedWithout(h, new Set())) repairs?.push("The bundle network is now in separate pieces; wires between them have no route until you join them.");
+  },
+});
+
+/**
+ * Combine two bundles leaving the same point into a common trunk: P1→P2 and P1→P3 become P1→B (trunk) with
+ * branches B→P2 and B→P3. Wire lengths are preserved (the trunk is taken out of both branches).
+ */
+export const combineSegments = def<{ segmentIds: [string, string]; nodeId: string; trunkMm: number; position: Point }>("combineSegments", {
+  label: () => "Combine into trunk",
+  run(proj, p) {
+    const h = H(proj);
+    const [s1, s2] = p.segmentIds.map((id) => h.segments.find((x) => x.id === id)) as [Harness["segments"][0] | undefined, Harness["segments"][0] | undefined];
+    if (!s1 || !s2 || s1 === s2) throw new CommandRejectedError("Select two bundles.");
+    const shared = [s1.a, s1.b].find((n) => n === s2.a || n === s2.b);
+    if (!shared) throw new CommandRejectedError("The two bundles must start from the same connector or breakout.");
+    const trunk = Math.round(p.trunkMm);
+    if (!(trunk > 0) || trunk >= Math.min(s1.lengthMm, s2.lengthMm)) throw new CommandRejectedError(`Trunk length must be shorter than both bundles (${Math.min(s1.lengthMm, s2.lengthMm).toFixed(0)} mm).`);
+    h.nodes.push({ id: p.nodeId, kind: "breakout", position: p.position });
+    const trunkSeg = { id: uid(), a: shared, b: p.nodeId, lengthMm: trunk, lengthSource: "estimated" as const, toleranceMm: Math.min(s1.toleranceMm, s2.toleranceMm), label: "" };
+    // Coverings: a full-length layer on both branches also covers the trunk; partial extents shift with the moved end.
+    for (const l of h.layers) {
+      const e1 = l.extents.find((e) => e.segmentId === s1.id);
+      const e2 = l.extents.find((e) => e.segmentId === s2.id);
+      if (e1 && e2 && e1.startMm == null && e1.endMm == null && e2.startMm == null && e2.endMm == null) l.extents.push({ segmentId: trunkSeg.id });
+    }
+    for (const s of [s1, s2]) {
+      const fromA = s.a === shared;
+      const newLen = s.lengthMm - trunk;
+      for (const l of h.layers) {
+        const e = l.extents.find((x) => x.segmentId === s.id);
+        if (!e || (e.startMm == null && e.endMm == null)) continue;
+        const st = (e.startMm ?? 0) - (fromA ? trunk : 0);
+        const en = (e.endMm ?? s.lengthMm) - (fromA ? trunk : 0);
+        const cs = Math.max(0, st);
+        const ce = Math.min(newLen, en);
+        if (ce - cs < 1) l.extents = l.extents.filter((x) => x !== e);
+        else {
+          e.startMm = cs;
+          e.endMm = ce;
+        }
+      }
+      if (fromA) s.a = p.nodeId;
+      else s.b = p.nodeId;
+      s.lengthMm = newLen;
+    }
+    h.segments.push(trunkSeg);
+  },
+});
+
+export const setSegmentProps = def<{ ids: string[]; lengthMm?: number; toleranceMm?: number; label?: string; tieSpacingMm?: number | null; lengthSource?: "default" | "estimated" | "confirmed" }>("setSegmentProps", {
+  label: (p) => (p.lengthMm ? "Set segment length" : p.lengthSource === "confirmed" ? "Confirm length" : "Edit segment"),
   run(proj, p) {
     for (const s of H(proj).segments) {
       if (!p.ids.includes(s.id)) continue;
+      if (p.lengthSource) s.lengthSource = p.lengthSource;
+      if (p.lengthMm !== undefined && !(p.lengthMm > 0 && p.lengthMm < 1e6)) throw new CommandRejectedError(`Length ${p.lengthMm} mm is out of range.`);
       if (p.lengthMm && p.lengthMm > 0) {
         const scale = p.lengthMm / s.lengthMm;
+        if (!p.lengthSource) s.lengthSource = "confirmed";
         s.lengthMm = p.lengthMm;
         for (const l of H(proj).layers)
           for (const e of l.extents)
@@ -1160,9 +1345,9 @@ export const setSettings = def<Partial<Settings>>("setSettings", {
   },
 });
 
+/** Switch the working revision's build class. A released revision keeps the class it was released for (FIX-01). */
 export const setActivePedigree = def<{ id: string }>("setActivePedigree", {
   label: (p) => `Switch pedigree`,
-  allowFrozen: true,
   run(proj, p) {
     if (proj.pedigreeScheme.pedigrees.some((x) => x.id === p.id)) currentRevision(proj).activePedigreeId = p.id;
   },
@@ -1173,10 +1358,13 @@ export const setPedigreeScheme = def<{ scheme: PedigreeScheme; activeId?: string
   allowFrozen: true,
   run(proj, p) {
     proj.pedigreeScheme = p.scheme;
+    // Released revisions carry their own scheme in the release record; only working revisions follow the edit.
     for (const r of proj.revisions) {
+      if (r.frozen) continue;
       if (!p.scheme.pedigrees.some((x) => x.id === r.activePedigreeId)) r.activePedigreeId = p.scheme.pedigrees[0]!.id;
     }
-    if (p.activeId) currentRevision(proj).activePedigreeId = p.activeId;
+    const cur = currentRevision(proj);
+    if (p.activeId && !cur.frozen) cur.activePedigreeId = p.activeId;
   },
 });
 
@@ -1280,18 +1468,25 @@ export const setQuoteSelection = def<{ qty?: number; tier?: string; quantities?:
   },
 });
 
-export const setCustomerFurnished = def<{ pn: string; furnished: boolean }>("setCustomerFurnished", {
-  label: (p) => (p.furnished ? `Customer-furnished: ${p.pn}` : `We supply: ${p.pn}`),
+export const setCustomerFurnished = def<{ pn: string; furnished: boolean; arrivalDays?: number | null }>("setCustomerFurnished", {
+  label: (p) => (p.arrivalDays !== undefined ? `Customer parts arrival: ${p.pn}` : p.furnished ? `Customer-furnished: ${p.pn}` : `We supply: ${p.pn}`),
   allowFrozen: true,
   run(proj, p) {
     const list = proj.quote.customerFurnished.filter((x) => x !== p.pn);
     if (p.furnished) list.push(p.pn);
     proj.quote.customerFurnished = list;
+    const arr = { ...proj.quote.customerFurnishedArrivalDays };
+    if (!p.furnished || p.arrivalDays === null) delete arr[p.pn];
+    else if (p.arrivalDays !== undefined) {
+      if (!(p.arrivalDays >= 0 && p.arrivalDays < 3650)) throw new CommandRejectedError("Arrival must be 0–3650 days.");
+      arr[p.pn] = p.arrivalDays;
+    }
+    proj.quote.customerFurnishedArrivalDays = arr;
   },
 });
 
 /** Freeze the current revision (immutable) and continue on the next letter (§4.3). */
-export const freezeRevision = def<{ notes: string; newRevisionId: string; snapshot?: unknown; at: string }>("freezeRevision", {
+export const freezeRevision = def<{ notes: string; newRevisionId: string; release: ReleaseSnapshot; at: string }>("freezeRevision", {
   label: () => "Freeze revision",
   allowFrozen: false,
   run(proj, p) {
@@ -1299,7 +1494,7 @@ export const freezeRevision = def<{ notes: string; newRevisionId: string; snapsh
     cur.frozen = true;
     cur.frozenAt = p.at;
     cur.notes = p.notes;
-    cur.snapshot = p.snapshot;
+    cur.release = p.release;
     const next = nextRevisionLabel(cur.label);
     proj.revisions.push({ id: p.newRevisionId, label: next, notes: "", frozen: false, activePedigreeId: cur.activePedigreeId, harness: snapshot(cur.harness) });
     proj.currentRevisionId = p.newRevisionId;

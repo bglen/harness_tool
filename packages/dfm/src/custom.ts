@@ -1,4 +1,5 @@
 import { formatWireColor, isAutoNetName, type CustomCond, type CustomRule } from "@hs/model";
+import { safeRegExp } from "./regex";
 import type { RuleCtx, Violation, EntityKind } from "./types";
 
 /**
@@ -160,12 +161,7 @@ export function evalCond(v: unknown, c: CustomCond): boolean {
       return !(Array.isArray(val) ? val : String(val).split(",")).map((x) => String(x).trim()).includes(String(v));
     case "matches":
     case "notMatches": {
-      let ok = false;
-      try {
-        ok = new RegExp(String(val)).test(String(v ?? ""));
-      } catch {
-        throw new Error(`Invalid regex ${val}`);
-      }
+      const ok = safeRegExp(String(val)).test(String(v ?? ""));
       return c.op === "matches" ? ok : !ok;
     }
   }
@@ -191,9 +187,9 @@ export function validateCustom(r: CustomRule): string[] {
     if (!CUSTOM_FIELDS[r.forEach].some((f) => f.key === c.field)) errs.push(`Unknown field "${c.field}" for ${r.forEach}`);
     if (c.op === "matches" || c.op === "notMatches") {
       try {
-        new RegExp(String(c.value));
-      } catch {
-        errs.push(`Invalid pattern "${c.value}"`);
+        safeRegExp(String(c.value));
+      } catch (e) {
+        errs.push(`Pattern "${c.value}": ${(e as Error).message}`);
       }
     }
     const f = CUSTOM_FIELDS[r.forEach].find((x) => x.key === c.field);

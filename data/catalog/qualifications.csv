@@ -1,0 +1,4 @@
+# schema=1; explicit qualified-source evidence (QPL/QML listing, certificate, approval letter). One row per PN or prefix* pattern.
+# Owner-supplied data: a part is "qualified" only when a row here names the source and the evidence, and it hasn't expired.
+# Nothing is inferred from part-number prefixes. Empty file = every part is "unverified".
+pn,specification,source,evidence,valid_until,reviewed_by

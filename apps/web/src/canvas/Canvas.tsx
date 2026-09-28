@@ -9,10 +9,12 @@ import {
   moveNodes,
   netOfPin,
   parseLength,
+  reattachSegment,
   setConnectorProps,
   setPinSignals,
   setSegmentProps,
   uid,
+  type Command,
   type Harness,
   type Point,
   type Wire,
@@ -20,11 +22,11 @@ import {
 import { cvdFilterMatrix, semantic } from "@hs/ui-tokens";
 import { dispatch, useProject } from "../store/project";
 import { useUi } from "../store/ui";
-import { useActiveAnalysis, useDerived } from "../store/analysis";
+import { activePedigreeOf, useActiveAnalysis, useDerived } from "../store/analysis";
 import { svc } from "../lib/services";
 import { bundleWidth, layoutConnector, nodePos, projectOnSegment, zoomLevel, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 import { ConnectorView, type RowState } from "./ConnectorView";
-import { BundleLayer } from "./BundleLayer";
+import { BundleLayer, SegmentHandles } from "./BundleLayer";
 import { WireLayer } from "./WireLayer";
 import { canvasToScreen, zoomToFit } from "../lib/viewport";
 import { EmptyState } from "./EmptyState";
@@ -38,6 +40,7 @@ type Drag =
   | { kind: "move"; ids: string[]; nodeIds: string[]; start: Point; cur: Point; moved: boolean; hitId: string; hitKind: "connector" | "node" }
   | { kind: "wire"; from: { connectorId: string; cavityId: string }[]; start: Point; cur: Point; moved: boolean; srcKey: string }
   | { kind: "branch"; segmentId: string; t: number; start: Point; cur: Point; moved: boolean }
+  | { kind: "reattach"; segmentId: string; end: "a" | "b"; start: Point; cur: Point; moved: boolean }
   | { kind: "marquee"; start: Point; cur: Point; additive: boolean }
   | { kind: "note"; id: string; start: Point; cur: Point; moved: boolean };
 
@@ -45,6 +48,19 @@ function hitAt(e: { target: EventTarget | null }): { hit: string; id: string } |
   const el = (e.target as Element | null)?.closest?.("[data-hit]");
   if (!el) return null;
   return { hit: el.getAttribute("data-hit")!, id: el.getAttribute("data-id") ?? "" };
+}
+
+/** Every hit target under a screen point, top-most first (skips drag previews and hit-less elements). */
+function hitsAtPoint(x: number, y: number): { hit: string; id: string }[] {
+  const out: { hit: string; id: string }[] = [];
+  const seen = new Set<Element>();
+  for (const el of document.elementsFromPoint(x, y)) {
+    const h = (el as Element).closest?.("[data-hit]");
+    if (!h || seen.has(h) || h.getAttribute("data-hit") === "drag-preview") continue;
+    seen.add(h);
+    out.push({ hit: h.getAttribute("data-hit")!, id: h.getAttribute("data-id") ?? "" });
+  }
+  return out;
 }
 
 function hitAtPoint(x: number, y: number): { hit: string; id: string } | null {
@@ -233,8 +249,27 @@ export function Canvas() {
       setDrag({ kind: "pan", sx: e.clientX, sy: e.clientY, vx: vp.x, vy: vp.y });
       return;
     }
+    // Breakout tool: a click on a bundle splits it there; anywhere else cancels the tool.
+    if (ui.tool === "breakout") {
+      ui.setTool(null);
+      if (hit?.hit === "segment" || hit?.hit === "chip-length") {
+        const s = h.segments.find((x) => x.id === hit.id)!;
+        const a = nodePos(h, s.a);
+        const b = nodePos(h, s.b);
+        const t = hit.hit === "segment" ? projectOnSegment(a, b, p) : 0.5;
+        const nodeId = uid();
+        if (dispatch(addBreakout({ segmentId: s.id, t, nodeId, position: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t } }), "Add breakout")) ui.select("node", [nodeId]);
+        return;
+      }
+      if (!hit) return;
+    }
     if (!hit) {
       setDrag({ kind: "marquee", start: p, cur: p, additive: e.shiftKey || e.ctrlKey || e.metaKey });
+      return;
+    }
+    if (hit.hit === "seg-end") {
+      const [segmentId, end] = hit.id.split(":") as [string, "a" | "b"];
+      setDrag({ kind: "reattach", segmentId, end, start: p, cur: p, moved: false });
       return;
     }
     if (hit.hit === "pin" || hit.hit === "signal") {
@@ -366,17 +401,32 @@ export function Canvas() {
           return;
         }
       }
-      // Free breakout dropped onto a connector → route branch there
+      // A breakout dropped onto a connector, another breakout or a bundle joins them there (lengths unchanged).
       if (dr.hitKind === "node" && dr.nodeIds.length === 1) {
-        const over = hitAtPoint(e.clientX, e.clientY);
-        const targetConn = over && (over.hit === "connector" || over.hit === "pin") ? over.id.split(":")[0]! : null;
         const node = h0.nodes.find((n) => n.id === dr.hitId);
-        if (targetConn && node?.kind === "breakout") {
-          const into = h0.nodes.find((n) => n.connectorId === targetConn)!.id;
-          const degree = h0.segments.filter((s) => s.a === node.id || s.b === node.id).length;
-          if (degree === 1) {
+        const incident = (segId: string) => h0.segments.some((s) => s.id === segId && (s.a === dr.hitId || s.b === dr.hitId));
+        const over = hitsAtPoint(e.clientX, e.clientY).find((x) => !(x.hit === "node" && x.id === dr.hitId) && !(x.hit === "segment" && incident(x.id)) && ["connector", "pin", "signal", "node", "segment"].includes(x.hit));
+        if (node?.kind === "breakout" && over) {
+          if (over.hit === "connector" || over.hit === "pin" || over.hit === "signal") {
+            const into = h0.nodes.find((n) => n.connectorId === over.id.split(":")[0])!.id;
             dispatch(mergeNodes({ from: node.id, into }), "Route branch to connector");
             return;
+          }
+          if (over.hit === "node") {
+            dispatch(mergeNodes({ from: node.id, into: over.id }), "Merge breakouts");
+            return;
+          }
+          if (over.hit === "segment") {
+            const s = h0.segments.find((x) => x.id === over.id)!;
+            if (s.a !== node.id && s.b !== node.id) {
+              const a = nodePos(h0, s.a);
+              const b = nodePos(h0, s.b);
+              const t = projectOnSegment(a, b, dr.cur);
+              const nodeId = uid();
+              dispatch([addBreakout({ segmentId: s.id, t, nodeId, position: { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t } }), mergeNodes({ from: node.id, into: nodeId })], "Join breakout to bundle");
+              ui.select("node", [nodeId]);
+              return;
+            }
           }
         }
       }
@@ -439,6 +489,33 @@ export function Canvas() {
       if (targetConn) dispatch(addBreakout({ segmentId: s.id, t: dr.t, nodeId, position: bp, branch: { toConnectorId: targetConn, lengthMm } }), "Add branch");
       else dispatch(addBreakout({ segmentId: s.id, t: dr.t, nodeId, position: bp, branch: { toPosition: dr.cur, newNodeId: uid(), lengthMm } }), "Add branch");
       ui.select("node", [nodeId]);
+      return;
+    }
+    if (dr.kind === "reattach") {
+      if (!dr.moved) return;
+      const s = h0.segments.find((x) => x.id === dr.segmentId);
+      if (!s) return;
+      const over = hitsAtPoint(e.clientX, e.clientY).find((x) => ["connector", "pin", "signal", "node", "segment"].includes(x.hit) && !(x.hit === "segment" && x.id === s.id));
+      let cmds: Command[] = [];
+      let nodeId: string | undefined;
+      if (over && (over.hit === "connector" || over.hit === "pin" || over.hit === "signal")) {
+        cmds = [reattachSegment({ segmentId: s.id, end: dr.end, toNodeId: h0.nodes.find((n) => n.connectorId === over.id.split(":")[0])!.id })];
+      } else if (over?.hit === "node") {
+        cmds = [reattachSegment({ segmentId: s.id, end: dr.end, toNodeId: over.id })];
+      } else if (over?.hit === "segment") {
+        // Drop on another bundle: split it there and attach to the new breakout.
+        const t = h0.segments.find((x) => x.id === over.id)!;
+        const a = nodePos(h0, t.a);
+        const b = nodePos(h0, t.b);
+        const f = projectOnSegment(a, b, dr.cur);
+        nodeId = uid();
+        cmds = [addBreakout({ segmentId: t.id, t: f, nodeId, position: { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f } }), reattachSegment({ segmentId: s.id, end: dr.end, toNodeId: nodeId })];
+      } else {
+        // Empty canvas: detach this end to a new free breakout.
+        nodeId = uid();
+        cmds = [reattachSegment({ segmentId: s.id, end: dr.end, toPosition: dr.cur, newNodeId: nodeId })];
+      }
+      if (dispatch(cmds, "Re-attach bundle")) ui.select("segment", [s.id]);
       return;
     }
     if (dr.kind === "note") {
@@ -521,7 +598,7 @@ export function Canvas() {
   const dimAll = ui.shieldView;
   const bg = semantic("bg.canvas", theme);
   const grid = semantic("canvas.grid", theme);
-  const ped = project.pedigreeScheme.pedigrees.find((p) => p.id === rev.activePedigreeId);
+  const ped = project.pedigreeScheme.pedigrees.find((p) => p.id === activePedigreeOf(project));
 
   // Drag preview elements
   let preview: JSX.Element | null = null;
@@ -550,6 +627,20 @@ export function Canvas() {
         <circle cx={bp.x} cy={bp.y} r={7} fill={semantic("text.primary", theme)} />
       </g>
     );
+  } else if (drag?.kind === "reattach" && drag.moved) {
+    const s = h.segments.find((x) => x.id === drag.segmentId);
+    if (s) {
+      const fixed = nodePos(h, drag.end === "a" ? s.b : s.a);
+      preview = (
+        <g data-hit="drag-preview" pointerEvents="none">
+          <line x1={fixed.x} y1={fixed.y} x2={drag.cur.x} y2={drag.cur.y} stroke={semantic("accent", theme)} strokeWidth={bundleWidth(2, level)} strokeDasharray="8 5" strokeLinecap="round" opacity={0.7} />
+          <circle cx={drag.cur.x} cy={drag.cur.y} r={7} fill="none" stroke={semantic("accent", theme)} strokeWidth={2} />
+          <text x={drag.cur.x + 12} y={drag.cur.y - 10} fontSize={11 / Math.max(vp.k, 0.6)} fill={semantic("accent", theme)}>
+            Drop on a connector, breakout or bundle
+          </text>
+        </g>
+      );
+    }
   } else if (drag?.kind === "marquee") {
     const x = Math.min(drag.start.x, drag.cur.x);
     const y = Math.min(drag.start.y, drag.cur.y);
@@ -637,6 +728,7 @@ export function Canvas() {
             />
           ))}
           <NotesLayer notes={h.notes} theme={theme} selected={sel.kind === "note" ? selSet : EMPTY} offset={drag?.kind === "note" && drag.moved ? { id: drag.id, dx: drag.cur.x - drag.start.x, dy: drag.cur.y - drag.start.y } : null} />
+          {sel.kind === "segment" && <SegmentHandles h={h} selected={selSet} k={kq} theme={theme} />}
           {preview}
         </g>
       </svg>
@@ -688,7 +780,29 @@ export function Canvas() {
         </div>
       )}
       {ui.shieldView && <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-control border border-accent bg-bg-surface-2 px-3 py-1 text-xs text-text-primary">Shield view: grounding scheme (press G to exit)</div>}
+      {ui.tool === "breakout" && <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-control border border-accent bg-bg-surface-2 px-3 py-1 text-xs text-text-primary">Click a bundle to add a breakout there (Esc to cancel)</div>}
       {ui.cvd && <div className="absolute right-3 top-3 rounded-control border border-border-subtle bg-bg-surface-2 px-2 py-1 text-xs text-text-secondary">Simulating {ui.cvd === "achroma" ? "achromatopsia" : `${ui.cvd}opia`} <button className="ml-2 text-accent" onClick={() => ui.setCvd(null)}>off</button></div>}
+      <BranchingTip count={h0.connectors.length} segments={h0.segments.length} />
+    </div>
+  );
+}
+
+/** One-time tip once a harness has 3+ connectors: how to edit bundle branching. */
+function BranchingTip({ count, segments }: { count: number; segments: number }) {
+  const ui = useUi();
+  if (count < 3 || segments < 2 || ui.hintsSeen.includes("branching")) return null;
+  return (
+    <div className="absolute bottom-10 left-3 z-10 w-[290px] rounded-card border border-border-subtle bg-bg-surface-2 p-3 text-xs text-text-secondary shadow-lg" role="note">
+      <div className="mb-1 font-medium text-text-primary">Adjusting how bundles branch</div>
+      <ul className="list-disc space-y-0.5 pl-4">
+        <li>Drag from the middle of a bundle to pull out a branch; drop it on a connector to route that connector through it.</li>
+        <li>Select two bundles that leave the same connector (Shift+click) and choose <b>Combine into trunk</b>.</li>
+        <li>Select a bundle and drag its end handle onto another connector, breakout or bundle to re-attach it.</li>
+        <li>Drop a breakout onto another breakout or a connector to join them. <b>B</b> adds a breakout by clicking a bundle.</li>
+      </ul>
+      <button className="mt-2 text-accent hover:underline" onClick={() => ui.markHint("branching")}>
+        Got it
+      </button>
     </div>
   );
 }

@@ -26,10 +26,10 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
     return a.dfm.results.filter((r) => (src === "all" ? true : src === "manufacturer" ? r.eff.source.layer === "manufacturer" : r.eff.source.layer !== "manufacturer") && (!q || `${r.eff.rule.id} ${r.eff.rule.title} ${r.eff.rule.category}`.toLowerCase().includes(q.toLowerCase())) && (!init.objectId || r.violations.some((v) => v.objectIds.includes(init.objectId!)) || !openRule));
   }, [a, src, q, init.objectId, openRule]);
   if (!a) return null;
-  const failing = results.filter((r) => r.status === "fail" || r.status === "error");
-  const passed = results.filter((r) => r.status === "pass" || r.status === "waived");
-  const off = results.filter((r) => r.status === "off" || r.status === "superseded");
-  const cats = [...new Set(failing.map((r) => r.eff.rule.category))];
+  const failing = results.filter((r) => r.status === "fail" || r.status === "engineError" || r.status === "missingInput" || r.status === "notEvaluated");
+  const passed = results.filter((r) => r.status === "pass" || r.status === "waived" || r.status === "notApplicable");
+  const off = results.filter((r) => r.status === "off");
+  const cats = [...new Set(failing.map((r) => (r.status === "fail" ? r.eff.rule.category : "Couldn't run")))];
   const detail = a.dfm.results.find((r) => r.eff.rule.id === openRule);
   return (
     <Dialog open onClose={close} title="Checks" width={1080} description={<span className="flex items-center gap-2">Checked against <PedigreePill id={currentRevision(project).activePedigreeId} /> · {a.dfm.manufacturability.checks + a.dfm.design.checks} active checks · evaluated in {Math.round(a.ms)} ms</span>}>
@@ -52,7 +52,7 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
               <div key={c}>
                 <div className="label-caps sticky top-0 bg-bg-surface-2 px-3 py-1">{c}</div>
                 {failing
-                  .filter((r) => r.eff.rule.category === c)
+                  .filter((r) => (r.status === "fail" ? r.eff.rule.category : "Couldn't run") === c)
                   .map((r) => (
                     <RuleRow key={r.eff.rule.id} r={r} active={openRule === r.eff.rule.id} onClick={() => setOpenRule(r.eff.rule.id)} />
                   ))}
@@ -60,7 +60,7 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
             ))}
             <button className="flex w-full items-center gap-1 border-t border-border-subtle px-3 py-2 text-left text-xs text-text-secondary hover:text-text-primary" onClick={() => setShowPassed(!showPassed)} aria-expanded={showPassed}>
               {showPassed ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              <SeverityIcon severity="pass" size={12} /> {passed.length} passed{off.length ? ` · ${off.length} off or superseded` : ""}
+              <SeverityIcon severity="pass" size={12} /> {passed.length} passed{off.length ? ` · ${off.length} off` : ""}
             </button>
             {showPassed &&
               [...passed, ...off].map((r) => (
@@ -79,12 +79,12 @@ function RuleRow({ r, active, onClick }: { r: RuleResult; active: boolean; onCli
   const across = severityAcross(r.eff, project);
   return (
     <button onClick={onClick} className={cx("flex w-full items-center gap-2 border-b border-border-subtle px-3 py-1.5 text-left text-sm hover:bg-bg-hover", active && "bg-bg-hover")}>
-      <SeverityIcon severity={r.status === "pass" || r.status === "waived" ? "pass" : r.status === "off" || r.status === "superseded" ? "off" : r.eff.severity} />
+      <SeverityIcon severity={r.status === "pass" || r.status === "waived" || r.status === "notApplicable" ? "pass" : r.status === "off" ? "off" : r.status === "fail" ? r.eff.severity : "error"} />
       <span className="mono w-28 shrink-0 text-2xs text-text-secondary">{r.eff.rule.id}</span>
       <span className="min-w-0 flex-1 truncate">{r.eff.rule.title}</span>
       {across && <span className="hidden text-2xs text-text-tertiary xl:inline">{across}</span>}
       <Chip>{r.eff.source.layer === "manufacturer" ? "Manufacturer" : r.eff.source.layer === "project" ? "Project" : r.eff.source.name}</Chip>
-      <span className="tnum w-16 text-right text-xs text-text-secondary">{r.status === "fail" ? `${r.violations.length} affected` : r.status === "waived" ? "waived" : r.status === "error" ? "rule error" : r.status}</span>
+      <span className="tnum w-16 text-right text-xs text-text-secondary">{r.status === "fail" ? `${r.violations.length} affected` : r.status === "waived" ? "waived" : r.status === "engineError" ? "rule error" : r.status === "missingInput" ? "missing input" : r.status === "notEvaluated" ? "not run" : r.status === "notApplicable" ? "n/a" : r.status}</span>
     </button>
   );
 }
@@ -161,6 +161,7 @@ function RuleDetail({ r }: { r: RuleResult }) {
       {r.waived.length > 0 && (
         <div>
           <div className="label-caps">Waived</div>
+          <div className="mb-1 text-2xs text-text-tertiary">A waiver records acceptance of the finding. Manual operations, cost and lead-time consequences still apply.</div>
           {r.waived.map((w, i) => (
             <div key={i} className="flex items-center justify-between text-xs text-text-secondary">
               <span>

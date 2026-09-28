@@ -74,8 +74,11 @@ const arrangements = load(
 const cavities = load("connector_cavities.csv", z.object({ arrangement: str, cavity_id: z.string().min(1), x_mm: num, y_mm: num, contact_size: str, status }));
 const contacts = load(
   "contacts.csv",
-  z.object({ pn: str, size: str, gender: z.enum(["pin", "socket"]), gauge_min: num, gauge_max: num, plating: str, crimp_tool: str, positioner: str, insertion_tool: str, removal_tool: str, machine_insertable: bool, current_a: num, status }),
+  // tooling_status: the crimp/insertion tooling columns are approved separately from the row (FIX-10); absent = seed.
+  z.object({ pn: str, size: str, gender: z.enum(["pin", "socket"]), gauge_min: num, gauge_max: num, plating: str, crimp_tool: str, positioner: str, insertion_tool: str, removal_tool: str, machine_insertable: bool, current_a: num, status, tooling_status: z.preprocess((v) => (v === "" || v == null ? "seed" : v), status) }),
 );
+// Explicit qualified-source evidence (FIX-08). Empty until the owner supplies records; missing = unverified.
+const qualifications = load("qualifications.csv", z.object({ pn: str, specification: str, source: str, evidence: str, valid_until: optStr, reviewed_by: str }));
 const connContacts = load("connector_contacts.csv", z.object({ series: str, size: str, gender: str, contact_pn: str }));
 const backshells = load(
   "backshells.csv",
@@ -207,22 +210,24 @@ const bundle: Omit<CatalogBundle, "version"> = {
     cavities: (cavByArr.get(a.arrangement) ?? []).map((c) => ({ id: c.cavity_id, x: c.x_mm, y: c.y_mm, size: c.contact_size, ...(c.contact_size === "8" ? { special: true } : {}) })),
   })),
   contactSizes: contactSizes.map((c) => ({ size: c.size, sealingMinMm: c.sealing_min_mm, sealingMaxMm: c.sealing_max_mm, gauges: c.gauges, currentA: c.current_a, source: c.source })),
-  contacts: contacts.map((c) => ({ pn: c.pn, size: c.size, gender: c.gender, gaugeMin: c.gauge_min, gaugeMax: c.gauge_max, plating: c.plating, crimpTool: c.crimp_tool, positioner: c.positioner, insertionTool: c.insertion_tool, removalTool: c.removal_tool, machineInsertable: c.machine_insertable, currentA: c.current_a, status: c.status })),
-  sealingPlugs: accessories.filter((a) => a.kind === "sealingPlug").map((a) => ({ pn: a.pn, size: a.contact_size, color: /\((\w+)\)/.exec(a.description)?.[1] ?? "" })),
+  contacts: contacts.map((c) => ({ pn: c.pn, size: c.size, gender: c.gender, gaugeMin: c.gauge_min, gaugeMax: c.gauge_max, plating: c.plating, crimpTool: c.crimp_tool, positioner: c.positioner, insertionTool: c.insertion_tool, removalTool: c.removal_tool, machineInsertable: c.machine_insertable, currentA: c.current_a, status: c.status, toolingStatus: c.tooling_status })),
+  sealingPlugs: accessories.filter((a) => a.kind === "sealingPlug").map((a) => ({ pn: a.pn, size: a.contact_size, color: /\((\w+)\)/.exec(a.description)?.[1] ?? "", status: a.status })),
   wires: wires.map((w) => ({ spec: w.spec, gauge: w.gauge, pn: w.pn_pattern, odMm: w.od_mm, massGPerM: w.mass_g_per_m, ohmPerKm: w.ohm_per_km, currentA: w.current_a, tempC: w.temp_c, insulation: w.insulation, conductor: w.conductor, machineReady: w.machine_ready, status: w.status })),
   cableWireCodes: cables.filter((c) => c.kind === "wire").map((c) => ({ wireCode: c.code, spec: c.spec, gauges: c.gauges })),
   cableShields: cables.filter((c) => c.kind === "shield").map((c) => ({ code: c.code, material: c.material, coverage: c.coverage ?? 0, thicknessMm: c.thickness_mm ?? 0 })),
   cableJackets: cables.filter((c) => c.kind === "jacket").map((c) => ({ code: c.code, material: c.material, thicknessMm: c.thickness_mm ?? 0 })),
   backshells: backshells.map((b) => ({ pn: b.pn, description: b.description, shellSizes: b.shell_sizes, angle: b.angle as 0 | 45 | 90, style: b.style, clampMinMm: b.clamp_min_mm, clampMaxMm: b.clamp_max_mm, bandPlatform: b.band_platform, massG: b.mass_g, lengthMm: b.length_mm, machineReady: b.machine_ready, status: b.status })),
-  accessories: accessories.filter((a) => a.kind !== "sealingPlug").map((a) => ({ pn: a.pn, kind: a.kind as Exclude<typeof a.kind, "sealingPlug">, description: a.description, shellSizes: a.shell_sizes, forKind: a.for_kind, lanyard: a.lanyard, massG: a.mass_g })),
+  accessories: accessories.filter((a) => a.kind !== "sealingPlug").map((a) => ({ pn: a.pn, kind: a.kind as Exclude<typeof a.kind, "sealingPlug">, description: a.description, shellSizes: a.shell_sizes, forKind: a.for_kind, lanyard: a.lanyard, massG: a.mass_g, status: a.status })),
   layers: layers.map((l) => ({ pn: l.pn, type: l.type, material: l.material, description: l.description, minDiaMm: l.min_dia_mm, maxDiaMm: l.max_dia_mm, thicknessMm: l.thickness_mm, massGPerM: l.mass_g_per_m, coverageOptions: l.coverage_options.length ? l.coverage_options : undefined, shrinkRatio: l.shrink_ratio, machineReady: l.machine_ready, status: l.status })),
-  clamps: clamps.map((c) => ({ pn: c.pn, description: c.description, minDiaMm: c.min_dia_mm, maxDiaMm: c.max_dia_mm, tensionSpec: c.tension_spec, tool: c.tool, massG: c.mass_g })),
-  boots: boots.map((b) => ({ pn: b.pn, shape: b.shape, description: b.description, minDiaMm: b.min_dia_mm, maxDiaMm: b.max_dia_mm, massG: b.mass_g })),
-  labels: labels.map((l) => ({ pn: l.pn, type: l.type, description: l.description, minDiaMm: l.min_dia_mm, maxDiaMm: l.max_dia_mm, printableLengthMm: l.printable_length_mm, charsPerMm: l.chars_per_mm })),
-  splices: splices.map((s) => ({ pn: s.pn, type: s.type, description: s.description, gaugeMin: s.gauge_min, gaugeMax: s.gauge_max, maxWires: s.max_wires, massG: s.mass_g })),
-  potting: potting.map((p) => ({ pn: p.pn, kind: p.kind, description: p.description, cureHours: p.cure_hours, densityGPerCc: p.density_g_per_cc, shellSizes: p.shell_sizes.length ? p.shell_sizes : undefined })),
-  hardware: hardware.map((h) => ({ pn: h.pn, type: h.type, description: h.description, minDiaMm: h.min_dia_mm, maxDiaMm: h.max_dia_mm })),
+  // These files carry no status column: every row is seed data (see README "Data status").
+  clamps: clamps.map((c) => ({ pn: c.pn, description: c.description, minDiaMm: c.min_dia_mm, maxDiaMm: c.max_dia_mm, tensionSpec: c.tension_spec, tool: c.tool, massG: c.mass_g, status: "seed" as const })),
+  boots: boots.map((b) => ({ pn: b.pn, shape: b.shape, description: b.description, minDiaMm: b.min_dia_mm, maxDiaMm: b.max_dia_mm, massG: b.mass_g, status: "seed" as const })),
+  labels: labels.map((l) => ({ pn: l.pn, type: l.type, description: l.description, minDiaMm: l.min_dia_mm, maxDiaMm: l.max_dia_mm, printableLengthMm: l.printable_length_mm, charsPerMm: l.chars_per_mm, status: "seed" as const })),
+  splices: splices.map((s) => ({ pn: s.pn, type: s.type, description: s.description, gaugeMin: s.gauge_min, gaugeMax: s.gauge_max, maxWires: s.max_wires, massG: s.mass_g, status: "seed" as const })),
+  potting: potting.map((p) => ({ pn: p.pn, kind: p.kind, description: p.description, cureHours: p.cure_hours, densityGPerCc: p.density_g_per_cc, shellSizes: p.shell_sizes.length ? p.shell_sizes : undefined, status: "seed" as const })),
+  hardware: hardware.map((h) => ({ pn: h.pn, type: h.type, description: h.description, minDiaMm: h.min_dia_mm, maxDiaMm: h.max_dia_mm, status: "seed" as const })),
   alternates: alternates.map((a) => ({ pn: a.pn, alternate: a.alternate, relationship: a.relationship })),
+  qualifications: qualifications.map((q) => ({ pn: q.pn, specification: q.specification, source: q.source, evidence: q.evidence, validUntil: q.valid_until || undefined, reviewedBy: q.reviewed_by })),
   supply: supply.map((s) => ({ pattern: s.pattern, breaks: [{ qty: 1, price: s.price_1 }, { qty: 10, price: s.price_10 }, { qty: 100, price: s.price_100 }], stock: s.stock, leadDays: s.lead_days, lifecycle: s.lifecycle, asOf: s.as_of })),
 };
 

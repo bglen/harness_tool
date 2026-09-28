@@ -109,7 +109,7 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
             })}
             {/* hit target */}
             <line data-hit="segment" data-id={s.id} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="transparent" strokeWidth={Math.max(w, 14)} style={{ cursor: "copy" }}>
-              <title>Bundle segment: drag from here to pull out a breakout; click to select</title>
+              <title>Bundle: drag from here to branch off a breakout (drop on a connector to route it there). Click to select, then drag an end handle to re-attach that end.</title>
             </line>
             {/* tie-downs */}
             {s.tieSpacingMm && level !== "overview" && Array.from({ length: Math.floor(s.lengthMm / s.tieSpacingMm) }, (_, i) => lerp(a, b, ((i + 1) * s.tieSpacingMm!) / s.lengthMm)).map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.6} fill={tp} />)}
@@ -192,7 +192,7 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
           const sel = selectedNodes.has(n.id);
           return (
             <g key={n.id} data-hit="node" data-id={n.id} style={{ cursor: "move" }}>
-              <title>{`Breakout B${i + 1}: drag to move, drop onto a connector to route there`}</title>
+              <title>{`Breakout B${i + 1}: drag to move (lengths don't change); drop onto a connector, another breakout or a bundle to join them there`}</title>
               {sel && <circle cx={n.position.x} cy={n.position.y} r={11} fill="none" stroke={accent} strokeWidth={2} />}
               <circle cx={n.position.x} cy={n.position.y} r={7} fill={tp} stroke={semantic("bg.canvas", theme)} strokeWidth={2} />
               {level !== "overview" && (
@@ -265,3 +265,37 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
 });
 
 export { lerp };
+
+/**
+ * End handles on selected bundles, drawn above connectors and wires so they're always grabbable:
+ * drag one onto a connector, breakout or another bundle to re-attach that end.
+ */
+export function SegmentHandles({ h, selected, k, theme }: { h: Harness; selected: Set<string>; k: number; theme: "dark" | "light" }) {
+  const accent = semantic("accent", theme);
+  const kk = Math.max(k, 0.6);
+  return (
+    <g>
+      {h.segments
+        .filter((s) => selected.has(s.id))
+        .flatMap((s) => {
+          const a = nodePos(h, s.a);
+          const b = nodePos(h, s.b);
+          return (["a", "b"] as const).map((end) => {
+            const from = end === "a" ? a : b;
+            const to = end === "a" ? b : a;
+            const L = Math.hypot(to.x - from.x, to.y - from.y) || 1;
+            // Clear of the pin fan at connector ends (fan ≈ 72 canvas px), and never past the middle.
+            const off = Math.min(L * 0.35, Math.max(48, 30 / kk));
+            const p = { x: from.x + ((to.x - from.x) / L) * off, y: from.y + ((to.y - from.y) / L) * off };
+            return (
+              <g key={`${s.id}:${end}`} data-hit="seg-end" data-id={`${s.id}:${end}`} style={{ cursor: "grab" }} role="button" aria-label={`Bundle end ${end.toUpperCase()}: drag to re-attach`}>
+                <title>Drag this end onto a connector, breakout or another bundle to re-attach it (lengths stay the same)</title>
+                <circle cx={p.x} cy={p.y} r={11 / kk} fill="transparent" />
+                <circle cx={p.x} cy={p.y} r={6 / kk} fill={semantic("bg.surface-2", theme)} stroke={accent} strokeWidth={2.2 / kk} />
+              </g>
+            );
+          });
+        })}
+    </g>
+  );
+}

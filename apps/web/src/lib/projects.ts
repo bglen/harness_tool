@@ -1,4 +1,4 @@
-import { newProject, ProjectSchema, type PedigreeScheme } from "@hs/model";
+import { newProject, parseProject, type PedigreeScheme } from "@hs/model";
 import { useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { svc } from "./services";
@@ -6,7 +6,7 @@ import { zoomToFit } from "./viewport";
 
 export async function openExample(id: string) {
   const raw = await svc().catalog.example(id);
-  const p = ProjectSchema.parse(raw);
+  const p = parseProject(raw);
   // Give each opened example a fresh id so edits don't overwrite the template in local storage
   const fresh = { ...p, id: globalThis.crypto.randomUUID(), created: new Date().toISOString(), updated: new Date().toISOString() };
   useProject.getState().init(fresh);

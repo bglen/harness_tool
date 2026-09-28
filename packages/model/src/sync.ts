@@ -8,6 +8,10 @@ import type { Harness, Label, Net, Project, Settings, Termination, Wire, WireEnd
 
 export interface SyncContext {
   cat: CatalogIndex;
+  /** Collects what normalization changed beyond the command, so it's reported rather than silent. */
+  repairs?: string[];
+  /** Create a direct (default-length, flagged) segment for wires with no route. Default true. */
+  autoRoute?: boolean;
 }
 
 /** Desired wire endpoint pairs for a net (§4.2). */
@@ -59,20 +63,29 @@ function ensureConnectorNodes(h: Harness) {
   prune(h, "segments", (s) => nodeIds.has(s.a) && nodeIds.has(s.b) && s.a !== s.b);
 }
 
-function cleanNets(h: Harness, cat: CatalogIndex) {
+function cleanNets(h: Harness, cat: CatalogIndex, repairs?: string[]) {
   const snap = plain(h);
   const cavities = new Map<string, Set<string>>();
+  const refDes = new Map(snap.connectors.map((c) => [c.id, c.refDes]));
   for (const c of snap.connectors) {
     const part = cat.connector(c.pn);
     cavities.set(c.id, new Set(part ? part.arrangement.cavities.map((x) => x.id) : Object.keys(c.pins)));
   }
-  // 1. Drop invalid / duplicate members (only touch nets that change)
-  const seen = new Set<string>();
+  // 1. Drop invalid / duplicate members (only touch nets that change) — and say so.
+  const seen = new Map<string, string>();
   snap.nets.forEach((n, i) => {
     const keep = n.members.filter((m) => {
       const k = memberKey(m);
-      if (seen.has(k) || !cavities.get(m.connectorId)?.has(m.cavityId)) return false;
-      seen.add(k);
+      const pin = `${refDes.get(m.connectorId) ?? "deleted connector"}-${m.cavityId}`;
+      if (seen.has(k)) {
+        repairs?.push(`${pin} was on both ${seen.get(k)} and ${n.name}; kept it on ${seen.get(k)}.`);
+        return false;
+      }
+      if (!cavities.get(m.connectorId)?.has(m.cavityId)) {
+        if (refDes.has(m.connectorId)) repairs?.push(`${pin} doesn't exist on the connector's insert; removed it from ${n.name}.`);
+        return false;
+      }
+      seen.set(k, n.name);
       return true;
     });
     if (keep.length !== n.members.length) h.nets[i]!.members = keep;
@@ -134,11 +147,15 @@ function syncSplices(h: Harness, cat: CatalogIndex) {
   }
 }
 
-function syncWires(h: Harness, settings: Settings, cat: CatalogIndex, create: boolean) {
+function syncWires(h: Harness, settings: Settings, cat: CatalogIndex, create: boolean, repairs?: string[]) {
   // Read from a plain snapshot (fast) and write only real changes to the draft.
   const snap = plain(h);
   const desired = new Map<string, { netId: string; a: WireEnd; b: WireEnd }>();
   for (const n of snap.nets) for (const [a, b] of desiredPairs(snap, n)) desired.set(pairKey(a, b), { netId: n.id, a, b });
+  // Wires the user customised (pinned spec/gauge/color, extra length, cable/shield/twist membership) are reported when
+  // the connectivity change removes them.
+  for (const w of snap.wires)
+    if (!desired.has(pairKey(w.from, w.to)) && (w.pinned.length || w.extraLengthMm || w.cableId || w.shieldId || w.twistGroupId)) repairs?.push(`Wire ${w.label} (customised) was removed because its connection changed.`);
   prune(h, "wires", (w) => desired.has(pairKey(w.from, w.to)));
   const have = new Set(snap.wires.map((w) => pairKey(w.from, w.to)));
   const netById = new Map(snap.nets.map((n) => [n.id, n]));
@@ -199,7 +216,10 @@ function plain<T>(v: T): T {
   return isDraft(v) ? current(v) : v;
 }
 
-/** When a wire has no route, auto-create a direct segment between its end nodes (§4.2). */
+/**
+ * When a wire has no route, create a direct segment between its end nodes (§4.2). The segment's length is a
+ * flagged default ("assumed_dimensions" check) until someone enters it; with autoRoute off, wires stay unrouted.
+ */
 function ensureRoutes(h: Harness, settings: Settings) {
   const connNode = new Map(h.nodes.filter((n) => n.kind === "connector").map((n) => [n.connectorId!, n.id]));
   const nodeOf = (e: WireEnd) => (e.kind === "pin" ? connNode.get(e.connectorId) : h.splices.find((s) => s.id === e.spliceId)?.nodeId);
@@ -209,7 +229,7 @@ function ensureRoutes(h: Harness, settings: Settings) {
     const b = nodeOf(w.to);
     if (!a || !b || a === b) continue;
     if (!shortestPath(adj, a, b)) {
-      h.segments.push({ id: uid(), a, b, lengthMm: settings.defaultSegmentMm, toleranceMm: 10, label: "" });
+      h.segments.push({ id: uid(), a, b, lengthMm: settings.defaultSegmentMm, lengthSource: "default", toleranceMm: 10, label: "" });
       adj = buildAdjacency(h);
     }
   }
@@ -316,7 +336,24 @@ function syncTerminations(h: Harness, d: Derived, cat: CatalogIndex) {
   for (const w of want) if (!have.has(key(w))) h.terminations.push({ id: uid(), targetId: w.targetId, nodeId: w.nodeId, method: w.defaultMethod, partPns: [], auto: true });
   // Drain-to-pin terminations need a pin; keep only valid refs.
   for (const t of h.terminations) if (t.drainPin && !h.connectors.some((c) => c.id === t.drainPin!.connectorId)) delete t.drainPin;
+  // A drain landed on a pin is a physical conductor (FIX-05): spec/gauge follow the shielded wires; the pigtail
+  // length is a flagged default until confirmed.
+  for (const t of h.terminations) {
+    if (t.method !== "drainToPin" || !t.drainPin) {
+      if (t.drain) delete t.drain;
+      continue;
+    }
+    if (t.drain) continue;
+    const sh = h.shields.find((s) => s.id === t.targetId);
+    const ws = sh ? h.wires.filter((w) => sh.wireIds.includes(w.id)) : [];
+    const gauge = ws.length ? Math.max(...ws.map((w) => w.gauge)) : 22;
+    const spec = ws[0]?.spec ?? "M22759/16";
+    t.drain = { spec: cat.wire(spec, gauge) ? spec : "M22759/16", gauge, lengthMm: DEFAULT_DRAIN_MM, lengthSource: "default" };
+  }
 }
+
+/** Placeholder drain pigtail length (shield strip-back to the contact); always flagged for confirmation. */
+export const DEFAULT_DRAIN_MM = 75;
 
 function syncClamps(h: Harness, d: Derived, cat: CatalogIndex, doubleBand: boolean) {
   const termIds = new Set(h.terminations.map((t) => t.id));
@@ -347,11 +384,14 @@ export function terminationDiameter(h: Harness, d: Derived, t: Termination): num
   let dia = 0;
   const layer = h.layers.find((l) => l.id === t.targetId);
   for (const s of segs) {
+    // Query the stack at the end touching this node (FIX-09), not the segment maximum.
+    const iv = d.segIntervals.get(s.id);
+    const end = iv && (s.a === t.nodeId ? iv[0] : iv[iv.length - 1]);
     if (layer) {
       if (!layer.extents.some((e) => e.segmentId === s.id)) continue;
-      const under = diameterUnderLayer(d, s.id, layer.id);
+      const at = end?.layers.find((x) => x.layerId === layer.id);
       const la = d.segStack.get(s.id)?.find((x) => x.layer.id === layer.id);
-      dia = Math.max(dia, under + 2 * (la?.thicknessMm ?? 0.5));
+      dia = Math.max(dia, at ? at.odAfterMm : diameterUnderLayer(d, s.id, layer.id) + 2 * (la?.thicknessMm ?? 0.5));
     } else {
       dia = Math.max(dia, (d.segCoreOdMm.get(s.id) ?? 0) + 0.6);
     }
@@ -490,10 +530,10 @@ export function normalize(p: Project, ctx: SyncContext): void {
     return r;
   };
   tm("nodes", () => ensureConnectorNodes(h));
-  tm("nets", () => cleanNets(h, cat));
+  tm("nets", () => cleanNets(h, cat, ctx.repairs));
   tm("splices", () => syncSplices(h, cat));
-  tm("wires", () => syncWires(h, p.settings, cat, p.settings.autoCommit));
-  tm("routes", () => ensureRoutes(h, p.settings));
+  tm("wires", () => syncWires(h, p.settings, cat, p.settings.autoCommit, ctx.repairs));
+  if (ctx.autoRoute !== false) tm("routes", () => ensureRoutes(h, p.settings));
   tm("refs", () => cleanRefs(h));
   const ped = resolvePedigree(p.pedigreeScheme, rev.activePedigreeId);
   let d = tm("derive1", () => derive(plain(h), cat, p.settings));

@@ -41,7 +41,10 @@ export interface InspectionType {
   id: string;
   name: string;
   description: string;
+  /** Performed by the manufacturer (vs sent out). */
   inHouse: boolean;
+  /** Runs on automated equipment without operator judgment. Independent of inHouse (FIX-07). */
+  automated?: boolean;
   samplingOptions: string[];
   params: InspectionParamDef[];
   costPerUnit: number;

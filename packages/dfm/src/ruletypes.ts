@@ -2,6 +2,7 @@ import {
   addBoot,
   colorName,
   commitRatsnest,
+  cavityStates,
   contactPnFor,
   diameterUnderLayer,
   extentCoverage,
@@ -9,6 +10,8 @@ import {
   isAutoNetName,
   resolveLabelTemplate,
   setBackshell,
+  setDrain,
+  setNetProps,
   setSegmentProps,
   setShieldProps,
   setTermination,
@@ -24,7 +27,9 @@ import {
   type RuleInstance,
   type Wire,
 } from "@hs/model";
+import { purchaseQty } from "@hs/ops";
 import { deltaE, simulateCvd, wireColor } from "@hs/ui-tokens";
+import { safeRegExp } from "./regex";
 import type { RuleCtx, RuleType, Violation } from "./types";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -43,21 +48,10 @@ export function netInScope(net: Net | undefined, params: Record<string, any>, ru
   const cls = (params.netClass as NetClass | undefined) ?? undefined;
   const pat = (params.namePattern as string | undefined) || undefined;
   if (cls && net.cls !== cls) return false;
-  if (pat) {
-    try {
-      if (!new RegExp(pat).test(net.name)) return false;
-    } catch {
-      return false;
-    }
-  }
+  // Invalid/unsafe patterns throw → the rule reports engineError (never a silent pass).
+  if (pat && !safeRegExp(pat).test(net.name)) return false;
   if (rule?.scope?.netClass?.length && !rule.scope.netClass.includes(net.cls)) return false;
-  if (rule?.scope?.namePattern) {
-    try {
-      if (!new RegExp(rule.scope.namePattern).test(net.name)) return false;
-    } catch {
-      return false;
-    }
-  }
+  if (rule?.scope?.namePattern && !safeRegExp(rule.scope.namePattern).test(net.name)) return false;
   return true;
 }
 
@@ -98,8 +92,6 @@ function nodeName(ctx: RuleCtx, nid: string): string {
   if (n.kind === "connector") return ctx.refDes(n.connectorId!);
   return `breakout B${ctx.h.nodes.filter((x) => x.kind === "breakout").indexOf(n) + 1}`;
 }
-
-const QPL_RE = /^(M\d|MS\d|D38999|A-A-|NAS\d|AS\d|SAE)/i;
 
 // ─── rule types ─────────────────────────────────────────────────────────────
 
@@ -485,6 +477,8 @@ export const RULE_TYPES: RuleType[] = [
         const reasons: string[] = [];
         if (!slashes.includes(part.slash)) reasons.push(`/${part.slash} not fixtured`);
         if (part.arrangement.inactive) reasons.push(`insert ${part.arrangement.id} inactive for new design`);
+        // Fixture/placement data come from cavity geometry: unreviewed geometry is never machine-ready (FIX-10).
+        if (part.arrangement.status !== "verified") reasons.push(`insert ${part.arrangement.id} geometry ${part.arrangement.status}`);
         if (part.arrangement.special) reasons.push("shielded contacts");
         const unsupported = Object.keys(part.arrangement.sizes).filter((s) => !ctx.profile.capabilities.contactSizes.includes(s));
         if (unsupported.length) reasons.push(`contact size ${unsupported.join("/")}`);
@@ -647,8 +641,8 @@ export const RULE_TYPES: RuleType[] = [
     evaluate(ctx) {
       return ctx
         .bom()
-        .lines.filter((l) => !l.customerFurnished && l.stock < l.qty * ctx.qty)
-        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn}: ${l.stock} in stock, ${+(l.qty * ctx.qty).toFixed(2)} ${l.uom} needed for ${ctx.qty} units (demo data).` }));
+        .lines.filter((l) => !l.stockSufficient)
+        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn}: ${l.stock} in stock, ${purchaseQty(l, ctx.qty)} ${l.uom} needed for ${ctx.qty} units (demo data).` }));
     },
   },
   {
@@ -662,7 +656,7 @@ export const RULE_TYPES: RuleType[] = [
     evaluate(ctx) {
       return ctx
         .bom()
-        .lines.filter((l) => !l.customerFurnished && l.stock < l.qty * ctx.qty && l.leadDays > ctx.tierDays)
+        .lines.filter((l) => !l.stockSufficient && l.leadDays > ctx.tierDays)
         .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn}: ${l.leadDays}-day lead time exceeds the ${ctx.tierDays}-day tier (demo data).` }));
     },
   },
@@ -692,11 +686,110 @@ export const RULE_TYPES: RuleType[] = [
     category: "Components",
     params: [],
     depends: ["connector"],
+    review: true,
     evaluate(ctx) {
       return ctx.h.connectors
         .map((c) => ({ c, part: ctx.cat.connector(c.pn) }))
         .filter((x) => x.part && x.part.arrangement.status !== "verified")
-        .map(({ c, part }) => ({ objectIds: [c.id], objectKind: "connector", message: `${c.refDes}: insert ${part!.arrangement.id} geometry is unreviewed (MIL-STD-1560C extraction); verify face view before release.` }));
+        .map(({ c, part }) => ({ objectIds: [c.id], objectKind: "connector", message: `${c.refDes}: insert ${part!.arrangement.id} geometry is ${part!.arrangement.status} (MIL-STD-1560C extraction). Face view, adjacency and fixture data can't be relied on until it's reviewed.` }));
+    },
+  },
+  {
+    id: "reference_data_status",
+    name: "Reference data approved",
+    description: "Catalog fields the build depends on (contact tooling, wire OD/mass, finishing part dimensions) must be reviewed, not seed values.",
+    example: "Crimp tool for M39029/58-360 is seed data.",
+    category: "Components",
+    params: [],
+    depends: ["bom"],
+    review: true,
+    evaluate(ctx) {
+      const out: Violation[] = [];
+      const seen = new Set<string>();
+      const flag = (key: string, ids: string[], msg: string) => {
+        if (seen.has(key)) return;
+        seen.add(key);
+        out.push({ objectIds: ids, objectKind: "bom", message: msg });
+      };
+      for (const l of ctx.bom().lines) {
+        if (l.category === "Connectors") continue; // insert geometry is its own check (unreviewed_geometry)
+        if (l.dataStatus && l.dataStatus !== "verified") flag(`p:${l.pn}`, l.objectIds, `${l.pn}: ${l.dataFields ?? "catalog data"} ${l.dataStatus === "seed" ? "is seed data" : "is unreviewed"}; verify before release.`);
+      }
+      return out;
+    },
+  },
+  {
+    id: "contact_compatibility",
+    name: "Contact matches connector and cavity",
+    description: "Contact gender must match the connector, contact size must match the cavity, and the contact must exist in the catalog.",
+    example: "M39029/58-360 (pin) on a socket connector.",
+    category: "Electrical",
+    params: [],
+    depends: ["connector", "wire", "termination"],
+    evaluate(ctx) {
+      const out: Violation[] = [];
+      const wired = new Map<string, number>();
+      for (const w of ctx.h.wires) for (const e of pinEnds(w)) wired.set(`${e.connectorId}:${e.cavityId}`, w.gauge);
+      for (const t of ctx.h.terminations) if (t.method === "drainToPin" && t.drainPin) wired.set(`${t.drainPin.connectorId}:${t.drainPin.cavityId}`, t.drain?.gauge ?? 22);
+      for (const c of ctx.h.connectors) {
+        const part = ctx.cat.connector(c.pn);
+        if (!part) continue;
+        const cavs = new Set([...Object.keys(c.pins).filter((k) => c.pins[k]!.contactPn || c.pins[k]!.filler), ...[...wired.keys()].filter((k) => k.startsWith(`${c.id}:`)).map((k) => k.slice(c.id.length + 1))]);
+        for (const cavId of cavs) {
+          const cav = ctx.cat.cavity(c.pn, cavId);
+          if (!cav || cav.special) continue;
+          const pn = contactPnFor(ctx.h, ctx.cat, c.id, cavId, wired.get(`${c.id}:${cavId}`) ?? 22);
+          const cp = pn ? ctx.cat.contactsByPn.get(pn) : undefined;
+          const where = pinLabel(ctx, c.id, cavId);
+          if (!pn || !cp) {
+            out.push({ objectIds: [c.id], objectKind: "pin", message: `${where}: contact ${pn ?? `size ${cav.size} ${part.gender}`} is not in the catalog; compatibility can't be confirmed.` });
+            continue;
+          }
+          const problems: string[] = [];
+          if (cp.gender !== part.gender) problems.push(`${cp.gender} contact in a ${part.gender} insert`);
+          if (cp.size !== cav.size) problems.push(`size ${cp.size} contact in a size ${cav.size} cavity`);
+          if (problems.length) out.push({ objectIds: [c.id], objectKind: "pin", message: `${where}: ${cp.pn} doesn't fit (${problems.join("; ")}).` });
+        }
+      }
+      return out;
+    },
+  },
+  {
+    id: "net_topology",
+    name: "Multi-pin net construction chosen",
+    description: "A net with 3 or more pins needs an explicit construction: a splice, or a confirmed daisy chain (two wires in one contact).",
+    example: "GND on P1, P2 and P3 with no splice and no confirmation.",
+    category: "Connectivity",
+    params: [],
+    depends: ["net", "splice"],
+    evaluate(ctx) {
+      return ctx.h.nets
+        .filter((n) => n.members.length >= 3 && !(n.topology === "splice" && ctx.h.splices.some((s) => s.netId === n.id)) && !n.topologyConfirmed)
+        .map((n) => ({
+          objectIds: [n.id, ...n.members.map((m) => m.connectorId)],
+          objectKind: "net" as const,
+          message: `${n.name} joins ${n.members.length} pins with an assumed daisy chain (two wires crimped in one contact). Confirm the daisy chain or use a splice.`,
+          fix: { label: "Use a splice", commands: [setNetProps({ ids: [n.id], topology: "splice" })] },
+        }));
+    },
+  },
+  {
+    id: "assumed_dimensions",
+    name: "Dimensions confirmed",
+    description: "Segment lengths created from defaults are assumptions until someone enters or confirms them.",
+    example: "Segment P1–P2 is the default 12 in.",
+    category: "Documentation",
+    params: [],
+    depends: ["segment", "node", "termination"],
+    review: true,
+    evaluate(ctx) {
+      const out: Violation[] = ctx.h.segments
+        .filter((s) => s.lengthSource === "default")
+        .map((s) => ({ objectIds: [s.id], objectKind: "segment" as const, message: `Segment ${segmentLabel(ctx, s.id)} length ${ctx.len(s.lengthMm)} is a default; enter or confirm the real length.`, fix: { label: "Confirm length", commands: [setSegmentProps({ ids: [s.id], lengthSource: "confirmed" })] } }));
+      for (const t of ctx.h.terminations)
+        if (t.drain?.lengthSource === "default")
+          out.push({ objectIds: [t.targetId, t.nodeId], objectKind: "termination", message: `Drain pigtail at ${nodeName(ctx, t.nodeId)} is the default ${ctx.len(t.drain.lengthMm)}; confirm its length.`, fix: { label: "Confirm length", commands: [setDrain({ id: t.id, lengthSource: "confirmed" })] } });
+      return out;
     },
   },
   {
@@ -1038,14 +1131,32 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "sealed_cavities",
-    name: "Unused cavities sealed",
-    description: "Unused cavities get sealing plugs automatically.",
-    example: "7 of 13 cavities plugged on P1.",
+    name: "Every cavity sealed",
+    description: "Each cavity must hold a contact with one conductor or a catalog sealing plug. Checks unsupported cavities, missing plugs, named-but-unwired pins, contacts without a conductor, and two wires in one grommet hole.",
+    example: "P1-4 has a contact override but no wire.",
     category: "Finishing",
     params: [],
-    depends: ["connector"],
-    evaluate() {
-      return []; // Always satisfied: sealing plugs are derived into the BOM.
+    depends: ["connector", "wire", "termination"],
+    evaluate(ctx) {
+      const out: Violation[] = [];
+      for (const c of ctx.h.connectors) {
+        const part = ctx.cat.connector(c.pn);
+        if (!part) continue;
+        const known = new Set(part.arrangement.cavities.map((x) => x.id));
+        const unknown = Object.keys(c.pins).filter((k) => !known.has(k));
+        if (unknown.length) out.push({ objectIds: [c.id], objectKind: "connector", message: `${c.refDes}: cavities ${unknown.join(", ")} aren't on insert ${part.arrangement.id}; sealing can't be checked.` });
+        const issues: string[] = [];
+        for (const s of cavityStates(ctx.h, ctx.cat, c.id)) {
+          const where = `${c.refDes}-${s.cavityId}`;
+          if (s.fill === "unsupported") issues.push(`${where}: size ${s.size} shielded cavity has no catalog contact or plug`);
+          else if (s.fill === "plug" && !ctx.cat.sealingPlug(s.size)) issues.push(`${where}: no size ${s.size} sealing plug in the catalog`);
+          if (s.gauges.length > 1) issues.push(`${where}: ${s.gauges.length} conductors in one grommet hole won't seal`);
+          if (s.contactWithoutConductor) issues.push(`${where}: contact specified but no conductor (use a wired spare or a plug)`);
+          if (s.assignedUnwired) issues.push(`${where}: signal assigned but unwired, so it will be plugged`);
+        }
+        if (issues.length) out.push({ objectIds: [c.id], objectKind: "connector", message: `${issues.slice(0, 4).join("; ")}${issues.length > 4 ? `; +${issues.length - 4} more` : ""}.` });
+      }
+      return out;
     },
   },
 
@@ -1135,7 +1246,7 @@ export const RULE_TYPES: RuleType[] = [
     params: [
       { key: "classA", label: "Class A", type: "netClass" },
       { key: "classB", label: "Class B", type: "netClass" },
-      { key: "minMm", label: "Minimum centre spacing", type: "number", unit: "mm", stricter: "higher", help: "Blank = adjacent cavities" },
+      { key: "minMm", label: "Minimum centre spacing", type: "number", unit: "mm", stricter: "higher", optional: true, help: "Blank = adjacent cavities" },
     ],
     depends: ["net", "connector"],
     evaluate(ctx, p) {
@@ -1242,12 +1353,7 @@ export const RULE_TYPES: RuleType[] = [
     ],
     depends: ["net", "connector", "wire"],
     evaluate(ctx, p) {
-      let re: RegExp;
-      try {
-        re = new RegExp(p.pattern ?? ".*");
-      } catch {
-        return [];
-      }
+      const re = safeRegExp(p.pattern ?? ".*");
       if (p.target === "connector") return ctx.h.connectors.filter((c) => !re.test(c.refDes)).map((c) => ({ objectIds: [c.id], objectKind: "connector", message: `RefDes ${c.refDes} doesn't match ${p.pattern}.` }));
       if (p.target === "wire") return ctx.h.wires.filter((w) => !re.test(w.label)).map((w) => ({ objectIds: [w.id], objectKind: "wire", message: `Wire ID ${w.label} doesn't match ${p.pattern}.` }));
       return ctx.h.nets.filter((n) => !re.test(n.name)).map((n) => ({ objectIds: [n.id], objectKind: "net", message: `Net ${n.name} doesn't match ${p.pattern}.` }));
@@ -1417,17 +1523,21 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "qpl_only",
-    name: "QPL / approved parts only",
-    description: "All parts must be QPL/standard parts (M-, MS-, D38999, A-A-, NAS, AS).",
-    example: "Generic HS- finishing parts at Flight.",
+    name: "Qualified parts only",
+    description: "Every part needs a qualified-source evidence record in the catalog (qualifications.csv). A specification-style part number is not evidence; parts without a record are unverified.",
+    example: "D38999/26WB35SN with no QPL source on file.",
     category: "Parts",
     params: [],
     depends: ["bom"],
     evaluate(ctx) {
       return ctx
         .bom()
-        .lines.filter((l) => !QPL_RE.test(l.pn))
-        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn} is not a QPL/standard part (required at ${ctx.ped.name}).` }));
+        .lines.filter((l) => l.qualification.status !== "qualified")
+        .map((l) => ({
+          objectIds: l.objectIds,
+          objectKind: "bom",
+          message: `${l.pn}: ${l.qualification.status === "expired" ? `qualification evidence expired (${l.qualification.source})` : "no qualified-source evidence on file (unverified)"}; required at ${ctx.ped.name}.`,
+        }));
     },
   },
 ];

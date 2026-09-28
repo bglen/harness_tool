@@ -1,12 +1,12 @@
 import { create } from "zustand";
-import { currentRevision, derive, type Derived, type Project } from "@hs/model";
+import { currentRevision, derive, projectForRevision, type Derived, type Project } from "@hs/model";
 import type { DfmSummary } from "@hs/dfm";
 import { computeBom, summaryHash, type Bom, type QuoteSummary } from "@hs/ops";
 import type { QuoteResult } from "@hs/providers";
 import { useEffect, useMemo, useRef } from "react";
 import { svc } from "../lib/services";
 import { useProject } from "./project";
-import type { AnalysisRequest, AnalysisResult } from "../workers/analysis.worker";
+import type { AnalysisError, AnalysisRequest, AnalysisResult } from "../workers/analysis.worker";
 
 interface PedAnalysis {
   dfm: DfmSummary;
@@ -18,28 +18,50 @@ interface PedAnalysis {
 }
 
 interface AnalysisState {
+  /** Current generation, and the project/revision it belongs to. Results for anything else are discarded. */
   seq: number;
+  projectId: string;
+  revisionId: string;
   byPedigree: Record<string, PedAnalysis>;
   quotes: Record<string, QuoteResult>;
   quoteUpdating: boolean;
   /** Previous quote for the selected cell (delta indicator §8.1). */
   delta: { amount: number; label: string; at: number } | null;
   quoteError?: string;
+  /** The analysis worker failed (init or runtime): checks were NOT evaluated. */
+  workerError?: string;
+  /** Per-pedigree evaluation failures for the current generation. */
+  errors: Record<string, string>;
 }
 
-export const useAnalysis = create<AnalysisState>(() => ({ seq: 0, byPedigree: {}, quotes: {}, quoteUpdating: false, delta: null }));
+export const useAnalysis = create<AnalysisState>(() => ({ seq: 0, projectId: "", revisionId: "", byPedigree: {}, quotes: {}, quoteUpdating: false, delta: null, errors: {} }));
 
 let worker: Worker | undefined;
 function getWorker(): Worker {
   if (!worker) {
     worker = new Worker(new URL("../workers/analysis.worker.ts", import.meta.url), { type: "module" });
-    worker.onmessage = (e: MessageEvent<AnalysisResult>) => {
+    // Same catalog/profile snapshot the main thread loaded through the provider interfaces.
+    const s = svc();
+    worker.postMessage({ type: "init", bundle: s.cat.bundle, profile: s.profile, inspections: s.inspections });
+    worker.onmessage = (e: MessageEvent<AnalysisResult | AnalysisError>) => {
       const r = e.data;
-      if (r.type !== "result") return;
       const st = useAnalysis.getState();
-      if (r.seq < st.seq && st.byPedigree[r.pedigreeId] && st.byPedigree[r.pedigreeId]!.seq > r.seq) return;
-      useAnalysis.setState({ byPedigree: { ...st.byPedigree, [r.pedigreeId]: { dfm: r.dfm, summary: r.summary, massG: r.massG, materialCost: r.materialCost, seq: r.seq, ms: r.ms } } });
+      // Stale-result rejection: generation, project and revision must all match the current request.
+      if (r.seq !== st.seq || r.projectId !== st.projectId || r.revisionId !== st.revisionId) return;
+      if (r.type === "error") {
+        useAnalysis.setState({ errors: { ...st.errors, [r.pedigreeId ?? "*"]: r.message } });
+        return;
+      }
+      const { [r.pedigreeId]: _gone, ...rest } = st.errors;
+      useAnalysis.setState({ byPedigree: { ...st.byPedigree, [r.pedigreeId]: { dfm: r.dfm, summary: r.summary, massG: r.massG, materialCost: r.materialCost, seq: r.seq, ms: r.ms } }, errors: rest, workerError: undefined });
     };
+    worker.onerror = (e) => {
+      e.preventDefault?.();
+      useAnalysis.setState({ workerError: e.message || "The analysis worker stopped." });
+      worker?.terminate();
+      worker = undefined; // next request starts a fresh worker
+    };
+    worker.onmessageerror = () => useAnalysis.setState({ workerError: "The analysis worker sent an unreadable result." });
   }
   return worker;
 }
@@ -47,13 +69,21 @@ function getWorker(): Worker {
 let seq = 0;
 export function requestAnalysis(project: Project) {
   seq++;
-  const rev = currentRevision(project);
+  const view = projectForRevision(project, project.currentRevisionId);
+  const rev = currentRevision(view);
   const active = rev.activePedigreeId;
-  const others = project.pedigreeScheme.pedigrees.map((p) => p.id).filter((id) => id !== active);
-  const tierDays = svc().pricing.leadTiers.find((t) => t.id === project.quote.selected.tier)?.days ?? 15;
-  useAnalysis.setState({ seq });
-  const msg: AnalysisRequest = { type: "run", seq, project, pedigreeIds: [active, ...others], qty: project.quote.selected.qty, tierDays };
-  getWorker().postMessage(msg);
+  const others = view.pedigreeScheme.pedigrees.map((p) => p.id).filter((id) => id !== active);
+  const tierDays = svc().pricing.leadTiers.find((t) => t.id === view.quote.selected.tier)?.days ?? 15;
+  const st = useAnalysis.getState();
+  const switched = st.projectId !== project.id || st.revisionId !== rev.id;
+  // A different project or revision: previous results are cleared, never shown as current.
+  useAnalysis.setState({ seq, projectId: project.id, revisionId: rev.id, errors: {}, ...(switched ? { byPedigree: {}, quotes: {}, delta: null } : {}) });
+  const msg: AnalysisRequest = { type: "run", seq, projectId: project.id, revisionId: rev.id, project: view, pedigreeIds: [active, ...others], qty: view.quote.selected.qty, tierDays };
+  try {
+    getWorker().postMessage(msg);
+  } catch (e) {
+    useAnalysis.setState({ workerError: (e as Error).message });
+  }
 }
 
 /** Bridge: runs analysis on every project change and the (debounced, cancellable) quote. */
@@ -64,10 +94,12 @@ export function useAnalysisBridge() {
     if (project) requestAnalysis(project);
   }, [project]);
 
-  const active = project ? currentRevision(project).activePedigreeId : "";
+  const active = project ? activePedigreeOf(project) : "";
   const byPed = useAnalysis((s) => s.byPedigree);
+  const cur = useAnalysis((s) => s.seq);
   const quantities = project?.quote.quantities ?? [];
-  const key = useMemo(() => project?.pedigreeScheme.pedigrees.map((p) => (byPed[p.id] ? summaryHash(byPed[p.id]!.summary) : "")).join("|") + `|${quantities.join(",")}`, [byPed, project?.pedigreeScheme, quantities]);
+  // Only price results from the current generation.
+  const key = useMemo(() => project?.pedigreeScheme.pedigrees.map((p) => (byPed[p.id]?.seq === cur ? summaryHash(byPed[p.id]!.summary) : "")).join("|") + `|${quantities.join(",")}`, [byPed, cur, project?.pedigreeScheme, quantities]);
   const abortRef = useRef<AbortController>();
   const labelRef = useRef<string>("");
   labelRef.current = lastChange?.label ?? "";
@@ -75,17 +107,20 @@ export function useAnalysisBridge() {
   useEffect(() => {
     if (!project) return;
     const activeA = byPed[active];
-    if (!activeA) return;
+    if (!activeA || activeA.seq !== cur) return;
     abortRef.current?.abort();
     const ac = new AbortController();
     abortRef.current = ac;
     useAnalysis.setState({ quoteUpdating: true });
+    const gen = cur;
+    const projectId = project.id;
     const t = setTimeout(async () => {
       try {
-        const ids = project.pedigreeScheme.pedigrees.map((p) => p.id).filter((id) => byPed[id]);
+        const ids = project.pedigreeScheme.pedigrees.map((p) => p.id).filter((id) => byPed[id]?.seq === gen);
         const summaries = ids.map((id) => byPed[id]!.summary);
         const results = await svc().quote.compute(summaries, quantities, ac.signal);
         const st = useAnalysis.getState();
+        if (st.seq !== gen || st.projectId !== projectId) return; // superseded while pricing
         const quotes = { ...st.quotes };
         const prev = st.quotes[active];
         ids.forEach((id, i) => (quotes[id] = results[i]!));
@@ -104,28 +139,40 @@ export function useAnalysisBridge() {
   }, [key, active, project?.quote.selected.qty, project?.quote.selected.tier]);
 }
 
-export function useActiveAnalysis(): PedAnalysis | undefined {
+/** The build class analysed for the open revision (a released revision keeps its release class). */
+export function activePedigreeOf(project: Project): string {
+  const rev = currentRevision(project);
+  return rev.frozen && rev.release ? rev.release.pedigreeId : rev.activePedigreeId;
+}
+
+/** Active analysis; `stale` is true while a newer generation is being computed. */
+export function useActiveAnalysis(): (PedAnalysis & { stale: boolean }) | undefined {
   const project = useProject((s) => s.project);
   const byPed = useAnalysis((s) => s.byPedigree);
-  return project ? byPed[currentRevision(project).activePedigreeId] : undefined;
+  const cur = useAnalysis((s) => s.seq);
+  const a = project ? byPed[activePedigreeOf(project)] : undefined;
+  return a ? { ...a, stale: a.seq !== cur } : undefined;
 }
 
 export function useActiveQuote(): QuoteResult | undefined {
   const project = useProject((s) => s.project);
   const q = useAnalysis((s) => s.quotes);
-  return project ? q[currentRevision(project).activePedigreeId] : undefined;
+  return project ? q[activePedigreeOf(project)] : undefined;
 }
 
 /** Main-thread derivation (routes, lengths, diameters) for rendering. Memoized per harness. */
 export function useDerived(): Derived {
   const project = useProject((s) => s.project)!;
   const rev = currentRevision(project);
-  return useMemo(() => derive(rev.harness, svc().cat, project.settings, { breakoutAllowanceMm: svc().profile.capabilities.breakoutAllowanceMm }), [rev.harness, project.settings]);
+  const settings = rev.frozen && rev.release ? rev.release.inputs.settings : project.settings;
+  return useMemo(() => derive(rev.harness, svc().cat, settings, { breakoutAllowanceMm: svc().profile.capabilities.breakoutAllowanceMm }), [rev.harness, settings]);
 }
 
 export function useBom(): Bom {
   const project = useProject((s) => s.project)!;
-  const rev = currentRevision(project);
   const d = useDerived();
-  return useMemo(() => computeBom(project, rev, svc().cat, d, project.quote.selected.qty), [rev, d, project.quote]);
+  return useMemo(() => {
+    const view = projectForRevision(project, project.currentRevisionId);
+    return computeBom(view, currentRevision(view), svc().cat, d, view.quote.selected.qty);
+  }, [project, d]);
 }

@@ -3,9 +3,10 @@ import {
   currentRevision,
   derive,
   formatWireColor,
-  quickHash,
+  projectForRevision,
   resolveLabelTemplate,
   resolvePedigree,
+  sha256HexSync,
   stableStringify,
   type CatalogIndex,
   type Derived,
@@ -65,15 +66,19 @@ export function buildDocData(opts: {
   printWire: (code: number) => string;
   revisionId?: string;
 }): DocData {
-  const { project, cat, profile, inspections } = opts;
-  const rev = opts.revisionId ? project.revisions.find((r) => r.id === opts.revisionId)! : currentRevision(project);
+  const { cat, profile, inspections } = opts;
+  const rev0 = opts.revisionId ? opts.project.revisions.find((r) => r.id === opts.revisionId)! : currentRevision(opts.project);
+  // Released revisions are documented with their release inputs (settings, rules, pedigree), not today's.
+  const project = projectForRevision(opts.project, rev0.id);
+  const rev = currentRevision(project);
   const h = rev.harness;
   const ped = resolvePedigree(project.pedigreeScheme, rev.activePedigreeId);
   const d = derive(h, cat, project.settings, { breakoutAllowanceMm: profile.capabilities.breakoutAllowanceMm });
   const bom = computeBom(project, rev, cat, d, project.quote.selected.qty);
   const ops = deriveOperations(project, rev, cat, profile, ped, inspections, d);
   const dfm = runDfm({ project, rev, cat, profile });
-  const designHash = quickHash(stableStringify(h));
+  // Content identity: SHA-256 of the canonical harness (short form shown on documents).
+  const designHash = (rev.release?.designSha256 ?? sha256HexSync(stableStringify(h))).slice(0, 16);
   const connectorRows = [...h.connectors]
     .sort((a, b) => a.refDes.localeCompare(b.refDes, "en", { numeric: true }))
     .map((c) => {

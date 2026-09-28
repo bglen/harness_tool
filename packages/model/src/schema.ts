@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const Id = z.string().min(1);
 const Point = z.object({ x: z.number(), y: z.number() });
@@ -65,6 +65,8 @@ export const NetSchema = z.object({
   cls: NetClass.default("signal"),
   currentA: z.number().nonnegative().optional(),
   topology: z.enum(["daisy", "splice"]).default("daisy"),
+  /** A 3+ pin daisy chain (two wires in one contact) was explicitly chosen, not assumed. */
+  topologyConfirmed: z.boolean().default(false),
   members: z.array(NetMemberSchema),
 });
 export type Net = z.infer<typeof NetSchema>;
@@ -106,6 +108,8 @@ export const SegmentSchema = z.object({
   a: Id,
   b: Id,
   lengthMm: z.number().positive(),
+  /** default = placeholder from settings; estimated = imported/derived; confirmed = entered by a person. */
+  lengthSource: z.enum(["default", "estimated", "confirmed"]).default("confirmed"),
   toleranceMm: z.number().nonnegative().default(10),
   label: z.string().default(""),
   tieSpacingMm: z.number().nonnegative().optional(),
@@ -191,6 +195,16 @@ export const TerminationSchema = z.object({
   nodeId: Id,
   method: TerminationMethod,
   drainPin: NetMemberSchema.optional(),
+  /** Physical drain/pigtail conductor from the shield to the drain pin (FIX-05). */
+  drain: z
+    .object({
+      spec: z.string(),
+      gauge: z.number(),
+      lengthMm: z.number().positive(),
+      lengthSource: z.enum(["default", "estimated", "confirmed"]).default("default"),
+    })
+    .optional(),
+  /** Termination hardware (grounding rings, solder sleeves, …); consumed by the BOM. */
   partPns: z.array(z.string()).default([]),
   auto: z.boolean().default(false),
 });
@@ -472,6 +486,66 @@ export const ReportTextSchema = z.object({
   sections: z.record(z.string(), z.boolean()).default({}),
 });
 
+const QuoteSettingsSchema = z
+  .object({
+    quantities: z.array(z.number().int().positive()).default([1, 5, 10, 25, 100]),
+    selected: z.object({ qty: z.number(), tier: z.string() }).default({ qty: 10, tier: "standard" }),
+    customerFurnished: z.array(z.string()).default([]),
+    /** Expected arrival (days from order) of customer-furnished parts, by PN; unknown when absent. */
+    customerFurnishedArrivalDays: z.record(z.string(), z.number().nonnegative()).default({}),
+    highestOrderedPedigree: z.string().optional(),
+  })
+  .default({});
+
+/**
+ * Typed, versioned release record (feedback §2). Everything that affects a released revision's content is
+ * captured here, so later changes to settings, rules, pedigrees or the catalog can't alter it.
+ */
+export const ReleaseSnapshotSchema = z.object({
+  schemaVersion: z.literal(1),
+  releasedAt: z.string(),
+  /** The build class the revision was released for. Viewing other classes never mutates the revision. */
+  pedigreeId: z.string(),
+  inputs: z.object({
+    name: z.string(),
+    partNumber: z.string(),
+    units: z.enum(["mm", "in"]),
+    settings: SettingsSchema,
+    pedigreeScheme: PedigreeSchemeSchema,
+    rulesets: z.array(RulesetSchema),
+    projectRules: z.array(RuleInstanceSchema),
+    overrides: z.array(RuleOverrideSchema),
+    waivers: z.array(WaiverSchema),
+    presets: z.array(FinishingPresetSchema),
+    titleBlock: TitleBlockSchema,
+    report: ReportTextSchema,
+    quote: QuoteSettingsSchema,
+  }),
+  versions: z.object({
+    tool: z.string(),
+    catalog: z.object({ hash: z.string(), date: z.string() }),
+    profile: z.object({ version: z.string(), sha256: z.string() }),
+    inspectionsSha256: z.string().default(""),
+  }),
+  /** SHA-256 of the canonical harness JSON and of the canonical release inputs. */
+  designSha256: z.string(),
+  inputsSha256: z.string(),
+  /** Results as released (not recomputed): DFM headline, BOM quantities, cut lengths, demo quote. */
+  results: z
+    .object({
+      dfm: z.object({ status: z.string(), errors: z.number(), warnings: z.number(), incomplete: z.number().default(0), review: z.number().default(0), hash: z.string(), designErrors: z.number() }).optional(),
+      bom: z.array(z.object({ pn: z.string(), qty: z.number(), uom: z.string() })).default([]),
+      wireLengthsMm: z.record(z.string(), z.number()).default({}),
+      quote: z.any().optional(),
+    })
+    .default({}),
+  /** Output files generated at release (path → SHA-256). */
+  outputs: z.array(z.object({ path: z.string(), sha256: z.string() })).default([]),
+  /** Release decisions. Roles and who may approve are owner decisions; nothing is recorded automatically. */
+  approvals: z.array(z.object({ role: z.string(), name: z.string(), decision: z.enum(["approved", "rejected"]), at: z.string(), note: z.string().default("") })).default([]),
+});
+export type ReleaseSnapshot = z.infer<typeof ReleaseSnapshotSchema>;
+
 export const RevisionSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -480,8 +554,10 @@ export const RevisionSchema = z.object({
   frozenAt: z.string().optional(),
   activePedigreeId: z.string(),
   harness: HarnessSchema,
-  /** Snapshot of rulesets/results at freeze (§9.5.5). */
-  snapshot: z.any().optional(),
+  /** Typed release record, present on revisions frozen with schema v2+. */
+  release: ReleaseSnapshotSchema.optional(),
+  /** Untyped snapshot from schema v1 files (kept verbatim, read-only). */
+  legacySnapshot: z.any().optional(),
 });
 export type Revision = z.infer<typeof RevisionSchema>;
 
@@ -501,14 +577,7 @@ export const ProjectSchema = z.object({
   presets: z.array(FinishingPresetSchema).default([]),
   titleBlock: TitleBlockSchema.default({}),
   report: ReportTextSchema.default({}),
-  quote: z
-    .object({
-      quantities: z.array(z.number().int().positive()).default([1, 5, 10, 25, 100]),
-      selected: z.object({ qty: z.number(), tier: z.string() }).default({ qty: 10, tier: "standard" }),
-      customerFurnished: z.array(z.string()).default([]),
-      highestOrderedPedigree: z.string().optional(),
-    })
-    .default({}),
+  quote: QuoteSettingsSchema,
   revisions: z.array(RevisionSchema).min(1),
   currentRevisionId: z.string(),
   catalogVersion: z.string().default(""),
@@ -518,6 +587,47 @@ export const ProjectSchema = z.object({
 export type Project = z.infer<typeof ProjectSchema>;
 export type ProjectInput = z.input<typeof ProjectSchema>;
 
+export class UnsupportedSchemaError extends Error {}
+
+/**
+ * Explicit schema migrations (feedback §2). Each step is a pure JSON transform; unknown/newer versions are
+ * refused rather than reinterpreted, so loading never silently discards engineering information.
+ */
+export function migrateProject(json: unknown): { data: unknown; from: number; notes: string[] } {
+  if (!json || typeof json !== "object") throw new UnsupportedSchemaError("Not a project file.");
+  const src = json as Record<string, any>;
+  const from = Number(src.schemaVersion);
+  if (!Number.isInteger(from) || from < 1) throw new UnsupportedSchemaError(`Unknown schema version "${src.schemaVersion}".`);
+  if (from > SCHEMA_VERSION) throw new UnsupportedSchemaError(`This file uses schema v${from}; this version of the tool reads up to v${SCHEMA_VERSION}. Update the tool to open it.`);
+  const notes: string[] = [];
+  let d: Record<string, any> = structuredClone(src);
+  if (d.schemaVersion === 1) {
+    // v1 → v2: untyped release snapshot kept as legacySnapshot; segment lengths of unknown provenance are "estimated".
+    for (const r of d.revisions ?? []) {
+      if (r.snapshot !== undefined) {
+        r.legacySnapshot = r.snapshot;
+        delete r.snapshot;
+        notes.push(`Rev ${r.label}: release snapshot from schema v1 kept as a legacy (untyped) record.`);
+      }
+      for (const s of r.harness?.segments ?? []) if (s.lengthSource === undefined) s.lengthSource = "estimated";
+    }
+    d.schemaVersion = 2;
+  }
+  return { data: d, from, notes };
+}
+
 export function parseProject(json: unknown): Project {
-  return ProjectSchema.parse(json);
+  return ProjectSchema.parse(migrateProject(json).data);
+}
+
+/** Migrate + validate, reporting problems instead of throwing. */
+export function safeParseProject(json: unknown): { ok: true; project: Project; notes: string[]; from: number } | { ok: false; error: string } {
+  try {
+    const m = migrateProject(json);
+    const r = ProjectSchema.safeParse(m.data);
+    if (!r.success) return { ok: false, error: r.error.issues.slice(0, 5).map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") };
+    return { ok: true, project: r.data, notes: m.notes, from: m.from };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }

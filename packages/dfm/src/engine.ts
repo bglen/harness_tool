@@ -18,7 +18,7 @@ import {
 import { computeBom, type Bom } from "@hs/ops";
 import { evaluateCustom } from "./custom";
 import { RULE_TYPE_BY_ID } from "./ruletypes";
-import type { DfmSummary, EffectiveRule, EntityKind, RuleCtx, RuleResult, RuleSource, Violation } from "./types";
+import { INCOMPLETE_STATUSES, type DfmSummary, type EffectiveRule, type RuleCtx, type RuleResult, type RuleSource, type Violation } from "./types";
 
 const SEV_RANK: Record<Severity, number> = { off: 0, info: 1, warning: 2, error: 3 };
 
@@ -121,74 +121,116 @@ export function collectRules(project: Project, profile: MachineProfile, pedigree
       if (m && Number.isFinite(uv) && Number.isFinite(mv) && isStricter(pd.stricter!, mv, uv)) u.notes.push(`Manufacturer limit is stricter (${pd.label}: ${uv} → ${mv}). This rule has no effect below that.`);
     }
   }
-  const groups = new Map<string, EffectiveRule[]>();
-  for (const u of user) {
-    if (u.severity === "off") continue;
-    const t = RULE_TYPE_BY_ID.get(u.rule.type);
-    const strictKeys = new Set((t?.params ?? []).filter((p) => p.stricter).map((p) => p.key));
-    if (!strictKeys.size) continue;
-    const rest = Object.fromEntries(Object.entries(u.params).filter(([k]) => !strictKeys.has(k)));
-    const key = `${u.rule.type}|${stableStringify(u.rule.scope ?? {})}|${stableStringify(rest)}`;
-    (groups.get(key) ?? groups.set(key, []).get(key)!).push(u);
-  }
-  for (const g of groups.values()) {
+  // Duplicate constraints from different sources are NOT merged or superseded (FIX-04): every mandatory
+  // obligation is evaluated independently with its own severity, scope and source. Only an informational
+  // note links them, so a 50 mm project warning can never hide an enforced 100 mm ruleset error.
+  const byType = new Map<string, EffectiveRule[]>();
+  for (const u of user) if (u.severity !== "off") (byType.get(u.rule.type) ?? byType.set(u.rule.type, []).get(u.rule.type)!).push(u);
+  for (const g of byType.values()) {
     if (g.length < 2) continue;
-    const t = RULE_TYPE_BY_ID.get(g[0]!.rule.type)!;
-    const pd = t.params.find((p) => p.stricter)!;
-    const winner = g.reduce((a, b) => (isStricter(pd.stricter!, Number(b.params[pd.key]), Number(a.params[pd.key])) ? b : a));
     for (const e of g) {
-      if (e === winner) continue;
-      winner.sources.push(e.source);
-      e.notes.push(`Superseded by stricter ${winner.rule.id} (${winner.source.name}).`);
-      (e as EffectiveRule & { superseded?: boolean }).superseded = true;
+      const others = g.filter((x) => x !== e).map((x) => `${x.rule.id} (${x.source.name}, ${x.severity})`);
+      e.notes.push(`Also constrained by ${others.join(", ")}; each rule is checked independently.`);
     }
   }
   return out;
 }
 
-/** Caches rule results keyed by the hash of the entity slices each rule type depends on (incremental re-evaluation). */
+/** What a rule evaluation read, recorded automatically so cache invalidation can't miss a dependency (FIX-03). */
+interface DepSet {
+  /** Top-level harness collections read (connectors, wires, …). */
+  h: string[];
+  /** Derived data (routes, lengths, diameters) — depends on the whole harness + settings. */
+  d: boolean;
+  /** BOM or revision object — depends on everything. */
+  all: boolean;
+  /** Project-level fields (settings, quote, part number, …). */
+  project: boolean;
+}
+
+interface CacheEntry {
+  deps: DepSet;
+  dep: string;
+  violations: Violation[];
+}
+
+/**
+ * Caches rule results. Each entry records which inputs the evaluation actually read (via a tracking proxy),
+ * and is reused only when the hash of exactly those inputs is unchanged. Global inputs (catalog, profile,
+ * resolved pedigree, params, qty/tier) are part of the key.
+ */
 export class DfmCache {
-  private map = new Map<string, { dep: string; violations: Violation[] }>();
-  get(key: string, dep: string) {
-    const e = this.map.get(key);
-    return e && e.dep === dep ? e.violations : undefined;
+  private map = new Map<string, CacheEntry>();
+  entry(key: string) {
+    return this.map.get(key);
   }
-  set(key: string, dep: string, violations: Violation[]) {
-    this.map.set(key, { dep, violations });
+  set(key: string, e: CacheEntry) {
+    this.map.delete(key);
+    this.map.set(key, e);
     if (this.map.size > 2000) this.map.delete(this.map.keys().next().value!);
+  }
+  clear() {
+    this.map.clear();
   }
 }
 
-function sliceHasher(h: Harness, project: Project, qty: number, tierDays: number) {
-  const cache = new Map<EntityKind, string>();
-  const src: Record<EntityKind, () => unknown> = {
-    connector: () => h.connectors,
-    pin: () => h.connectors,
-    net: () => h.nets,
-    wire: () => h.wires,
-    segment: () => h.segments,
-    node: () => h.nodes,
-    layer: () => h.layers,
-    shield: () => h.shields,
-    termination: () => h.terminations,
-    clamp: () => h.clamps,
-    boot: () => h.boots,
-    label: () => [h.labels, h.labelRules],
-    splice: () => h.splices,
-    potting: () => h.potting,
-    cable: () => h.cables,
-    twist: () => h.twistGroups,
-    project: () => [project.partNumber, project.settings, project.quote, qty, tierDays],
-    bom: () => [h, project.quote, project.settings, qty],
+function depHasher(h: Harness, project: Project, rev: Revision, derivedHash: () => string) {
+  const slices = new Map<string, string>();
+  let projectHash: string | undefined;
+  let allHash: string | undefined;
+  const slice = (k: string) => {
+    if (!slices.has(k)) slices.set(k, quickHash(stableStringify((h as Record<string, unknown>)[k] ?? null)));
+    return slices.get(k)!;
   };
-  return (kinds: EntityKind[]) =>
-    kinds
-      .map((k) => {
-        if (!cache.has(k)) cache.set(k, quickHash(stableStringify(src[k]())));
-        return cache.get(k)!;
-      })
-      .join(".");
+  const proj = () => (projectHash ??= quickHash(stableStringify({ ...project, revisions: undefined, updated: undefined, rev: { ...rev, harness: undefined } })));
+  const all = () => (allHash ??= quickHash(stableStringify(h)));
+  return (deps: DepSet) => {
+    const parts: string[] = [];
+    if (deps.all) parts.push(`A${all()}`, `P${proj()}`);
+    else {
+      for (const k of [...deps.h].sort()) parts.push(`${k}:${slice(k)}`);
+      if (deps.d) parts.push(`D${derivedHash()}`);
+      if (deps.project) parts.push(`P${proj()}`);
+    }
+    return parts.join(".");
+  };
 }
+
+function trackedCtx(ctx: RuleCtx, deps: DepSet): RuleCtx {
+  const hs = new Set<string>();
+  const h = new Proxy(ctx.h, {
+    get(t, k, r) {
+      if (typeof k === "string") hs.add(k);
+      return Reflect.get(t, k, r);
+    },
+  });
+  const finish = () => (deps.h = [...hs]);
+  const out: RuleCtx = {
+    ...ctx,
+    h,
+    get d() {
+      deps.d = true;
+      return ctx.d;
+    },
+    get project() {
+      deps.project = true;
+      return ctx.project;
+    },
+    get rev() {
+      deps.all = true;
+      return ctx.rev;
+    },
+    bom: () => {
+      deps.all = true;
+      return ctx.bom();
+    },
+  };
+  (out as RuleCtx & { __finish: () => void }).__finish = finish;
+  return out;
+}
+
+/** Thrown by a rule when a required input is absent: the outcome is `missingInput`, never a pass. */
+export class MissingInputError extends Error {}
 
 function isWaivable(eff: EffectiveRule): boolean {
   if (eff.source.layer === "manufacturer") return eff.severity !== "error";
@@ -223,43 +265,63 @@ export function runDfm(opts: DfmOptions): DfmSummary {
     len: (mm) => formatLength(mm, project.units, { decimals: project.units === "in" ? 2 : 1 }),
     refDes: (id) => refs.get(id) ?? "?",
   };
-  const hashOf = sliceHasher(h, project, qty, tierDays);
+  let dHash: string | undefined;
+  const derivedHash = () =>
+    (dHash ??= quickHash(
+      stableStringify({
+        len: [...d.wireLengthMm],
+        routes: [...d.routes],
+        od: [...d.segOuterOdMm],
+        core: [...d.segCoreOdMm],
+        node: [...d.nodeOdMm],
+        wod: [...d.wireOdMm],
+        stack: [...d.segStack].map(([k, v]) => [k, v.map((x) => [x.layer.id, x.odAfterMm, x.thicknessMm])]),
+        settings: project.settings,
+      }),
+    ));
+  const hashOf = depHasher(h, project, rev, derivedHash);
   const rules = collectRules(project, profile, pedId);
   const results: RuleResult[] = [];
-  const catV = cat.version.hash;
+  // Global inputs every rule may read: catalog identity, machine profile content, resolved pedigree, qty/tier.
+  const globalKey = quickHash(stableStringify({ cat: cat.version.hash, profile, ped, qty, tierDays, units: project.units }));
   for (const eff of rules) {
     const r0 = typeof performance !== "undefined" ? performance.now() : Date.now();
-    if ((eff as EffectiveRule & { superseded?: boolean }).superseded) {
-      results.push({ eff, status: "superseded", violations: [], waived: [], ms: 0 });
-      continue;
-    }
     if (eff.severity === "off") {
       results.push({ eff, status: "off", violations: [], waived: [], ms: 0 });
       continue;
     }
     let violations: Violation[] = [];
     let error: string | undefined;
+    let status: RuleResult["status"] | undefined;
     try {
-      if (eff.rule.type === "custom" || eff.rule.custom) {
-        if (!eff.rule.custom) throw new Error("Custom rule has no definition");
-        violations = evaluateCustom(ctx, eff.rule.custom);
-      } else {
-        const t = RULE_TYPE_BY_ID.get(eff.rule.type);
-        if (!t) throw new Error(`Unknown rule type "${eff.rule.type}"`);
-        const key = `${eff.rule.id}|${stableStringify(eff.params)}|${stableStringify(eff.rule.scope ?? null)}|${pedId}|${catV}`;
-        const dep = hashOf(t.depends);
-        const cached = opts.cache?.get(key, dep);
-        if (cached) violations = cached;
-        else {
-          violations = t.evaluate(ctx, eff.params, eff.rule);
-          opts.cache?.set(key, dep, violations);
-        }
+      const isCustom = eff.rule.type === "custom" || !!eff.rule.custom;
+      const t = isCustom ? undefined : RULE_TYPE_BY_ID.get(eff.rule.type);
+      if (isCustom && !eff.rule.custom) throw new Error("Custom rule has no definition");
+      if (!isCustom && !t) throw new Error(`Unknown rule type "${eff.rule.type}"`);
+      // Runtime parameter validation: a missing or non-numeric limit must never evaluate as a pass.
+      for (const pd of t?.params ?? []) {
+        const v = eff.params[pd.key];
+        if (pd.optional && (v === undefined || v === null || v === "")) continue;
+        if (pd.type === "number" && (v === undefined || v === null || v === "" || !Number.isFinite(Number(v)))) throw new MissingInputError(`Parameter "${pd.label}" is ${v === undefined || v === "" ? "missing" : `not a number (${String(v)})`}`);
+        if (pd.type === "enum" && v !== undefined && pd.options && !pd.options.includes(String(v))) throw new MissingInputError(`Parameter "${pd.label}" has an unknown value "${String(v)}"`);
+      }
+      const key = `${eff.rule.id}|${eff.rule.type}|${stableStringify(eff.params)}|${stableStringify(eff.rule.scope ?? null)}|${stableStringify(eff.rule.custom ?? null)}|${globalKey}`;
+      const prev = opts.cache?.entry(key);
+      if (prev && prev.dep === hashOf(prev.deps)) violations = prev.violations;
+      else {
+        const deps: DepSet = { h: [], d: false, all: false, project: false };
+        const tctx = trackedCtx(ctx, deps);
+        violations = isCustom ? evaluateCustom(tctx, eff.rule.custom!) : t!.evaluate(tctx, eff.params, eff.rule);
+        (tctx as RuleCtx & { __finish: () => void }).__finish();
+        opts.cache?.set(key, { deps, dep: hashOf(deps), violations });
       }
     } catch (e) {
       error = (e as Error).message;
+      status = e instanceof MissingInputError ? "missingInput" : "engineError";
+      violations = [];
     }
     const waived: RuleResult["waived"] = [];
-    if (isWaivable(eff)) {
+    if (!error && isWaivable(eff)) {
       violations = violations.filter((v) => {
         const w = project.waivers.find((x) => x.ruleId === eff.rule.id && (x.objectId === "*" || v.objectIds.includes(x.objectId)));
         if (w) {
@@ -269,7 +331,7 @@ export function runDfm(opts: DfmOptions): DfmSummary {
         return true;
       });
     }
-    const status = error ? "error" : violations.length ? "fail" : waived.length ? "waived" : "pass";
+    status ??= violations.length ? "fail" : waived.length ? "waived" : "pass";
     results.push({ eff, status, violations, waived, error, ms: (typeof performance !== "undefined" ? performance.now() : Date.now()) - r0 });
   }
 
@@ -287,28 +349,51 @@ export function runDfm(opts: DfmOptions): DfmSummary {
       }
   }
   const tally = (rs: RuleResult[]) => {
-    const active = rs.filter((r) => r.status !== "off" && r.status !== "superseded");
+    const active = rs.filter((r) => r.status !== "off");
     const count = (s: Severity) => active.filter((r) => r.status === "fail" && r.eff.severity === s).reduce((a, r) => a + r.violations.length, 0);
-    return { checks: active.length, errors: count("error"), warnings: count("warning"), infos: count("info"), passed: active.filter((r) => r.status === "pass" || r.status === "waived").length };
+    return {
+      checks: active.length,
+      errors: count("error"),
+      warnings: count("warning"),
+      infos: count("info"),
+      passed: active.filter((r) => r.status === "pass" || r.status === "waived" || r.status === "notApplicable").length,
+      incomplete: active.filter((r) => INCOMPLETE_STATUSES.includes(r.status)).length,
+    };
   };
   const mfgR = results.filter((r) => r.eff.source.layer === "manufacturer");
   const desR = results.filter((r) => r.eff.source.layer !== "manufacturer");
   const m = tally(mfgR);
-  const manual = mfgR.some((r) => r.status === "fail" && RULE_TYPE_BY_ID.get(r.eff.rule.type)?.manual);
-  const status = m.errors > 0 ? "notBuildable" : manual ? "manual" : "ready";
+  // A waiver documents acceptance; it doesn't remove the manual operation behind a finding.
+  const manual = mfgR.some((r) => (r.status === "fail" || r.status === "waived") && RULE_TYPE_BY_ID.get(r.eff.rule.type)?.manual);
+  const reviewRs = mfgR.filter((r) => (r.status === "fail" || r.status === "waived") && RULE_TYPE_BY_ID.get(r.eff.rule.type)?.review);
+  const review = reviewRs.reduce((a, r) => a + r.violations.length + r.waived.length, 0);
+  // Design-rule errors that couldn't run also block a "ready" claim for the build class.
+  const desIncomplete = desR.filter((r) => INCOMPLETE_STATUSES.includes(r.status) && r.eff.severity === "error");
+  const blockers: string[] = [];
+  if (m.errors) blockers.push(`${m.errors} manufacturer error${m.errors > 1 ? "s" : ""}`);
+  for (const r of mfgR.filter((x) => INCOMPLETE_STATUSES.includes(x.status))) blockers.push(`${r.eff.rule.id} ${r.eff.rule.title}: ${r.status}${r.error ? ` (${r.error})` : ""}`);
+  for (const r of desIncomplete) blockers.push(`${r.eff.rule.id} ${r.eff.rule.title}: ${r.status}${r.error ? ` (${r.error})` : ""}`);
+  for (const r of reviewRs) blockers.push(`${r.eff.rule.title}: ${r.violations.length + r.waived.length} item${r.violations.length + r.waived.length > 1 ? "s" : ""} need data review`);
+  const status: DfmSummary["manufacturability"]["status"] = m.errors > 0 ? "notBuildable" : m.incomplete > 0 || desIncomplete.length > 0 || review > 0 ? "incomplete" : manual ? "manual" : "ready";
   const des = tally(desR);
   const rulesets = [...new Set(desR.filter((r) => r.status !== "off").map((r) => (r.eff.source.version ? `${r.eff.source.name} v${r.eff.source.version}` : r.eff.source.name)))];
-  const hash = quickHash(results.map((r) => `${r.eff.rule.id}:${r.status}:${r.violations.length}`).join(","));
+  const hash = quickHash(results.map((r) => `${r.eff.rule.id}:${r.status}:${r.violations.length}:${r.waived.length}`).join(","));
   return {
     pedigreeId: pedId,
     pedigreeName: ped.name,
-    manufacturability: { status, ...m },
+    manufacturability: { status, ...m, review, blockers },
     design: { ...des, rulesets },
     results,
     byObject,
     durationMs: (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0,
     hash,
+    inputHash: dfmInputHash({ project, rev, cat, profile, pedigreeId: pedId, qty, tierDays }),
   };
+}
+
+/** Identity of all DFM inputs; results with a different input hash are stale. */
+export function dfmInputHash(o: { project: Project; rev: Revision; cat: CatalogIndex; profile: MachineProfile; pedigreeId: string; qty: number; tierDays: number }): string {
+  return quickHash(stableStringify({ p: { ...o.project, revisions: undefined, updated: undefined }, rev: o.rev, cat: o.cat.version.hash, profile: o.profile.version, pid: o.pedigreeId, qty: o.qty, tier: o.tierDays }));
 }
 
 /** Human-readable severity-across-pedigrees summary, e.g. "Error at T2 · warning at T3". */

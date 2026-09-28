@@ -10,7 +10,16 @@ export function Toasts() {
       {toasts.map((t) => (
         <div key={t.id} className={cx("pop-in pointer-events-auto flex items-center gap-2 rounded-card border bg-bg-surface-2 px-3 py-2 text-sm shadow-xl", t.kind === "error" ? "border-status-error" : "border-border-subtle")}>
           <SeverityIcon severity={t.kind === "error" ? "error" : t.kind === "success" ? "pass" : "info"} />
-          <span>{t.text}</span>
+          <span className="max-w-[560px]">
+            {t.text}
+            {t.detail && (
+              <ul className="mt-1 list-disc pl-4 text-xs text-text-secondary">
+                {t.detail.slice(1, 6).map((d, i) => (
+                  <li key={i}>{d}</li>
+                ))}
+              </ul>
+            )}
+          </span>
           {t.action && (
             <button className="ml-2 text-accent hover:underline" onClick={() => (t.action!.run(), dismiss(t.id))}>
               {t.action.label}

@@ -78,6 +78,8 @@ export function ContextBar({ layouts }: { layouts: Map<string, ConnLayout> }) {
     <div className="pop-in absolute z-20 flex -translate-x-1/2 items-center gap-0.5 rounded-card border border-border-subtle bg-bg-surface-2 p-1 shadow-lg" style={{ left: sx, top: Math.max(6, sy) }} role="toolbar" aria-label="Selection actions" onPointerDown={(e) => e.stopPropagation()}>
       <span className="mono max-w-[140px] truncate px-2 text-xs text-text-secondary">{title}</span>
       {sel.kind === "pin" && <span className="px-1 text-xs text-text-tertiary">Drag pins onto another connector to connect in order · double-click to name</span>}
+      {sel.kind === "segment" && sel.ids.length === 1 && <span className="hidden whitespace-nowrap px-1 text-2xs text-text-tertiary 2xl:inline">Drag ○ ends to re-attach</span>}
+      {sel.kind === "node" && sel.ids.length === 1 && <span className="hidden whitespace-nowrap px-1 text-2xs text-text-tertiary 2xl:inline">Drop on a connector/breakout to join</span>}
       {actions.map((a) => (
         <Tip key={a.id} label={a.label} shortcut={a.shortcut}>
           <button className={`flex h-7 items-center gap-1 rounded-control px-2 text-xs hover:bg-bg-hover ${a.danger ? "text-status-error" : "text-text-primary"}`} onClick={(e) => a.run({ ...ctx, anchor: { x: e.clientX, y: e.clientY + 16 } })}>

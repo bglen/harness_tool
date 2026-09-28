@@ -35,8 +35,10 @@ test("core flow: 2 connectors → connect 3 pins → quote → order review, wit
   }
   await expect(page.getByRole("button", { name: /Wires \(3\)/ })).toBeVisible();
 
-  // Quote updates (demo): Order button shows a price
-  await expect(page.getByRole("button", { name: /^Order\s*\$/ })).toBeVisible({ timeout: 15_000 });
+  // Quote updates (demo): the order button shows a price. Unreviewed catalog data makes it an estimate
+  // ("Request quote ~$…") rather than an instant order.
+  const orderBtn = page.getByRole("button", { name: /^(Order|Request quote)\s*~?\$/ });
+  await expect(orderBtn).toBeVisible({ timeout: 15_000 });
 
   // Undo removes the last wire, redo brings it back
   await page.keyboard.press("Control+z");
@@ -45,16 +47,55 @@ test("core flow: 2 connectors → connect 3 pins → quote → order review, wit
   await expect(page.getByRole("button", { name: /Wires \(3\)/ })).toBeVisible();
 
   // Order review
-  await page.getByRole("button", { name: /^Order\s*\$/ }).click();
+  await orderBtn.click();
   await expect(page.getByText("ORDER LINES", { exact: false })).toBeVisible();
   await expect(page.getByText("Nothing is submitted", { exact: false })).toBeVisible();
 
   expect(outbound).toEqual([]);
 });
 
-test("example opens, pedigree switch re-runs checks", async ({ page }) => {
+test("example opens; unreviewed reference data is never claimed ready", async ({ page }) => {
   await page.goto("/");
   await page.getByText("open an example", { exact: false }).click();
-  await expect(page.getByText("Ready for automated build").first()).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("47 checks", { exact: false }).first()).toBeVisible();
+  // Seed/unreviewed catalog data (insert geometry, tooling) blocks the "ready" claim (FIX-10).
+  await expect(page.getByText("Needs review before it can be called ready").first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("Ready for automated build")).toHaveCount(0);
+  await expect(page.getByText("51 checks", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("Saved on this device")).toBeVisible({ timeout: 10_000 });
+});
+
+test("three connectors: combine two bundles into a trunk and re-attach a branch", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByText("Add your first connector")).toBeVisible();
+  await placeConnector(page, 400, 400, "13-35");
+  await placeConnector(page, 950, 300, "13-35 pin");
+  await placeConnector(page, 1150, 720, "13-35 pin");
+  await page.keyboard.press("Escape");
+  const hs = () => page.evaluate(() => {
+    const w = window as unknown as { __hs: { useProject: { getState(): { project: { currentRevisionId: string; revisions: { id: string; harness: { segments: { id: string; a: string; b: string }[]; nodes: { id: string; kind: string; connectorId?: string; position: { x: number; y: number } }[]; connectors: { id: string; refDes: string }[] } }[] } } } } };
+    const p = w.__hs.useProject.getState().project;
+    return p.revisions.find((r) => r.id === p.currentRevisionId)!.harness;
+  });
+  // Connect J1 to P1 and J1 to P2 through the model (drag-to-connect is covered by the core-flow test)
+  await page.evaluate(() => {
+    const w = window as unknown as { __hs: { useProject: { getState(): { dispatch(c: unknown): boolean; project: { currentRevisionId: string; revisions: { id: string; harness: { connectors: { id: string }[] } }[] } } } } };
+    const st = w.__hs.useProject.getState();
+    const h = st.project.revisions.find((r) => r.id === st.project.currentRevisionId)!.harness;
+    const [a, b, c] = h.connectors.map((x) => x.id);
+    st.dispatch({ type: "connectPins", payload: { pairs: [{ a: { connectorId: a, cavityId: "1" }, b: { connectorId: b, cavityId: "1" } }, { a: { connectorId: a, cavityId: "2" }, b: { connectorId: c, cavityId: "1" } }] } });
+  });
+  let h = await hs();
+  expect(h.segments).toHaveLength(2);
+  // Select both bundles (Shift+click) and combine them into a trunk from the context bar
+  await page.evaluate(() => {
+    const w = window as unknown as { __hs: { useUi: { getState(): { select(k: string, ids: string[]): void } }; useProject: { getState(): { project: { currentRevisionId: string; revisions: { id: string; harness: { segments: { id: string }[] } }[] } } } } };
+    const p = w.__hs.useProject.getState().project;
+    w.__hs.useUi.getState().select("segment", p.revisions.find((r) => r.id === p.currentRevisionId)!.harness.segments.map((s) => s.id));
+  });
+  await page.getByRole("button", { name: "Combine into trunk" }).click();
+  h = await hs();
+  expect(h.segments).toHaveLength(3);
+  expect(h.nodes.filter((n) => n.kind === "breakout")).toHaveLength(1);
+  // The branching tip explains the gestures
+  await expect(page.getByText("Adjusting how bundles branch")).toBeVisible();
 });

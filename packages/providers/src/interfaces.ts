@@ -73,6 +73,8 @@ export interface QuoteCell {
   total: number;
   shipDate: string;
   breakdown: QuoteBreakdown;
+  /** Longest-lead part whose stock doesn't cover this quantity. */
+  criticalPart?: { pn: string; leadDays: number };
 }
 
 export interface QuoteBreakdown {
@@ -97,8 +99,11 @@ export interface QuoteResult {
   asOf: string;
   hash: string;
   demo: boolean;
+  /** Worst critical part across all cells; use the cell's own criticalPart for a specific quantity. */
   criticalPart?: { pn: string; leadDays: number };
   cureDays: number;
+  /** Assumptions behind ship dates/prices that the customer must confirm. */
+  assumptions?: string[];
 }
 
 export interface QuoteProvider {

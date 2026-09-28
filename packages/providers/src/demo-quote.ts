@@ -75,37 +75,52 @@ export class DemoQuoteProvider implements QuoteProvider {
     const nre = R.setupNre + R.setupPerUniqueConnector * s.stats.uniqueConnectors + R.setupPerManualOpType * manualKinds.size;
     let critical: { pn: string; leadDays: number } | undefined;
 
+    // Customer-furnished parts: the build can't start before they arrive; unknown arrival is an explicit assumption.
+    const assumptions: string[] = [];
+    const cf = s.lines.filter((l) => l.customerFurnished);
+    const cfArrival = Math.max(0, ...cf.map((l) => l.cfArrivalDays ?? 0));
+    const cfUnknown = cf.filter((l) => l.cfArrivalDays == null);
+    if (cfUnknown.length) assumptions.push(`Ship dates assume customer-furnished ${cfUnknown.map((l) => l.pn).slice(0, 3).join(", ")}${cfUnknown.length > 3 ? "…" : ""} are on hand at order (arrival date not given).`);
+    const unsupported = s.ops.filter((o) => o.unsupported).map((o) => o.inspectionId ?? "?");
+
     const cells: QuoteCell[] = [];
     for (const q of quantities) {
       let materials = 0;
       let shortLead = 0;
+      let cellCritical: { pn: string; leadDays: number } | undefined;
       for (const l of s.lines) {
         if (l.customerFurnished) continue;
         const sup = this.cat.supply(l.pn);
-        const need = l.qty * q;
+        const need = l.uom === "ea" ? Math.ceil(l.qty * q - 1e-9) : l.qty * q;
         const brk = sup ? ([...sup.breaks].reverse().find((b) => need >= b.qty) ?? sup.breaks[0]!) : undefined;
         materials += (brk?.price ?? 0) * l.qty;
+        // Availability per cell: a part is on the critical path only if stock can't cover this quantity.
         if (l.stock < need && l.leadDays > shortLead) {
           shortLead = l.leadDays;
-          if (!critical || l.leadDays > critical.leadDays) critical = { pn: l.pn, leadDays: l.leadDays };
+          cellCritical = { pn: l.pn, leadDays: l.leadDays };
         }
       }
+      if (cellCritical && (!critical || cellCritical.leadDays > critical.leadDays)) critical = cellCritical;
       materials *= R.materialMarkup;
       let machineMin = 0;
       let manualMin = 0;
       for (const o of s.ops) {
-        if (o.kind === "inspection") continue;
+        // Tests and inspections are priced once, below (no continuity double count).
+        if (o.kind === "inspection" || o.kind === "test") continue;
         if (o.automated) machineMin += (R.opMinutes[o.kind] ?? 0.5) * o.qty;
         else manualMin += (R.manualOpMinutes[o.kind] ?? (R.opMinutes[o.kind] ?? 0.5) * 4) * o.qty;
       }
       const items: QuoteBreakdown["inspectionItems"] = [];
       for (const o of s.ops.filter((x) => x.kind === "inspection" || x.kind === "test")) {
         if (o.kind === "test") {
-          items.push({ name: "Continuity test (machine jig)", amount: (R.opMinutes.test ?? 1.5) * R.machineRatePerMin, inHouse: true, sampling: "100%" });
+          items.push({ name: `Continuity test (machine jig${o.params?.maxOhm != null ? `, ≤ ${o.params.maxOhm} Ω` : ""})`, amount: (R.opMinutes.test ?? 1.5) * R.machineRatePerMin, inHouse: true, sampling: o.sampling ?? "100%" });
           continue;
         }
         const t = this.inspections.find((i) => i.id === o.inspectionId);
-        if (!t) continue;
+        if (!t) {
+          items.push({ name: `${o.inspectionId} (not priced: needs review)`, amount: 0, inHouse: false, sampling: o.sampling ?? "100%" });
+          continue;
+        }
         const amount = t.costPerUnit * samplingFactor(o.sampling, q) + t.setupCost / q;
         items.push({ name: t.name + (t.inHouse ? "" : " (outsourced)"), amount, inHouse: t.inHouse, sampling: o.sampling ?? "100%" });
       }
@@ -118,23 +133,31 @@ export class DemoQuoteProvider implements QuoteProvider {
         const nrePer = nre / q;
         const unit = materials + machine + manual + insp + nrePer;
         const buildDays = t.days + cureDays + outsourcedLead + Math.ceil(q / 50);
-        const days = Math.max(buildDays, shortLead ? shortLead + 3 + cureDays : 0);
+        const days = Math.max(buildDays, shortLead ? shortLead + 3 + cureDays : 0, cfArrival ? cfArrival + t.days : 0);
         cells.push({
           qty: q,
           tier: t.id,
           unit: round2(unit),
           total: round2(unit * q),
           shipDate: addDays(today, days),
+          criticalPart: cellCritical,
           breakdown: { materials: round2(materials), machine: round2(machine), manual: round2(manual), inspection: round2(insp), inspectionItems: items.map((i) => ({ ...i, amount: round2(i.amount * t.multiplier) })), nre: round2(nre), nrePerUnit: round2(nrePer) },
         });
       }
     }
     const unknown = s.lines.some((l) => !this.cat.supply(l.pn));
-    const needsReview = s.dfm.mfgErrors > 0 || unknown;
+    const reasons: string[] = [];
+    if (s.dfm.mfgErrors > 0) reasons.push(`${s.dfm.mfgErrors} manufacturability error${s.dfm.mfgErrors > 1 ? "s" : ""}`);
+    if (s.dfm.designErrors > 0) reasons.push(`${s.dfm.designErrors} required design-rule error${s.dfm.designErrors > 1 ? "s" : ""}`);
+    if (s.dfm.incomplete > 0) reasons.push(`${s.dfm.incomplete} check${s.dfm.incomplete > 1 ? "s" : ""} couldn't run`);
+    if (s.dfm.review > 0) reasons.push("unreviewed reference data");
+    if (unsupported.length) reasons.push(`inspection${unsupported.length > 1 ? "s" : ""} ${unsupported.join(", ")} not in the catalog`);
+    if (unknown) reasons.push("some parts have no price data");
     return {
       ...base,
-      state: needsReview ? "needsReview" : "instant",
-      reason: s.dfm.mfgErrors > 0 ? `${s.dfm.mfgErrors} manufacturability error${s.dfm.mfgErrors > 1 ? "s" : ""}: price is an estimate` : unknown ? "Some parts have no price data: price is an estimate" : undefined,
+      state: reasons.length ? "needsReview" : "instant",
+      reason: reasons.length ? `Estimate only: ${reasons.join("; ")}.` : undefined,
+      assumptions,
       cells,
       criticalPart: critical,
       cureDays,

@@ -270,7 +270,8 @@ export function expandDeferred(project: Project, cmds: Command[], cat: CatalogIn
       const { hub, connectorIds } = c.payload as { hub: string; connectorIds: string[] };
       // remove auto-created direct segments between connectors, add star
       const connNodes = connectorIds.map((id) => h.nodes.find((n) => n.connectorId === id)?.id).filter(Boolean) as string[];
-      for (const nid of connNodes) out.push(addSegment({ id: uid(), a: hub, b: nid, lengthMm: project.settings.defaultSegmentMm }));
+      // Star branch lengths are placeholders: flagged "default" until someone enters real lengths.
+      for (const nid of connNodes) out.push(addSegment({ id: uid(), a: hub, b: nid, lengthMm: project.settings.defaultSegmentMm, lengthSource: "default" }));
       const direct = h.segments.filter((s) => connNodes.includes(s.a) && connNodes.includes(s.b)).map((s) => s.id);
       if (direct.length) out.push({ type: "deleteSegments", payload: { ids: direct } });
     } else if (c.type === "__segmentLength") {
@@ -278,7 +279,8 @@ export function expandDeferred(project: Project, cmds: Command[], cat: CatalogIn
       const na = h.nodes.find((n) => n.connectorId === a)?.id;
       const nb = h.nodes.find((n) => n.connectorId === b)?.id;
       const seg = h.segments.find((s) => (s.a === na && s.b === nb) || (s.a === nb && s.b === na));
-      if (seg) out.push(setSegmentProps({ ids: [seg.id], lengthMm }));
+      // Derived from the wire list's wire lengths minus termination allowances: an estimate, not a confirmed dimension.
+      if (seg) out.push(setSegmentProps({ ids: [seg.id], lengthMm, lengthSource: "estimated" }));
     } else if (c.type === "__wireProps") {
       const rows = (c.payload as { rows: { from: { c: string; p: string }; to: { c: string; p: string }; gauge?: number; color?: WireColor; spec?: string }[] }).rows;
       for (const r of rows) {

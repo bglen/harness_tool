@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { currentRevision, formatMass, formatMoney, formatTotalLength, setQuoteSelection } from "@hs/model";
+import { formatMass, formatMoney, formatTotalLength, setQuoteSelection } from "@hs/model";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
-import { useActiveAnalysis, useActiveQuote, useAnalysis } from "../store/analysis";
+import { activePedigreeOf, useActiveAnalysis, useActiveQuote, useAnalysis } from "../store/analysis";
 import { cx, DemoTag, Tip } from "../ui/primitives";
 import { PedigreePill } from "./TopBar";
 
 export function QuoteCard() {
   const project = useProject((s) => s.project)!;
-  const rev = currentRevision(project);
   const q = useActiveQuote();
   const a = useActiveAnalysis();
   const updating = useAnalysis((s) => s.quoteUpdating);
@@ -29,7 +28,7 @@ export function QuoteCard() {
         </span>
       </div>
       <div className="mb-2 flex items-center justify-between text-xs text-text-secondary">
-        <PedigreePill id={rev.activePedigreeId} className="text-2xs" />
+        <PedigreePill id={activePedigreeOf(project)} className="text-2xs" />
         {cell && (
           <span>
             Ships <span className="tnum text-text-primary">{new Date(cell.shipDate + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
@@ -109,7 +108,17 @@ export function QuoteCard() {
           {delta!.amount > 0 ? "▲" : "▼"} {formatMoney(Math.abs(delta!.amount))}/unit: {delta!.label.toLowerCase()}
         </div>
       )}
-      {q?.state === "needsReview" && q.reason && <div className="mt-2 text-xs text-status-warning">{q.reason}. Order becomes “Request quote”.</div>}
+      {q?.state === "needsReview" && q.reason && <div className="mt-2 text-xs text-status-warning">{q.reason} Order becomes “Request quote”.</div>}
+      {cell?.criticalPart && (
+        <div className="mt-1 text-2xs text-text-secondary">
+          At {sel.qty} units, <span className="mono">{cell.criticalPart.pn}</span> isn't covered by stock ({cell.criticalPart.leadDays} d lead time) and sets the ship date.
+        </div>
+      )}
+      {q?.assumptions?.map((s, i) => (
+        <div key={i} className="mt-1 text-2xs text-text-tertiary">
+          Assumes: {s}
+        </div>
+      ))}
       {cell && (
         <div className="mt-2">
           <button className="flex items-center gap-1 text-xs text-text-secondary hover:text-text-primary" onClick={() => setOpen(!open)} aria-expanded={open}>

@@ -11,3 +11,6 @@ export * from "./commands";
 export * from "./project";
 export * from "./hash";
 export * from "./profile";
+export * from "./validate";
+export * from "./cavities";
+export * from "./release";

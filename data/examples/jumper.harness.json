@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "bfcce6c5-ffd0-4f5a-aa9a-5266494edfa5",
   "name": "38999 jumper (example)",
   "partNumber": "HS-1001",
@@ -116,7 +116,8 @@
       "qty": 10,
       "tier": "standard"
     },
-    "customerFurnished": []
+    "customerFurnished": [],
+    "customerFurnishedArrivalDays": {}
   },
   "revisions": [
     {
@@ -256,6 +257,7 @@
             "a": "083df372-4aa2-4a74-ac12-6733c1510479",
             "b": "8ddea690-0330-412c-a993-dcd967e00ae5",
             "lengthMm": 914.4,
+            "lengthSource": "confirmed",
             "toleranceMm": 10,
             "label": ""
           }
@@ -266,6 +268,7 @@
             "name": "+28V_A",
             "cls": "power",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -283,6 +286,7 @@
             "name": "+28V_RTN",
             "cls": "power",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -300,6 +304,7 @@
             "name": "CAN_H",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -316,6 +321,7 @@
             "name": "CAN_L",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -332,6 +338,7 @@
             "name": "RS422_TX+",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -348,6 +355,7 @@
             "name": "RS422_TX-",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -364,6 +372,7 @@
             "name": "RS422_RX+",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -380,6 +389,7 @@
             "name": "RS422_RX-",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -396,6 +406,7 @@
             "name": "DISCRETE_1",
             "cls": "signal",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",
@@ -412,6 +423,7 @@
             "name": "CHASSIS_GND",
             "cls": "ground",
             "topology": "daisy",
+            "topologyConfirmed": false,
             "members": [
               {
                 "connectorId": "829d4054-e8c5-4de4-a380-96f56539f9c5",

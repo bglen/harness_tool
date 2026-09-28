@@ -6,8 +6,19 @@ export interface LayerAt {
   layer: Layer;
   part?: LayerPart;
   thicknessMm: number;
+  /** Largest OD over this layer anywhere on its extent. */
   odAfterMm: number;
+  /** Largest diameter under this layer anywhere on its extent. */
+  underMaxMm: number;
   partial: boolean;
+}
+
+/** A stretch of a segment with a constant layer stack. */
+export interface SegInterval {
+  startMm: number;
+  endMm: number;
+  odMm: number;
+  layers: { layerId: string; underMm: number; odAfterMm: number }[];
 }
 
 export interface Derived {
@@ -24,6 +35,8 @@ export interface Derived {
   segCoreOdMm: Map<string, number>;
   segOuterOdMm: Map<string, number>;
   segStack: Map<string, LayerAt[]>;
+  /** segmentId → constant-stack intervals from end A */
+  segIntervals: Map<string, SegInterval[]>;
   /** node id → max OD of any adjacent segment (outer) */
   nodeOdMm: Map<string, number>;
   wireOdMm: Map<string, number>;
@@ -197,44 +210,78 @@ export function derive(h: Harness, cat: CatalogIndex, settings: Pick<Settings, "
     segCoreOdMm.set(s.id, d);
   }
 
-  // Layer stacks
+  // Layer stacks per interval (FIX-09): a layer only adds diameter where its extent actually is, so two
+  // disjoint partial sleeves never stack on top of each other.
   const segStack = new Map<string, LayerAt[]>();
   const segOuterOdMm = new Map<string, number>();
+  const segIntervals = new Map<string, SegInterval[]>();
   const layersSorted = [...h.layers].sort((a, b) => a.stackOrder - b.stackOrder);
   for (const s of h.segments) {
-    let od = segCoreOdMm.get(s.id)!;
-    const stack: LayerAt[] = [];
+    const core = segCoreOdMm.get(s.id)!;
+    const on: { l: Layer; part?: LayerPart; t: number; a: number; b: number }[] = [];
     for (const l of layersSorted) {
       const ext = l.extents.find((e) => e.segmentId === s.id);
       if (!ext) continue;
       const [a, b] = extentCoverage(s, ext);
       if (b - a <= 0) continue;
       const part = cat.layer(ext.pn ?? l.pn);
-      const t = layerThickness(l, part);
-      od += 2 * t;
-      stack.push({ layer: l, part, thicknessMm: t, odAfterMm: od, partial: a > 0.01 || b < s.lengthMm - 0.01 });
+      on.push({ l, part, t: layerThickness(l, part), a, b });
     }
-    segStack.set(s.id, stack);
-    segOuterOdMm.set(s.id, od);
+    const cuts = [...new Set([0, s.lengthMm, ...on.flatMap((x) => [x.a, x.b])])].sort((x, y) => x - y);
+    const intervals: SegInterval[] = [];
+    const maxAfter = new Map<string, number>();
+    const maxUnder = new Map<string, number>();
+    for (let i = 0; i + 1 < cuts.length; i++) {
+      const lo = cuts[i]!;
+      const hi = cuts[i + 1]!;
+      if (hi - lo < 1e-9) continue;
+      const mid = (lo + hi) / 2;
+      let od = core;
+      const layers: SegInterval["layers"] = [];
+      for (const x of on) {
+        if (mid < x.a || mid > x.b) continue;
+        const under = od;
+        od += 2 * x.t;
+        layers.push({ layerId: x.l.id, underMm: under, odAfterMm: od });
+        maxAfter.set(x.l.id, Math.max(maxAfter.get(x.l.id) ?? 0, od));
+        maxUnder.set(x.l.id, Math.max(maxUnder.get(x.l.id) ?? 0, under));
+      }
+      intervals.push({ startMm: lo, endMm: hi, odMm: od, layers });
+    }
+    if (!intervals.length) intervals.push({ startMm: 0, endMm: s.lengthMm, odMm: core, layers: [] });
+    segIntervals.set(s.id, intervals);
+    segStack.set(
+      s.id,
+      on.map((x) => ({ layer: x.l, part: x.part, thicknessMm: x.t, odAfterMm: maxAfter.get(x.l.id) ?? core + 2 * x.t, underMaxMm: maxUnder.get(x.l.id) ?? core, partial: x.a > 0.01 || x.b < s.lengthMm - 0.01 })),
+    );
+    segOuterOdMm.set(s.id, Math.max(core, ...intervals.map((x) => x.odMm)));
   }
 
+  // At a node, fittings see the diameter at that end of each segment, not the segment maximum.
   const nodeOdMm = new Map<string, number>();
   for (const s of h.segments) {
-    for (const n of [s.a, s.b]) nodeOdMm.set(n, Math.max(nodeOdMm.get(n) ?? 0, segOuterOdMm.get(s.id)!));
+    const iv = segIntervals.get(s.id)!;
+    nodeOdMm.set(s.a, Math.max(nodeOdMm.get(s.a) ?? 0, iv[0]!.odMm));
+    nodeOdMm.set(s.b, Math.max(nodeOdMm.get(s.b) ?? 0, iv[iv.length - 1]!.odMm));
   }
 
-  return { connectorNode, routes, nodePaths, wireLengthMm, segWires, segCoreOdMm, segOuterOdMm, segStack, nodeOdMm, wireOdMm, cableOdMm, totalWireMm, adjacency: adj };
+  return { connectorNode, routes, nodePaths, wireLengthMm, segWires, segCoreOdMm, segOuterOdMm, segStack, segIntervals, nodeOdMm, wireOdMm, cableOdMm, totalWireMm, adjacency: adj };
 }
 
-/** Diameter under a layer at a node end of a segment (for sizing clamps/boots at that end). */
+/** Largest diameter a layer has to go over on a segment (for sizing sleeves, braid, tape). */
 export function diameterUnderLayer(d: Derived, segmentId: string, layerId: string): number {
-  const stack = d.segStack.get(segmentId) ?? [];
-  let od = d.segCoreOdMm.get(segmentId) ?? 0;
-  for (const la of stack) {
-    if (la.layer.id === layerId) return od;
-    od = la.odAfterMm;
-  }
-  return od;
+  const la = d.segStack.get(segmentId)?.find((x) => x.layer.id === layerId);
+  if (la) return la.underMaxMm;
+  // Layer not on this segment: the outermost diameter there.
+  return d.segOuterOdMm.get(segmentId) ?? d.segCoreOdMm.get(segmentId) ?? 0;
+}
+
+/** Outside diameter at a position along a segment (mm from end A). */
+export function diameterAt(d: Derived, segmentId: string, posMm: number): number {
+  const iv = d.segIntervals.get(segmentId);
+  if (!iv?.length) return d.segCoreOdMm.get(segmentId) ?? 0;
+  const hit = iv.find((x) => posMm >= x.startMm - 1e-9 && posMm <= x.endMm + 1e-9) ?? (posMm <= 0 ? iv[0]! : iv[iv.length - 1]!);
+  return hit.odMm;
 }
 
 export function segmentsAtNode(h: Harness, nodeId: string): Segment[] {
