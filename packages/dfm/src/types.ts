@@ -24,6 +24,13 @@ export interface Fix {
 
 export interface Violation {
   objectIds: string[];
+  /** Identity of the original finding for waivers (set by the engine; stays the same when part of it is waived). */
+  key?: string;
+  /**
+   * What the finding is about when a rule can report several findings on the same objects (a part number, a
+   * cavity). Part of the waiver identity, so waiving one doesn't waive the others.
+   */
+  subject?: string;
   objectKind: EntityKind;
   message: string;
   fix?: Fix;

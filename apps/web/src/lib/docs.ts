@@ -130,7 +130,7 @@ export async function buildOutputPackage(items: PackageItem[], opts: { revisionI
   }
   if (items.includes("wirelist")) files.push({ path: `${b}_WireList.csv`, data: toCsv(wireListTable(p, cat, rev)) });
   if (items.includes("pinouts") || items.includes("wirelist")) files.push({ path: `${b}_Pinouts.csv`, data: toCsv(pinoutTable(p, cat, rev)) });
-  if (items.includes("dfm")) files.push({ path: `${b}_DFM_Results.csv`, data: toCsv(dfmTable(data.dfm)) });
+  if (items.includes("dfm")) files.push({ path: `${b}_DFM_Results.csv`, data: toCsv(dfmTable(data.dfm, rev.harness)) });
   if (items.includes("design")) files.push({ path: `design/${b}.harness.json`, data: stableStringify(redactProject(p, redact), 2) + "\n" });
   if (items.includes("rules")) {
     for (const rs of p.rulesets) files.push({ path: `rules/${rs.id}_v${rs.version}.harnessrules.json`, data: stableStringify(rs, 2) + "\n" });

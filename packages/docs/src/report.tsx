@@ -1,5 +1,5 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
-import { resolvePedigree, type NetClass } from "@hs/model";
+import { affectedParts, resolvePedigree, type NetClass } from "@hs/model";
 import { opLabel } from "@hs/ops";
 import type { DocData } from "./data";
 import { C, DEMO_FOOTER, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, money, pdfSafe, s, Swatch, Table } from "./common";
@@ -315,7 +315,7 @@ export function ReportDocument({ data, sections, hideQuote: hideQuoteIn, redact 
         {on("dfm") && (
           <Section title="7 Manufacturability (DFM) report">
             <Text style={s.p}>{status}. Checked against {ped.name} with machine profile {data.profile.version}: {dfm.manufacturability.checks} checks, {dfm.manufacturability.errors} errors, {dfm.manufacturability.warnings} warnings, {dfm.manufacturability.infos} info.</Text>
-            <Table cols={[{ label: "Rule", w: 1, mono: true }, { label: "Severity", w: 0.6 }, { label: "Message", w: 4 }]} rows={dfm.results.filter((r) => r.eff.source.layer === "manufacturer" && r.status === "fail").flatMap((r) => r.violations.map((v) => [r.eff.rule.id, r.eff.severity, v.message]))} />
+            <Table cols={[{ label: "Rule", w: 1, mono: true }, { label: "Severity", w: 0.6 }, { label: "Affected", w: 0.9, mono: true }, { label: "Message", w: 4 }]} rows={dfm.results.filter((r) => r.eff.source.layer === "manufacturer" && r.status === "fail").flatMap((r) => r.violations.map((v) => [r.eff.rule.id, r.eff.severity, affectedParts(h, v.objectIds, 4) || "—", v.message]))} />
             {dfm.results.some((r) => r.waived.length) && (
               <>
                 <Text style={s.h2}>Waivers</Text>

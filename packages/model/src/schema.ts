@@ -442,6 +442,8 @@ export const WaiverSchema = z.object({
   objectId: z.string(),
   /** Specific finding: the exact object-id set of the violation (see violationKey). Takes precedence over objectId. */
   violationKey: z.string().optional(),
+  /** Waive the finding only for this one part (the finding stays open for the other parts it names). */
+  scopeObjectId: z.string().optional(),
   /** The finding's text when it was waived, so a changed finding can be flagged for re-assessment. */
   message: z.string().optional(),
   note: z.string().min(1),

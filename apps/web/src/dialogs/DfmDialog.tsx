@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { currentHarness, uid, type Harness } from "@hs/model";
+import { affectedParts, currentHarness, objectLabel, uid, type Harness } from "@hs/model";
 import { RULE_TYPE_BY_ID, severityAcross, violationKey, type RuleResult, type Violation } from "@hs/dfm";
 import { ChevronDown, ChevronRight, ShieldCheck, Wand2, X } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
@@ -13,19 +13,15 @@ type SourceFilter = "all" | "manufacturer" | "design";
 
 /** Human name of any object id in the harness (for the "findings for …" filter). */
 export function objectName(h: Harness, id: string): string {
-  const c = h.connectors.find((x) => x.id === id);
-  if (c) return c.refDes || c.pn;
-  const w = h.wires.find((x) => x.id === id);
-  if (w) return `wire ${w.label}`;
-  const n = h.nets.find((x) => x.id === id);
-  if (n) return `net ${n.name}`;
-  const s = h.segments.find((x) => x.id === id);
-  if (s) return s.label ? `segment ${s.label}` : "segment";
-  const nd = h.nodes.find((x) => x.id === id);
-  if (nd) return nd.kind === "breakout" ? `breakout B${h.nodes.filter((x) => x.kind === "breakout").indexOf(nd) + 1}` : "node";
-  const sh = h.shields.find((x) => x.id === id);
-  if (sh) return `shield ${sh.label}`;
-  return "object";
+  return objectLabel(h, id) ?? "this object";
+}
+
+/** Small mono tag naming the parts a finding is about (P1, W3, SP1 …). */
+function PartsTag({ ids, max = 4 }: { ids: string[]; max?: number }) {
+  const project = useProject((s) => s.project)!;
+  const text = affectedParts(currentHarness(project), ids, max);
+  if (!text) return null;
+  return <span className="mono shrink-0 rounded-chip border border-border-subtle px-1 text-2xs text-text-primary">{text}</span>;
 }
 
 const involves = (r: RuleResult, id: string) => r.violations.some((v) => v.objectIds.includes(id)) || r.waived.some((v) => v.objectIds.includes(id));
@@ -55,7 +51,7 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
   }, [a, src, q, objectId]);
   if (!a) return null;
   const failing = results.filter((r) => r.status === "fail" || r.status === "engineError" || r.status === "missingInput" || r.status === "notEvaluated");
-  const waivedRules = results.filter((r) => r.waived.length > 0);
+  const waivedRules = results.filter((r) => r.waived.some((w) => !objectId || w.objectIds.includes(objectId)));
   const waivedCount = waivedRules.reduce((s, r) => s + r.waived.filter((w) => !objectId || w.objectIds.includes(objectId)).length, 0);
   const passed = results.filter((r) => r.status === "pass" || r.status === "notApplicable" || (r.status === "waived" && !r.violations.length));
   const off = results.filter((r) => r.status === "off");
@@ -64,8 +60,8 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
   const unmatched = project.waivers.filter((w) => a.dfm.unmatchedWaivers.includes(w.id));
   return (
     <Dialog open onClose={close} title="Checks" width={1120} description={<span className="flex items-center gap-2">Checked against <PedigreePill id={activePedigreeOf(project)} /> · {a.dfm.manufacturability.checks + a.dfm.design.checks} active checks · evaluated in {Math.round(a.ms)} ms</span>}>
-      <div className="grid h-[64vh] grid-cols-[1fr_420px] gap-4">
-        <div className="flex min-h-0 flex-col gap-2">
+      <div className="grid h-[64vh] grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-4">
+        <div className="flex min-h-0 min-w-0 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
             {(["all", "manufacturer", "design"] as const).map((s) => (
               <button key={s} onClick={() => setSrc(s)} className={cx("rounded-chip border px-2 py-0.5 text-xs", src === s ? "border-accent text-text-primary" : "border-border-subtle text-text-secondary")}>
@@ -126,17 +122,19 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
                 ))}
               </div>
             )}
-            <button className="flex w-full items-center gap-1 border-t border-border-subtle px-3 py-2 text-left text-xs text-text-secondary hover:text-text-primary" onClick={() => setShowPassed(!showPassed)} aria-expanded={showPassed}>
-              {showPassed ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              <SeverityIcon severity="pass" size={12} /> {passed.length} checks with no findings{off.length ? ` · ${off.length} off` : ""}
-            </button>
+            {passed.length + off.length > 0 && (
+              <button className="flex w-full items-center gap-1 border-t border-border-subtle px-3 py-2 text-left text-xs text-text-secondary hover:text-text-primary" onClick={() => setShowPassed(!showPassed)} aria-expanded={showPassed}>
+                {showPassed ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                <SeverityIcon severity="pass" size={12} /> {passed.length} checks with no findings{off.length ? ` · ${off.length} off` : ""}
+              </button>
+            )}
             {showPassed &&
               [...passed, ...off].map((r) => (
                 <RuleRow key={`p-${r.eff.rule.id}`} r={r} active={openRule === r.eff.rule.id} onClick={() => setOpenRule(r.eff.rule.id)} />
               ))}
           </div>
         </div>
-        <div className="scroll-thin min-h-0 overflow-auto rounded-card border border-border-subtle p-3">
+        <div className="scroll-thin min-h-0 min-w-0 overflow-y-auto overflow-x-hidden break-words rounded-card border border-border-subtle p-3">
           {detail ? <RuleDetail r={detail} objectId={objectId} /> : <div className="text-sm text-text-tertiary">Select a check to see what it looks for, why it matters, its threshold and source, the affected objects and any waivers.</div>}
         </div>
       </div>
@@ -147,8 +145,11 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
 function RuleRow({ r, active, onClick, objectId, waivedView }: { r: RuleResult; active: boolean; onClick: () => void; objectId?: string; waivedView?: boolean }) {
   const project = useProject((s) => s.project)!;
   const across = severityAcross(r.eff, project);
-  const open = r.violations.filter((v) => !objectId || v.objectIds.includes(objectId)).length;
-  const waived = r.waived.filter((v) => !objectId || v.objectIds.includes(objectId)).length;
+  const openV = r.violations.filter((v) => !objectId || v.objectIds.includes(objectId));
+  const waivedV = r.waived.filter((v) => !objectId || v.objectIds.includes(objectId));
+  const open = openV.length;
+  const waived = waivedV.length;
+  const partIds = (waivedView ? waivedV : openV).flatMap((v) => v.objectIds);
   const status = waivedView
     ? `${waived} waived`
     : r.status === "fail"
@@ -171,6 +172,7 @@ function RuleRow({ r, active, onClick, objectId, waivedView }: { r: RuleResult; 
       {waivedView ? <ShieldCheck size={14} className="text-text-tertiary" /> : <SeverityIcon severity={r.status === "pass" || r.status === "waived" || r.status === "notApplicable" ? "pass" : r.status === "off" ? "off" : r.status === "fail" ? r.eff.severity : "error"} />}
       <span className="mono w-28 shrink-0 text-2xs text-text-secondary">{r.eff.rule.id}</span>
       <span className={cx("min-w-0 flex-1 truncate", waivedView && "text-text-secondary")}>{r.eff.rule.title}</span>
+      {partIds.length > 0 && <PartsTag ids={partIds} max={3} />}
       {across && <span className="hidden text-2xs text-text-tertiary xl:inline">{across}</span>}
       <Chip>{r.eff.source.layer === "manufacturer" ? "Manufacturer" : r.eff.source.layer === "project" ? "Project" : r.eff.source.name}</Chip>
       <span className="tnum w-28 text-right text-xs text-text-secondary">{status}</span>
@@ -178,21 +180,41 @@ function RuleRow({ r, active, onClick, objectId, waivedView }: { r: RuleResult; 
   );
 }
 
-/** Waive one finding: reason + engineer (prefilled with the current user, editable). */
-function WaiveForm({ r, targets, onDone, label }: { r: RuleResult; targets: Violation[]; onDone: () => void; label: string }) {
+/**
+ * Waive findings: reason + engineer (prefilled with the current user, editable). When the checks view is filtered
+ * to one part and a finding also names other parts (e.g. a part number used on two connectors), the waiver can be
+ * limited to that part; the finding stays open for the others.
+ */
+function WaiveForm({ r, targets, onDone, label, objectId }: { r: RuleResult; targets: Violation[]; onDone: () => void; label: string; objectId?: string }) {
   const ui = useUi();
+  const project = useProject((s) => s.project)!;
+  const h = currentHarness(project);
   const [note, setNote] = useState("");
   const [author, setAuthor] = useState(ui.userName);
+  const shared = !!objectId && targets.some((v) => affectedParts(h, v.objectIds.filter((id) => id !== objectId)) !== "");
+  const [onlyThis, setOnlyThis] = useState(true);
   const ok = note.trim() && author.trim();
   const submit = () => {
     if (!ok) return;
     if (author.trim() !== ui.userName) ui.setUserName(author.trim());
     const date = new Date().toISOString().slice(0, 10);
-    const cmds = targets.map((v) => ({ type: "addWaiver", payload: { waiver: { id: uid(), ruleId: r.eff.rule.id, objectId: v.objectIds[0] ?? "*", violationKey: violationKey(v), message: v.message, note: note.trim(), author: author.trim(), date } } }));
+    const scope = shared && onlyThis ? objectId : undefined;
+    const cmds = targets.map((v) => ({ type: "addWaiver", payload: { waiver: { id: uid(), ruleId: r.eff.rule.id, objectId: scope ?? v.objectIds[0] ?? "*", violationKey: v.key ?? violationKey(v), scopeObjectId: scope, message: v.message, note: note.trim(), author: author.trim(), date } } }));
     if (dispatch(cmds, targets.length === 1 ? `Waive ${r.eff.rule.id} finding` : `Waive ${targets.length} ${r.eff.rule.id} findings`)) onDone();
   };
   return (
     <div className="mt-1 flex flex-col gap-1 rounded-control border border-border-subtle bg-bg-surface-1 p-2">
+      {shared && (
+        <div className="flex flex-col gap-0.5 text-2xs text-text-secondary">
+          <span>This finding also covers other parts ({affectedParts(h, targets.flatMap((v) => v.objectIds.filter((id) => id !== objectId)), 4)}).</span>
+          <label className="flex items-center gap-1">
+            <input type="radio" checked={onlyThis} onChange={() => setOnlyThis(true)} /> Waive for {objectLabel(h, objectId!)} only
+          </label>
+          <label className="flex items-center gap-1">
+            <input type="radio" checked={!onlyThis} onChange={() => setOnlyThis(false)} /> Waive for all: {affectedParts(h, targets.flatMap((v) => v.objectIds), 5)}
+          </label>
+        </div>
+      )}
       <input autoFocus className={cx(inputCls, "h-7 text-xs")} placeholder="Reason (required)" value={note} onChange={(e) => setNote(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} />
       <label className="flex items-center gap-2 text-2xs text-text-secondary">
         Waived by
@@ -274,11 +296,12 @@ function RuleDetail({ r, objectId }: { r: RuleResult; objectId?: string }) {
               </button>
             )}
           </div>
-          {waiving === "all" && <WaiveForm r={r} targets={open} label={`Waive all ${open.length}`} onDone={() => setWaiving(null)} />}
+          {waiving === "all" && <WaiveForm r={r} targets={open} objectId={objectId} label={`Waive all ${open.length}`} onDone={() => setWaiving(null)} />}
           <ul className="flex flex-col gap-1.5">
             {open.map((v, i) => (
               <li key={violationKey(v) + i} className="text-xs">
                 <div className="flex items-start gap-2">
+                  <PartsTag ids={v.objectIds} />
                   <button className="flex-1 text-left hover:text-accent" onClick={() => (ui.closeDialog("dfm"), ui.setView("design"), zoomToObjects(v.objectIds))}>
                     {v.message}
                   </button>
@@ -293,7 +316,7 @@ function RuleDetail({ r, objectId }: { r: RuleResult; objectId?: string }) {
                     </Button>
                   )}
                 </div>
-                {waiving === i && <WaiveForm r={r} targets={[v]} label="Waive this finding" onDone={() => setWaiving(null)} />}
+                {waiving === i && <WaiveForm r={r} targets={[v]} objectId={objectId} label="Waive this finding" onDone={() => setWaiving(null)} />}
               </li>
             ))}
           </ul>
@@ -309,6 +332,7 @@ function RuleDetail({ r, objectId }: { r: RuleResult; objectId?: string }) {
               <li key={w.waiverId} className="rounded-control border border-border-subtle p-2 text-xs">
                 <div className="flex items-start gap-2">
                   <ShieldCheck size={13} className="mt-[1px] shrink-0 text-text-tertiary" />
+                  <PartsTag ids={w.objectIds} />
                   <button className="flex-1 text-left text-text-secondary hover:text-accent" onClick={() => (ui.closeDialog("dfm"), ui.setView("design"), zoomToObjects(w.objectIds))}>
                     {w.message}
                   </button>

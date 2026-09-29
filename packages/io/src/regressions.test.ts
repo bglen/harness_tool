@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  affectedParts,
   addBreakout,
   addConnector,
   applyBatch,
@@ -484,6 +485,23 @@ describe("waivers target one finding", () => {
     const s = runDfm({ project: q, cat, profile });
     expect(s.unmatchedWaivers).toEqual([`w-${v.objectIds.join("")}`]);
     expect(() => waive(p, v, "  ")).toThrow(/engineer/);
+  });
+
+  it("a finding shared by two connectors can be waived for one of them only", () => {
+    const p = withBackshells(wired(1, "waive4")); // same backshell PN on A and B → one shared reference-data finding
+    const find = (proj: Project) => runDfm({ project: proj, cat, profile }).results.find((r) => r.eff.rule.type === "reference_data_status")!;
+    const shared = find(p).violations.find((v) => v.objectIds.includes("A") && v.objectIds.includes("B"))!;
+    expect(shared).toBeTruthy();
+    const q = run(p, [{ type: "addWaiver", payload: { waiver: { id: "wA", ruleId: find(p).eff.rule.id, objectId: "A", violationKey: violationKey(shared), scopeObjectId: "A", message: shared.message, note: "reviewed for A", author: "J. Engineer", date: "2026-09-28" } } }]);
+    const r = find(q);
+    const open = r.violations.find((v) => v.message === shared.message)!;
+    expect(open.objectIds).toContain("B");
+    expect(open.objectIds).not.toContain("A");
+    expect(r.waived.find((w) => w.message === shared.message)!.objectIds).toEqual(["A"]);
+    const s = runDfm({ project: q, cat, profile });
+    expect(s.waivedByObject.A?.count).toBe(1);
+    expect(s.waivedByObject.B).toBeUndefined();
+    expect(affectedParts(currentHarness(q), open.objectIds)).toMatch(/^P\d+$|^J\d+$/);
   });
 
   it("legacy rule-wide waivers ('*') still apply", () => {

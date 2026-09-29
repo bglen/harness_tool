@@ -13,4 +13,5 @@ export * from "./hash";
 export * from "./profile";
 export * from "./validate";
 export * from "./cavities";
+export * from "./names";
 export * from "./release";

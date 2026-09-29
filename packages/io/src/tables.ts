@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import { contactPnFor, currentRevision, derive, formatWireColor, type CatalogIndex, type Derived, type Project, type Revision } from "@hs/model";
+import { affectedParts, contactPnFor, currentRevision, derive, formatWireColor, type CatalogIndex, type Derived, type Harness, type Project, type Revision } from "@hs/model";
 import { computeBom, type Bom } from "@hs/ops";
 import type { DfmSummary } from "@hs/dfm";
 
@@ -62,15 +62,17 @@ export function bomTable(bom: Bom, opts: { pricing: boolean; supply?: boolean } 
   return { name: "BOM", header, rows };
 }
 
-export function dfmTable(s: DfmSummary): Table {
+/** DFM results, one row per finding (open and waived), with the affected parts named (P1, W3, SP1 …). */
+export function dfmTable(s: DfmSummary, h?: Harness): Table {
   const rows: (string | number)[][] = [];
+  const parts = (ids: string[]) => (h ? affectedParts(h, ids) : "");
   for (const r of s.results) {
     const base = [r.eff.rule.id, r.eff.source.name + (r.eff.source.version ? ` v${r.eff.source.version}` : ""), r.eff.rule.category, r.eff.rule.title, r.eff.severity];
-    if (r.status === "fail") for (const v of r.violations) rows.push([...base, "fail", v.message, ""]);
-    else if (r.waived.length) for (const v of r.waived) rows.push([...base, "waived", v.message, v.note]);
-    else rows.push([...base, r.status === "pass" ? "none found" : r.status, r.error ?? "", ""]);
+    for (const v of r.violations) rows.push([...base, "fail", parts(v.objectIds), v.message, "", "", ""]);
+    for (const v of r.waived) rows.push([...base, "waived", parts(v.objectIds), v.message, v.note, v.author, v.date]);
+    if (!r.violations.length && !r.waived.length) rows.push([...base, r.status === "pass" ? "none found" : r.status, "", r.error ?? "", "", "", ""]);
   }
-  return { name: "DFM results", header: ["Rule ID", "Source", "Category", "Finding", "Severity", "Status", "Message", "Waiver note"], rows };
+  return { name: "DFM results", header: ["Rule ID", "Source", "Category", "Finding", "Severity", "Status", "Affected", "Message", "Waiver note", "Waived by", "Waived on"], rows };
 }
 
 /** Deterministic CSV (fixed column order, \n line endings, no BOM) for byte-identical regeneration. */

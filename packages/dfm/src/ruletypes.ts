@@ -173,7 +173,7 @@ export const RULE_TYPES: RuleType[] = [
       for (const n of ctx.h.nets)
         for (const m of n.members) {
           const k = `${m.connectorId}:${m.cavityId}`;
-          if (seen.has(k)) out.push({ objectIds: [m.connectorId], objectKind: "pin", message: `${pinLabel(ctx, m.connectorId, m.cavityId)} is on ${seen.get(k)} and ${n.name}.` });
+          if (seen.has(k)) out.push({ objectIds: [m.connectorId], objectKind: "pin", subject: m.cavityId, message: `${pinLabel(ctx, m.connectorId, m.cavityId)} is on ${seen.get(k)} and ${n.name}.` });
           else seen.set(k, n.name);
         }
       return out;
@@ -261,7 +261,7 @@ export const RULE_TYPES: RuleType[] = [
           const c = ctx.h.connectors.find((x) => x.id === m.connectorId);
           const cav = c && ctx.cat.cavity(c.pn, m.cavityId);
           const rating = cav && ctx.cat.contactSize(cav.size)?.currentA;
-          if (rating && n.currentA > rating) out.push({ objectIds: [n.id, m.connectorId], objectKind: "pin", message: `${n.name}: ${n.currentA} A exceeds size ${cav!.size} contact rating ${rating} A at ${pinLabel(ctx, m.connectorId, m.cavityId)}.` });
+          if (rating && n.currentA > rating) out.push({ objectIds: [n.id, m.connectorId], objectKind: "pin", subject: m.cavityId, message: `${n.name}: ${n.currentA} A exceeds size ${cav!.size} contact rating ${rating} A at ${pinLabel(ctx, m.connectorId, m.cavityId)}.` });
         }
       }
       return out;
@@ -308,7 +308,7 @@ export const RULE_TYPES: RuleType[] = [
         for (const m of n.members) {
           const c = ctx.h.connectors.find((x) => x.id === m.connectorId);
           const cav = c && ctx.cat.cavity(c.pn, m.cavityId);
-          if (cav?.special) out.push({ objectIds: [m.connectorId, n.id], objectKind: "pin", message: `${pinLabel(ctx, m.connectorId, m.cavityId)} is a size ${cav.size} shielded cavity (coax/twinax contacts: Phase 2).` });
+          if (cav?.special) out.push({ objectIds: [m.connectorId, n.id], objectKind: "pin", subject: m.cavityId, message: `${pinLabel(ctx, m.connectorId, m.cavityId)} is a size ${cav.size} shielded cavity (coax/twinax contacts: Phase 2).` });
         }
       return out;
     },
@@ -628,7 +628,7 @@ export const RULE_TYPES: RuleType[] = [
       return ctx
         .bom()
         .lines.filter((l) => l.lifecycle !== "active")
-        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn} is ${l.lifecycle === "nrnd" ? "not recommended for new design" : l.lifecycle}${l.alternates[0] ? `; alternate ${l.alternates[0].alternate} available in BOM view` : ""}.` }));
+        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", subject: l.pn, message: `${l.pn} is ${l.lifecycle === "nrnd" ? "not recommended for new design" : l.lifecycle}${l.alternates[0] ? `; alternate ${l.alternates[0].alternate} available in BOM view` : ""}.` }));
     },
   },
   {
@@ -643,7 +643,7 @@ export const RULE_TYPES: RuleType[] = [
       return ctx
         .bom()
         .lines.filter((l) => !l.stockSufficient)
-        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn}: ${l.stock} in stock, ${purchaseQty(l, ctx.qty)} ${l.uom} needed for ${ctx.qty} units (demo data).` }));
+        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", subject: l.pn, message: `${l.pn}: ${l.stock} in stock, ${purchaseQty(l, ctx.qty)} ${l.uom} needed for ${ctx.qty} units (demo data).` }));
     },
   },
   {
@@ -658,7 +658,7 @@ export const RULE_TYPES: RuleType[] = [
       return ctx
         .bom()
         .lines.filter((l) => !l.stockSufficient && l.leadDays > ctx.tierDays)
-        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn}: ${l.leadDays}-day lead time exceeds the ${ctx.tierDays}-day tier (demo data).` }));
+        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", subject: l.pn, message: `${l.pn}: ${l.leadDays}-day lead time exceeds the ${ctx.tierDays}-day tier (demo data).` }));
     },
   },
   {
@@ -710,7 +710,7 @@ export const RULE_TYPES: RuleType[] = [
       const flag = (key: string, ids: string[], msg: string) => {
         if (seen.has(key)) return;
         seen.add(key);
-        out.push({ objectIds: ids, objectKind: "bom", message: msg });
+        out.push({ objectIds: ids, objectKind: "bom", subject: key, message: msg });
       };
       for (const l of ctx.bom().lines) {
         if (l.category === "Connectors") continue; // insert geometry is its own check (unreviewed_geometry)
@@ -743,13 +743,13 @@ export const RULE_TYPES: RuleType[] = [
           const cp = pn ? ctx.cat.contactsByPn.get(pn) : undefined;
           const where = pinLabel(ctx, c.id, cavId);
           if (!pn || !cp) {
-            out.push({ objectIds: [c.id], objectKind: "pin", message: `${where}: contact ${pn ?? `size ${cav.size} ${part.gender}`} is not in the catalog; compatibility can't be confirmed.` });
+            out.push({ objectIds: [c.id], objectKind: "pin", subject: cavId, message: `${where}: contact ${pn ?? `size ${cav.size} ${part.gender}`} is not in the catalog; compatibility can't be confirmed.` });
             continue;
           }
           const problems: string[] = [];
           if (cp.gender !== part.gender) problems.push(`${cp.gender} contact in a ${part.gender} insert`);
           if (cp.size !== cav.size) problems.push(`size ${cp.size} contact in a size ${cav.size} cavity`);
-          if (problems.length) out.push({ objectIds: [c.id], objectKind: "pin", message: `${where}: ${cp.pn} doesn't fit (${problems.join("; ")}).` });
+          if (problems.length) out.push({ objectIds: [c.id], objectKind: "pin", subject: cavId, message: `${where}: ${cp.pn} doesn't fit (${problems.join("; ")}).` });
         }
       }
       return out;
@@ -816,7 +816,7 @@ export const RULE_TYPES: RuleType[] = [
       return ctx
         .bom()
         .lines.filter((l) => !l.known)
-        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", message: `${l.pn} is not in the catalog.` }));
+        .map((l) => ({ objectIds: l.objectIds, objectKind: "bom", subject: l.pn, message: `${l.pn} is not in the catalog.` }));
     },
   },
 
@@ -1276,7 +1276,7 @@ export const RULE_TYPES: RuleType[] = [
             const on = cls.get(o);
             if (on && on.cls === p.classB && !seen.has(`${cav}|${o}`)) {
               seen.add(`${cav}|${o}`);
-              out.push({ objectIds: [c.id, net.id, on.id], objectKind: "pin", message: `${c.refDes}: ${net.name} (${p.classA}) at ${cav} is adjacent to ${on.name} (${p.classB}) at ${o}.` });
+              out.push({ objectIds: [c.id, net.id, on.id], objectKind: "pin", subject: `${cav}-${o}`, message: `${c.refDes}: ${net.name} (${p.classA}) at ${cav} is adjacent to ${on.name} (${p.classB}) at ${o}.` });
             }
           }
         }
@@ -1550,6 +1550,7 @@ export const RULE_TYPES: RuleType[] = [
         .map((l) => ({
           objectIds: l.objectIds,
           objectKind: "bom",
+          subject: l.pn,
           message: `${l.pn}: ${l.qualification.status === "expired" ? `qualification evidence expired (${l.qualification.source})` : "no qualified-source evidence on file (unverified)"}; required at ${ctx.ped.name}.`,
         }));
     },

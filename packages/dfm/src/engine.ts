@@ -231,8 +231,9 @@ function trackedCtx(ctx: RuleCtx, deps: DepSet): RuleCtx {
 }
 
 /** Identity of one finding for waivers: the exact set of objects it's about (order-independent). */
-export function violationKey(v: Pick<Violation, "objectIds">): string {
-  return [...v.objectIds].sort().join("|");
+export function violationKey(v: Pick<Violation, "objectIds" | "subject">): string {
+  const ids = [...v.objectIds].sort().join("|");
+  return v.subject ? `${ids}#${v.subject}` : ids;
 }
 
 /** Thrown by a rule when a required input is absent: the outcome is `missingInput`, never a pass. */
@@ -330,17 +331,29 @@ export function runDfm(opts: DfmOptions): DfmSummary {
     const waived: RuleResult["waived"] = [];
     if (!error && isWaivable(eff)) {
       const ruleWaivers = project.waivers.filter((x) => x.ruleId === eff.rule.id);
-      violations = violations.filter((v) => {
-        const key = violationKey(v);
-        // A waiver covers one specific finding (exact object set); legacy waivers fall back to object/"*" scope.
-        const w = ruleWaivers.find((x) => (x.violationKey !== undefined ? x.violationKey === key : x.objectId === "*" || v.objectIds.includes(x.objectId)));
-        if (w) {
+      const open: Violation[] = [];
+      for (const v0 of violations) {
+        const key = violationKey(v0);
+        const v = { ...v0, key };
+        const rec = (w: (typeof ruleWaivers)[number], objectIds: string[]) => {
           usedWaivers.add(w.id);
-          waived.push({ ...v, waiverId: w.id, note: w.note, author: w.author, date: w.date, changed: w.message !== undefined && w.message !== v.message, waivedMessage: w.message });
-          return false;
+          waived.push({ ...v, objectIds, waiverId: w.id, note: w.note, author: w.author, date: w.date, changed: w.message !== undefined && w.message !== v.message, waivedMessage: w.message });
+        };
+        // A waiver covers one specific finding (exact object set); legacy waivers fall back to object/"*" scope.
+        const whole = ruleWaivers.find((x) => (x.violationKey !== undefined ? x.violationKey === key && !x.scopeObjectId : x.objectId === "*" || v.objectIds.includes(x.objectId)));
+        if (whole) {
+          rec(whole, v.objectIds);
+          continue;
         }
-        return true;
-      });
+        // Part-scoped waivers: waived for those parts only; the finding stays open for the rest.
+        const scoped = ruleWaivers.filter((x) => x.violationKey === key && x.scopeObjectId && v.objectIds.includes(x.scopeObjectId));
+        for (const w of scoped) rec(w, [w.scopeObjectId!]);
+        const scopes = new Set(scoped.map((w) => w.scopeObjectId!));
+        const rest = v.objectIds.filter((id) => !scopes.has(id));
+        if (!scoped.length) open.push(v);
+        else if (rest.length) open.push({ ...v, objectIds: rest });
+      }
+      violations = open;
     }
     status ??= violations.length ? "fail" : waived.length ? "waived" : "pass";
     results.push({ eff, status, violations, waived, error, ms: (typeof performance !== "undefined" ? performance.now() : Date.now()) - r0 });

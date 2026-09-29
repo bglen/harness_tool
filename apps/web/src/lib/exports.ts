@@ -2,7 +2,7 @@ import { currentRevision } from "@hs/model";
 import { bomFor, bomTable, dfmTable, exportWireViz, pinoutTable, toCsv, toXlsx, wireListTable } from "@hs/io";
 import { exportProjectRuleset } from "@hs/dfm";
 import { getProject } from "../store/project";
-import { useAnalysis } from "../store/analysis";
+import { activePedigreeOf, useAnalysis } from "../store/analysis";
 import { useUi } from "../store/ui";
 import { svc } from "./services";
 import { downloadBlob, downloadProject, safeName } from "./files";
@@ -51,9 +51,9 @@ export const EXPORTS: (ExportItem | "-")[] = [
     run: () =>
       withToast("DFM results", () => {
         const p = getProject();
-        const a = useAnalysis.getState().byPedigree[currentRevision(p).activePedigreeId];
+        const a = useAnalysis.getState().byPedigree[activePedigreeOf(p)];
         if (!a) throw new Error("checks still running");
-        downloadBlob(`${base()}_DFM_Results.csv`, toCsv(dfmTable(a.dfm)), "text/csv");
+        downloadBlob(`${base()}_DFM_Results.csv`, toCsv(dfmTable(a.dfm, currentRevision(p).harness)), "text/csv");
       }),
   },
   { id: "wireviz", label: "WireViz YAML", run: () => withToast("WireViz", () => downloadBlob(`${base()}.yml`, exportWireViz(getProject(), svc().cat), "text/yaml")) },

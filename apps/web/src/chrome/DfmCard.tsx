@@ -1,4 +1,4 @@
-import { currentRevision, formatMoney } from "@hs/model";
+import { affectedParts, currentRevision, formatMoney } from "@hs/model";
 import type { RuleResult } from "@hs/dfm";
 import { ChevronRight } from "lucide-react";
 import { useProject } from "../store/project";
@@ -107,6 +107,7 @@ export function DfmCard() {
                   <SeverityIcon severity={r.eff.severity} size={12} />
                 </span>
                 <span className="min-w-0 flex-1">
+                  {affectedParts(currentRevision(project).harness, v.objectIds, 3) && <span className="mono mr-1 rounded-chip border border-border-subtle px-1 text-2xs text-text-primary">{affectedParts(currentRevision(project).harness, v.objectIds, 3)}</span>}
                   <span className="mono mr-1 text-2xs text-text-tertiary">{r.eff.rule.id}</span>
                   <span className="text-text-primary">{v.message}</span>
                 </span>
