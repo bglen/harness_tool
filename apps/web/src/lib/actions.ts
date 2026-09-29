@@ -53,6 +53,21 @@ export interface Action {
   run: (c: ActionCtx) => void;
 }
 
+/**
+ * Open the connector picker. `centered`: the picker opens in the middle of the canvas view and the connector is
+ * placed there (toolbar +). Otherwise it opens at the mouse (C key, double-click behaviour).
+ */
+export function openConnectorPicker(centered: boolean) {
+  const ui = useUi.getState();
+  const { w, h } = ui.canvasSize;
+  const el = document.getElementById("hs-canvas");
+  const r = el?.getBoundingClientRect() ?? { left: 0, top: 0 };
+  const mid = { x: r.left + w / 2, y: r.top + h / 2 };
+  const last = (window as unknown as { __hsMouse?: { x: number; y: number } }).__hsMouse;
+  const screen = !centered && last && last.x > r.left && last.y > r.top ? last : mid;
+  ui.openPicker({ screen, canvas: screenToCanvas(screen), mode: "place", centered });
+}
+
 function sharedNode(h: Harness, a: string, b: string): string | undefined {
   const s1 = h.segments.find((x) => x.id === a);
   const s2 = h.segments.find((x) => x.id === b);
@@ -70,15 +85,7 @@ export const ACTIONS: Action[] = [
     group: "Create",
     icon: "plus",
     shortcut: "C",
-    run: () => {
-      const ui = useUi.getState();
-      const { w, h } = ui.canvasSize;
-      const el = document.getElementById("hs-canvas");
-      const r = el?.getBoundingClientRect() ?? { left: 0, top: 0 };
-      const last = (window as unknown as { __hsMouse?: { x: number; y: number } }).__hsMouse;
-      const screen = last && last.x > r.left && last.y > r.top ? last : { x: r.left + w / 2, y: r.top + h / 2 };
-      ui.openPicker({ screen, canvas: screenToCanvas(screen), mode: "place" });
-    },
+    run: () => openConnectorPicker(false),
   },
   {
     id: "addNote",

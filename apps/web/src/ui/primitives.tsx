@@ -156,34 +156,84 @@ export function Dialog({ open, onClose, title, children, width = 640, footer, de
 }
 
 /** Floating panel at screen coordinates; closes on outside click / Esc. Keeps itself inside the viewport. */
-export function Floating({ x, y, onClose, children, className, align = "start", width }: { x: number; y: number; onClose: () => void; children: ReactNode; className?: string; align?: "start" | "center"; width?: number }) {
+/**
+ * Floating panel (popover/picker). Closes on outside click or Escape.
+ * align: "start" = top-left at (x, y); "center" = centred horizontally; "middle" = centred on (x, y).
+ * title: shows a drag bar with that title; drag it to move the panel anywhere (stays where you put it).
+ */
+export function Floating({ x, y, onClose, children, className, align = "start", width, title }: { x: number; y: number; onClose: () => void; children: ReactNode; className?: string; align?: "start" | "center" | "middle"; width?: number; title?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ left: x, top: y });
-  useLayoutEffect(() => {
+  const moved = useRef(false);
+  const startDrag = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
     const el = ref.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    let left = align === "center" ? x - r.width / 2 : x;
-    let top = y;
-    if (left + r.width > window.innerWidth - 8) left = window.innerWidth - r.width - 8;
-    if (top + r.height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - r.height - 8);
-    setPos({ left: Math.max(8, left), top: Math.max(8, top) });
+    const dx = e.clientX - r.left;
+    const dy = e.clientY - r.top;
+    const move = (ev: PointerEvent) => {
+      moved.current = true;
+      // Keep at least the drag bar on screen.
+      const left = Math.min(window.innerWidth - 60, Math.max(60 - r.width, ev.clientX - dx));
+      const top = Math.min(window.innerHeight - 30, Math.max(0, ev.clientY - dy));
+      setPos({ left, top });
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // Position from the anchor, and again whenever the content changes size (e.g. search results arrive),
+    // so the panel stays centred / on screen. Once the user drags it, it stays where they put it.
+    const place = () => {
+      if (moved.current) return;
+      const r = el.getBoundingClientRect();
+      let left = align === "start" ? x : x - r.width / 2;
+      let top = align === "middle" ? y - r.height / 2 : y;
+      if (left + r.width > window.innerWidth - 8) left = window.innerWidth - r.width - 8;
+      if (top + r.height > window.innerHeight - 8) top = window.innerHeight - r.height - 8;
+      setPos({ left: Math.max(8, left), top: Math.max(8, top) });
+    };
+    place();
+    const ro = new ResizeObserver(place);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [x, y, align]);
+  // Subscribe once. Callers usually pass an inline onClose, and some (the part picker) re-render on every
+  // pointer move; re-subscribing each render left gaps where an outside click was missed.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     const down = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node) && !(e.target as HTMLElement).closest?.("[data-floating-keep]")) onClose();
+      if (ref.current && !ref.current.contains(e.target as Node) && !(e.target as HTMLElement).closest?.("[data-floating-keep]")) closeRef.current();
     };
-    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    const t = setTimeout(() => window.addEventListener("pointerdown", down), 0);
+    const key = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
+    // Capture phase so canvas handlers that stop propagation can't swallow the outside click;
+    // deferred so the click that opened this floating element doesn't immediately close it.
+    const t = setTimeout(() => window.addEventListener("pointerdown", down, true), 0);
     window.addEventListener("keydown", key);
     return () => {
       clearTimeout(t);
-      window.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointerdown", down, true);
       window.removeEventListener("keydown", key);
     };
-  }, [onClose]);
+  }, []);
   return (
     <div ref={ref} role="dialog" className={cx("pop-in fixed z-40 rounded-card border border-border-subtle bg-bg-surface-2 shadow-xl", className)} style={{ left: pos.left, top: pos.top, width }} onPointerDown={(e) => e.stopPropagation()}>
+      {title && (
+        <div className="flex h-7 shrink-0 cursor-move select-none items-center gap-2 border-b border-border-subtle px-3 text-2xs text-text-tertiary" onPointerDown={startDrag} title="Drag to move">
+          <span aria-hidden className="tracking-[-2px]">⋮⋮</span>
+          <span className="label-caps">{title}</span>
+          <span className="ml-auto">drag to move</span>
+        </div>
+      )}
       {children}
     </div>
   );

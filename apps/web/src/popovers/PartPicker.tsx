@@ -96,7 +96,15 @@ export function PartPicker() {
   const arr = cur ? cat.arrangements.get(cur.arrangement) : undefined;
 
   return (
-    <Floating x={picker.screen.x + 8} y={picker.screen.y + 8} onClose={() => ui.openPicker(null)} width={760} className="flex max-h-[80vh] flex-col">
+    <Floating
+      x={picker.centered ? picker.screen.x : picker.screen.x + 8}
+      y={picker.centered ? picker.screen.y : picker.screen.y + 8}
+      align={picker.centered ? "middle" : "start"}
+      title={picker.mode === "replace" ? "Change connector" : "Add connector"}
+      onClose={() => ui.openPicker(null)}
+      width={760}
+      className="flex max-h-[80vh] flex-col"
+    >
       <div className="flex items-center gap-2 border-b border-border-subtle px-3 py-2">
         <Search size={16} className="text-text-tertiary" />
         <input

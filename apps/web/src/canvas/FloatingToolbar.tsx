@@ -1,7 +1,7 @@
 import { GitBranch, Maximize, MousePointer2, Plus, Shield, StickyNote } from "lucide-react";
 import { useUi } from "../store/ui";
 import { IconButton } from "../ui/primitives";
-import { runAction } from "../lib/actions";
+import { openConnectorPicker, runAction } from "../lib/actions";
 
 /** Bottom-centre canvas toolbar: Select, Add Connector, Add Breakout/Splice, Add Note, Zoom-to-fit. Nothing else (§3). */
 export function FloatingToolbar() {
@@ -11,7 +11,7 @@ export function FloatingToolbar() {
       <IconButton label="Select" shortcut="Esc" onClick={() => ui.clearSelection()}>
         <MousePointer2 size={18} />
       </IconButton>
-      <IconButton label="Add connector" shortcut="C" onClick={() => runAction("addConnector")}>
+      <IconButton label="Add connector" shortcut="C" onClick={() => openConnectorPicker(true)}>
         <Plus size={20} />
       </IconButton>
       <IconButton label="Add breakout: click a bundle to split it (B)" shortcut="B" active={ui.tool === "breakout"} onClick={() => ui.setTool(ui.tool === "breakout" ? null : "breakout")}>

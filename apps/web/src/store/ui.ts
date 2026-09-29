@@ -22,6 +22,8 @@ export interface PickerState {
   mode: "place" | "fromPin" | "replace";
   fromPins?: { connectorId: string; cavityId: string }[];
   connectorId?: string;
+  /** Open centred on `screen` (toolbar +) instead of beside it. */
+  centered?: boolean;
 }
 
 export interface PopoverState {
