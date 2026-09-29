@@ -43,6 +43,14 @@ export function DfmCard() {
       </section>
     );
   if (!a) return <section className="border-b border-border-subtle p-3 text-xs text-text-tertiary shimmer">Checking…</section>;
+  // An empty design has nothing to build; don't claim it's ready.
+  if (!currentRevision(project).harness.connectors.length)
+    return (
+      <section className="border-b border-border-subtle p-3" aria-label="Manufacturability">
+        <h2 className="label-caps mb-1">Manufacturability</h2>
+        <div className="text-xs text-text-tertiary">Add connectors to check manufacturability.</div>
+      </section>
+    );
   const m = a.dfm.manufacturability;
   const d = a.dfm.design;
   const st = STATUS[m.status];

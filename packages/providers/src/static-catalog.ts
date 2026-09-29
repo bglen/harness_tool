@@ -53,6 +53,7 @@ export class StaticCatalogProvider implements CatalogProvider {
     const idx = await this.idx();
     const inferred: FacetFilter = {};
     let q = query.trim();
+    let insertPrefix: string | undefined;
     // Exact PN typed
     const pn = parseD38999(q.replace(/\s+/g, ""));
     if (pn) {
@@ -63,6 +64,13 @@ export class StaticCatalogProvider implements CatalogProvider {
     const words = q.toLowerCase().split(/\s+/).filter(Boolean);
     const rest: string[] = [];
     for (const w of words) {
+      // A partial part number ("24", "24F", "D38999/24FA3", "35SN", "SN") narrows the facets as it's typed.
+      const part = partialPn(w, bundle);
+      if (part) {
+        Object.assign(inferred, part.facets);
+        if (part.insertPrefix) insertPrefix = part.insertPrefix;
+        continue;
+      }
       if (/^(socket|sockets|female|s)$/.test(w)) inferred.gender = "socket";
       else if (/^(pin|pins|male|p)$/.test(w)) inferred.gender = "pin";
       else if (/^plug/.test(w)) inferred.kind = "plug";
@@ -75,7 +83,12 @@ export class StaticCatalogProvider implements CatalogProvider {
     let docs: (Doc & { score: number })[];
     if (rest.length) docs = idx.search(rest.join(" ")) as unknown as (Doc & { score: number })[];
     else docs = bundle.connectorStyles.flatMap((st) => bundle.arrangements.map((a) => ({ id: `${st.slash}|${a.id}`, slash: st.slash, arrangement: a.id, kind: st.kind, mount: st.mount, shellSize: a.shellSize, sizes: Object.keys(a.sizes).join(" "), count: a.contactCount, status: a.status, score: 1 })));
-    const matchFacets = (d: Doc) => (!f.slash || d.slash === f.slash) && (!f.shellSize || d.shellSize === f.shellSize) && (!f.arrangement || d.arrangement === f.arrangement) && (!f.kind || d.kind === f.kind);
+    const matchFacets = (d: Doc) =>
+      (!f.slash || d.slash === f.slash) &&
+      (!f.shellSize || d.shellSize === f.shellSize) &&
+      (!f.arrangement || d.arrangement === f.arrangement) &&
+      (!insertPrefix || f.arrangement || d.arrangement.split("-")[1]!.startsWith(insertPrefix)) &&
+      (!f.kind || d.kind === f.kind);
     const filtered = docs.filter(matchFacets);
     // Rank: active before inactive, verified geometry first, then machine-ready (standard crimp sizes, no coax), then relevance and size
     const byId = new Map(bundle.arrangements.map((a) => [a.id, a]));
@@ -129,6 +142,60 @@ export class StaticCatalogProvider implements CatalogProvider {
   catalogVersion() {
     return this.bundle?.version.hash ?? "";
   }
+}
+
+const PIN_STYLES = ["P", "H", "R", "G", "A", "X", "C"];
+
+/**
+ * Interpret a partially typed D38999 part number. Two shapes are recognised:
+ *  - from the front: [D]38999/ + slash + class + shell code + insert + contact style + key, any prefix of it
+ *    ("24", "24F", "38999/24FA", "D38999/24FA35S");
+ *  - from the back: [insert] + contact style + [key] ("SN", "35SN", "PN").
+ * Returns null when the word isn't a PN fragment, so it falls through to text search.
+ */
+export function partialPn(word: string, bundle: CatalogBundle): { facets: FacetFilter; insertPrefix?: string } | null {
+  const s = word.toUpperCase().replace(/\s+/g, "");
+  const slashes = new Set(bundle.connectorStyles.map((x) => x.slash));
+  const finishes = new Set(bundle.finishes.map((x) => x.code));
+  const gender = (c: string) => (PIN_STYLES.includes(c) ? ("pin" as const) : ("socket" as const));
+  const hadPrefix = /^[MD]?38999\/?/.test(s);
+  const body = s.replace(/^[MD]?38999\/?/, "");
+  if (hadPrefix && !body) return { facets: {} };
+  const front = /^(\d{1,2})(AA|AB|[A-Z])?([A-HJ])?(\d{1,3})?([A-Z])?([NABCDE])?-?$/.exec(body);
+  const fromFront = (): { facets: FacetFilter; insertPrefix?: string } | null => {
+    if (!front) return null;
+    const [, slash, finish, shell, insert, style, key] = front;
+    // "2" while typing "24": accept any slash starting with it (only with the 38999 prefix, else it's ambiguous).
+    if (slash!.length === 1) return hadPrefix && [...slashes].some((x) => x.startsWith(slash!)) ? { facets: {} } : null;
+    if (!slashes.has(slash!)) return null;
+    if (finish && !finishes.has(finish)) return null;
+    const facets: FacetFilter = { slash: slash! };
+    if (finish) facets.finish = finish;
+    if (shell) {
+      const size = { A: 9, B: 11, C: 13, D: 15, E: 17, F: 19, G: 21, H: 23, J: 25 }[shell as "A"];
+      if (!size) return null;
+      facets.shellSize = size;
+    }
+    let insertPrefix: string | undefined;
+    if (insert) {
+      if (style && facets.shellSize) facets.arrangement = arrangementId(facets.shellSize, insert);
+      else insertPrefix = insert;
+    }
+    if (style) facets.gender = gender(style);
+    if (key) facets.keying = key;
+    return { facets, insertPrefix };
+  };
+  const f = fromFront();
+  if (f) return f;
+  if (hadPrefix) return null;
+  const back = /^(\d{1,3})?([PS])([NABCDE])?$/.exec(body);
+  if (back && (back[1] || back[3])) {
+    const [, insert, style, key] = back;
+    const facets: FacetFilter = { gender: gender(style!) };
+    if (key) facets.keying = key;
+    return { facets, insertPrefix: insert };
+  }
+  return null;
 }
 
 function stripUndef<T extends object>(o: T): Partial<T> {
