@@ -197,7 +197,9 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
               </text>
             )}
             {w && (
-              <g>
+              <g data-hit="wire-color" data-id={wires.map((x) => x.id).join(",")} style={{ cursor: "pointer" }}>
+                <title>{`${wires.map((x) => x.label).join(", ")}: ${formatWireColor(w.color)}, ${w.gauge} AWG. Click to change color or gauge.`}</title>
+                <rect x={colWire - 2} y={r.top + 1} width={wide ? 74 : 40} height={ROW_H - 2} rx={3} fill="transparent" />
                 <ColorRect color={w.color} x={colWire} y={r.y - 4} theme={theme} />
                 <text className="mono" x={colWire + 18} y={r.y + 4} fontSize={10} fill={ts}>
                   {wide ? `${w.gauge} · ${formatWireColor(w.color).split(" ")[1]}` : `${w.gauge}`}

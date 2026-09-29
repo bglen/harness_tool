@@ -71,7 +71,6 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
         return (
           <g key={s.id}>
             {selected && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={accent} strokeWidth={w + 8} strokeLinecap="round" opacity={0.55} />}
-            {segSev && segSev !== "info" && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={segSev === "error" ? "var(--status-error)" : "var(--status-warning)"} strokeWidth={w + 5} strokeDasharray="6 4" strokeLinecap="round" opacity={0.8} />}
             {/* jacket outline */}
             {stack.some((x) => x.layer.type === "jacket" || x.layer.type === "heatShrink" || x.layer.type === "conduit") && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={ts} strokeWidth={w + 3} strokeLinecap="round" />}
             <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={n ? fill : stroke} strokeWidth={n ? w : 3} strokeDasharray={n ? undefined : "4 4"} strokeLinecap="round" />

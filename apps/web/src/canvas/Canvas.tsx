@@ -267,6 +267,14 @@ export function Canvas() {
       setDrag({ kind: "marquee", start: p, cur: p, additive: e.shiftKey || e.ctrlKey || e.metaKey });
       return;
     }
+    if (hit.hit === "wire-color") {
+      // Wire color swatch on a pin card: edit that pin's wire(s) directly.
+      e.preventDefault();
+      const ids = hit.id.split(",").filter(Boolean);
+      ui.select("wire", ids);
+      ui.openPopover({ kind: "wireProps", screen: { x: e.clientX, y: e.clientY + 12 }, data: { ids, focus: "color" } });
+      return;
+    }
     if (hit.hit === "seg-end") {
       const [segmentId, end] = hit.id.split(":") as [string, "a" | "b"];
       setDrag({ kind: "reattach", segmentId, end, start: p, cur: p, moved: false });

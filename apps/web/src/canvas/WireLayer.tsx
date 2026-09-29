@@ -66,7 +66,6 @@ const WireView = memo(function WireView({ id, path, unrouted, base, stripes, tit
       <path d={path} stroke="transparent" strokeWidth={8} fill="none" />
       {selected && <path d={path} stroke={accent} strokeWidth={sw + 4.5} fill="none" opacity={0.7} strokeLinecap="round" />}
       {!selected && hover && <path d={path} stroke={accent} strokeWidth={sw + 2} fill="none" strokeLinecap="round" />}
-      {severity && severity !== "info" && <path d={path} stroke={severity === "error" ? "var(--status-error)" : "var(--status-warning)"} strokeWidth={sw + 3.5} strokeDasharray="5 3" fill="none" opacity={0.85} />}
       {casing && <path d={path} stroke={semantic("wire.casing", theme)} strokeWidth={sw + 1.1} fill="none" strokeLinecap="round" />}
       <path d={path} stroke={col} strokeWidth={selected ? sw + 0.5 : sw} fill="none" strokeLinecap="round" strokeDasharray={unrouted ? "4 3" : undefined} />
       {st.map((sc, i) => (
