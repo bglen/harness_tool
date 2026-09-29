@@ -286,13 +286,18 @@ export function Canvas() {
       return;
     }
     if (hit.hit === "connector") {
-      const ids = sel.kind === "connector" && selSet.has(hit.id) ? sel.ids : [hit.id];
-      const nodeIds = sel.kind === "node" ? sel.ids : [];
+      const already = sel.kind === "connector" && selSet.has(hit.id);
+      const ids = already ? sel.ids : [hit.id];
+      const nodeIds: string[] = [];
+      // Select on press (not only on release) so a connector being dragged is selected, e.g. F flips it mid-drag.
+      if (!already && !(e.shiftKey || e.ctrlKey || e.metaKey)) ui.select("connector", [hit.id]);
       setDrag({ kind: "move", ids, nodeIds, start: p, cur: p, moved: false, hitId: hit.id, hitKind: "connector" });
       return;
     }
     if (hit.hit === "node") {
-      const nodeIds = sel.kind === "node" && selSet.has(hit.id) ? sel.ids : [hit.id];
+      const already = sel.kind === "node" && selSet.has(hit.id);
+      const nodeIds = already ? sel.ids : [hit.id];
+      if (!already && !(e.shiftKey || e.ctrlKey || e.metaKey)) ui.select("node", [hit.id]);
       setDrag({ kind: "move", ids: [], nodeIds, start: p, cur: p, moved: false, hitId: hit.id, hitKind: "node" });
       return;
     }
