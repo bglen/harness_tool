@@ -147,9 +147,12 @@ function mergeNets(h: Harness, keep: Net, drop: Net) {
   if (keep.id === drop.id) return;
   for (const m of drop.members) keep.members.push(m);
   drop.members = [];
+  for (const l of drop.links ?? []) (keep.links ??= []).push(l);
+  drop.links = [];
   if (keep.currentA == null && drop.currentA != null) keep.currentA = drop.currentA;
 }
 
+/** Connect two pins, recording the connection as drawn so the wire follows it (see Net.links). */
 function connectTwo(h: Harness, a: NetMember, b: NetMember) {
   const na = netOfPin(h, a.connectorId, a.cavityId);
   const nb = netOfPin(h, b.connectorId, b.cavityId);
@@ -157,9 +160,15 @@ function connectTwo(h: Harness, a: NetMember, b: NetMember) {
   else if (na) setPinNet(h, b, na.id);
   else if (nb) setPinNet(h, a, nb.id);
   else {
-    const net: Net = { id: uid(), name: nextNetName(h), cls: "signal", topology: "daisy", topologyConfirmed: false, members: [{ ...a }, { ...b }] };
+    const net: Net = { id: uid(), name: nextNetName(h), cls: "signal", topology: "daisy", topologyConfirmed: false, members: [{ ...a }, { ...b }], links: [] };
     h.nets.push(net);
   }
+  const net = netOfPin(h, a.connectorId, a.cavityId);
+  if (!net) return;
+  const ka = memberKey(a);
+  const kb = memberKey(b);
+  net.links ??= [];
+  if (!net.links.some(([x, y]) => (x === ka && y === kb) || (x === kb && y === ka))) net.links.push([ka, kb]);
 }
 
 function deleteConnectorFrom(h: Harness, id: string) {
@@ -383,7 +392,7 @@ function assignSignal(h: Harness, m: NetMember, rawName: string, cls?: NetClass)
     cur.name = name; // sole member: rename the net
     return;
   }
-  const net: Net = { id: uid(), name, cls: cls ?? guessNetClass(name), topology: "daisy", topologyConfirmed: false, members: [] };
+  const net: Net = { id: uid(), name, cls: cls ?? guessNetClass(name), topology: "daisy", topologyConfirmed: false, members: [], links: [] };
   h.nets.push(net);
   setPinNet(h, m, net.id);
 }
@@ -590,6 +599,13 @@ export const deleteWires = def<{ ids: string[] }>("deleteWires", {
     for (const id of p.ids) {
       const w = h.wires.find((x) => x.id === id);
       if (!w) continue;
+      // Forget the drawn connection this wire came from.
+      const net = h.nets.find((n) => n.id === w.netId);
+      if (net?.links?.length && w.from.kind === "pin" && w.to.kind === "pin") {
+        const ka = memberKey(w.from);
+        const kb = memberKey(w.to);
+        net.links = net.links.filter(([x, y]) => !((x === ka && y === kb) || (x === kb && y === ka)));
+      }
       const end = w.to.kind === "pin" ? w.to : w.from.kind === "pin" ? w.from : null;
       if (end && end.kind === "pin") setPinNet(h, { connectorId: end.connectorId, cavityId: end.cavityId }, null);
     }

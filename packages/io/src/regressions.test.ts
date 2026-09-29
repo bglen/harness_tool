@@ -458,6 +458,34 @@ describe("multi-pin nets: parallel wires", () => {
   });
 });
 
+describe("wires follow the connections as drawn", () => {
+  const pin = (c: string, cav: string) => ({ connectorId: c, cavityId: cav });
+  const wiresOf = (p: Project) => currentHarness(p).wires.map((w) => [w.from, w.to].map((e) => (e.kind === "pin" ? `${e.connectorId}${e.cavityId}` : "sp")).join("-")).sort();
+
+  it("looping a pin back into its own connector keeps its existing run", () => {
+    let p = run(base("loop"), [connectPins({ pairs: [{ a: pin("A", "1"), b: pin("B", "1") }] })]);
+    expect(wiresOf(p)).toEqual(["A1-B1"]);
+    p = run(p, [connectPins({ pairs: [{ a: pin("A", "1"), b: pin("A", "5") }] })]);
+    expect(wiresOf(p)).toEqual(["A1-A5", "A1-B1"]);
+    const s = runDfm({ project: p, cat, profile });
+    expect(s.results.find((r) => r.eff.rule.type === "net_topology")!.status).toBe("pass"); // drawn = chosen
+    expect(s.results.find((r) => r.eff.rule.type === "manual_topology")!.violations[0]!.message).toMatch(/two wires crimped in one contact/);
+  });
+
+  it("a stand-alone loopback on one connector is a single wire", () => {
+    const p = run(base("loop2"), [connectPins({ pairs: [{ a: pin("A", "11"), b: pin("A", "13") }] })]);
+    expect(wiresOf(p)).toEqual(["A11-A13"]);
+    expect(runDfm({ project: p, cat, profile }).results.find((r) => r.eff.rule.type === "loopback")!.violations).toHaveLength(1);
+  });
+
+  it("deleting the loopback wire leaves the original run", () => {
+    let p = run(base("loop3"), [connectPins({ pairs: [{ a: pin("A", "1"), b: pin("B", "1") }] }), connectPins({ pairs: [{ a: pin("A", "1"), b: pin("A", "5") }] })]);
+    const loop = currentHarness(p).wires.find((w) => w.to.kind === "pin" && w.from.kind === "pin" && w.from.connectorId === "A" && w.to.connectorId === "A")!;
+    p = run(p, [{ type: "deleteWires", payload: { ids: [loop.id] } }]);
+    expect(wiresOf(p)).toEqual(["A1-B1"]);
+  });
+});
+
 describe("waivers target one finding", () => {
   const backshell = (p: Project) => runDfm({ project: p, cat, profile }).results.find((r) => r.eff.rule.id === "MFG-CMP-004")!;
   const waive = (p: Project, v: { objectIds: string[]; message: string }, author = "J. Engineer") =>

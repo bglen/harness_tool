@@ -72,6 +72,11 @@ export const NetSchema = z.object({
   /** The construction was explicitly chosen, not assumed. */
   topologyConfirmed: z.boolean().default(false),
   members: z.array(NetMemberSchema),
+  /**
+   * Pin-to-pin connections the user drew ("connectorId:cavityId" pairs). When they connect every member, wires
+   * follow them exactly (e.g. P1-1→P2-1 plus a loopback P1-1→P1-5) instead of an automatic daisy order.
+   */
+  links: z.array(z.tuple([z.string(), z.string()])).default([]),
 });
 export type Net = z.infer<typeof NetSchema>;
 

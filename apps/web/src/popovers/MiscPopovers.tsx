@@ -18,6 +18,7 @@ import {
   setLabelRules,
   setNetProps,
   effectiveTopology,
+  joinKind,
   parallelPairs,
   setSegmentProps,
   setShieldProps,
@@ -191,7 +192,9 @@ export function NetPopover({ x, y, ids }: { x: number; y: number; ids: string[] 
       )}
       <div className="text-2xs text-text-tertiary">
         {n.members.length} pins ·{" "}
-        {n.members.length < 3
+        {effectiveTopology(n) === "wired"
+          ? `wired as you drew it (${n.members.length} pins)${joinKind(n) === "doubleCrimp" ? ": a pin carries two wires, so it's crimped by hand" : ""}`
+          : n.members.length < 3
           ? "point-to-point"
           : effectiveTopology(n) === "parallel"
             ? `parallel: ${n.members.length / 2} wires pin-to-pin${!n.topologyConfirmed ? " (automatic: pins split evenly across two connectors)" : ""}`

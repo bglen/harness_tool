@@ -287,7 +287,7 @@ function NetsTable({ h }: { h: Harness }) {
               </td>
               <td className="tnum px-2 py-1">{n.currentA != null ? `${n.currentA} A` : "—"}</td>
               <td className="mono px-2 py-1">{n.members.map((m) => `${h.connectors.find((c) => c.id === m.connectorId)?.refDes}-${m.cavityId}`).join(", ")}</td>
-              <td className="px-2 py-1">{n.members.length >= 3 ? effectiveTopology(n) : "point-to-point"}</td>
+              <td className="px-2 py-1">{effectiveTopology(n) === "wired" ? "as drawn" : n.members.length >= 3 ? effectiveTopology(n) : "point-to-point"}</td>
             </tr>
           ))}
         </tbody>

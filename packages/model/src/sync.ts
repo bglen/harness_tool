@@ -30,15 +30,57 @@ export function parallelPairs(net: Net): [Net["members"][number], Net["members"]
 }
 
 /**
- * The construction actually used for a net. An explicit choice wins; otherwise a net that can be wired as
- * parallel pin-to-pin wires is, and anything else falls back to an (unconfirmed, flagged) daisy chain.
+ * The user's drawn connections, when they connect every pin of the net (a spanning set). Duplicates and links to
+ * pins no longer on the net are ignored. Returns null when the drawing doesn't cover the whole net.
  */
-export function effectiveTopology(net: Net): "daisy" | "splice" | "parallel" {
+export function drawnLinks(net: Net): [string, string][] | null {
+  const keys = new Set(net.members.map((m) => `${m.connectorId}:${m.cavityId}`));
+  const seen = new Set<string>();
+  const links = (net.links ?? []).filter(([a, b]) => {
+    const k = a < b ? `${a}|${b}` : `${b}|${a}`;
+    if (a === b || !keys.has(a) || !keys.has(b) || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  if (!links.length || keys.size < 2) return null;
+  // Every member reachable from the first through drawn links?
+  const adj = new Map<string, string[]>();
+  for (const [a, b] of links) (adj.get(a) ?? adj.set(a, []).get(a)!).push(b), (adj.get(b) ?? adj.set(b, []).get(b)!).push(a);
+  const start = keys.values().next().value!;
+  const reach = new Set([start]);
+  const q = [start];
+  while (q.length) for (const n of adj.get(q.pop()!) ?? []) if (!reach.has(n)) reach.add(n), q.push(n);
+  return reach.size === keys.size ? links : null;
+}
+
+/**
+ * The construction actually used for a net. An explicit choice wins; then the connections as the user drew them
+ * ("wired", e.g. a loopback plus a run to another connector); then parallel pin-to-pin wires when the pins split
+ * evenly across two connectors; anything else falls back to an (unconfirmed, flagged) daisy chain.
+ */
+export function effectiveTopology(net: Net): "daisy" | "splice" | "parallel" | "wired" {
+  if (net.members.length < 2) return "daisy";
+  if (net.topology === "splice" && net.members.length >= 3) return "splice";
+  if (net.topologyConfirmed) {
+    if (net.topology === "parallel") return parallelPairs(net) ? "parallel" : "daisy";
+    if (net.topology === "daisy") return "daisy";
+  }
+  if (drawnLinks(net)) return "wired";
   if (net.members.length < 3) return "daisy";
-  if (net.topology === "splice") return "splice";
-  if (net.topology === "parallel") return parallelPairs(net) ? "parallel" : "daisy";
-  if (net.topologyConfirmed) return "daisy";
   return parallelPairs(net) ? "parallel" : "daisy";
+}
+
+/** Does the net's construction put two wires in one contact, or need a splice (manual work)? */
+export function joinKind(net: Net): "splice" | "doubleCrimp" | null {
+  const t = effectiveTopology(net);
+  if (t === "splice") return "splice";
+  if (t === "parallel") return null;
+  if (t === "wired") {
+    const count = new Map<string, number>();
+    for (const [a, b] of drawnLinks(net)!) count.set(a, (count.get(a) ?? 0) + 1), count.set(b, (count.get(b) ?? 0) + 1);
+    return [...count.values()].some((n) => n > 1) ? "doubleCrimp" : null;
+  }
+  return net.members.length >= 3 ? "doubleCrimp" : null;
 }
 
 /** Desired wire endpoint pairs for a net (§4.2). */
@@ -49,6 +91,17 @@ export function desiredPairs(h: Harness, net: Net): [WireEnd, WireEnd][] {
   if (topo === "splice") {
     const sp = h.splices.find((s) => s.netId === net.id);
     if (sp) return members.map((m) => [{ kind: "pin", connectorId: m.connectorId, cavityId: m.cavityId }, { kind: "splice", spliceId: sp.id }]);
+  }
+  if (topo === "wired") {
+    const idx = new Map(h.connectors.map((c, i) => [c.id, i]));
+    const toEnd = (k: string): WireEnd => {
+      const i = k.indexOf(":");
+      return { kind: "pin", connectorId: k.slice(0, i), cavityId: k.slice(i + 1) };
+    };
+    return drawnLinks(net)!.map(([x, y]) => {
+      const [a, b] = [toEnd(x), toEnd(y)] as [Extract<WireEnd, { kind: "pin" }>, Extract<WireEnd, { kind: "pin" }>];
+      return (idx.get(a.connectorId) ?? 0) <= (idx.get(b.connectorId) ?? 0) ? [a, b] : [b, a];
+    });
   }
   if (topo === "parallel") {
     const idx = new Map(h.connectors.map((c, i) => [c.id, i]));
@@ -129,6 +182,12 @@ function cleanNets(h: Harness, cat: CatalogIndex, repairs?: string[]) {
     if (keep.length !== n.members.length) h.nets[i]!.members = keep;
   });
   prune(h, "nets", (n) => n.members.length > 0);
+  // Drawn connections only between pins still on the net.
+  for (const n of h.nets) {
+    if (!n.links?.length) continue;
+    const keys = new Set(n.members.map((m) => memberKey(m)));
+    prune(n, "links", ([a, b]) => keys.has(a) && keys.has(b));
+  }
   // 2. Pins mirror net membership: compute desired netId per pin, write only differences.
   const want = new Map<string, string>();
   for (const n of plain(h).nets) for (const m of n.members) want.set(`${m.connectorId}:${m.cavityId}`, n.id);

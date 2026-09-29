@@ -7,6 +7,7 @@ import {
   diameterUnderLayer,
   effectiveTopology,
   extentCoverage,
+  joinKind,
   formatWireColor,
   isAutoNetName,
   resolveLabelTemplate,
@@ -564,8 +565,8 @@ export const RULE_TYPES: RuleType[] = [
     evaluate(ctx) {
       if (ctx.profile.capabilities.supportsSplices && ctx.profile.capabilities.supportsDaisyChain) return [];
       return ctx.h.nets
-        .filter((n) => n.members.length >= 3 && effectiveTopology(n) !== "parallel")
-        .map((n) => ({ objectIds: [n.id, ...n.members.map((m) => m.connectorId)], objectKind: "net", message: `${n.name} (${n.members.length} pins) needs ${effectiveTopology(n) === "splice" ? "a splice" : "daisy-chain double crimps"}: manual operation.` }));
+        .filter((n) => joinKind(n) !== null)
+        .map((n) => ({ objectIds: [n.id, ...n.members.map((m) => m.connectorId)], objectKind: "net", message: `${n.name} (${n.members.length} pins) needs ${joinKind(n) === "splice" ? "a splice" : "two wires crimped in one contact"}: manual operation.` }));
     },
   },
   {
@@ -770,6 +771,7 @@ export const RULE_TYPES: RuleType[] = [
           if (n.members.length < 3) return false;
           const t = effectiveTopology(n);
           if (t === "parallel") return false; // one wire per contact, no splice: nothing to confirm
+          if (t === "wired") return false; // wired exactly as the user drew it: the construction was chosen
           if (t === "splice") return !ctx.h.splices.some((s) => s.netId === n.id);
           return !n.topologyConfirmed;
         })
@@ -1490,8 +1492,8 @@ export const RULE_TYPES: RuleType[] = [
     depends: ["splice", "net"],
     evaluate(ctx) {
       return ctx.h.nets
-        .filter((n) => n.members.length >= 3 && effectiveTopology(n) !== "parallel")
-        .map((n) => ({ objectIds: [n.id], objectKind: "net", message: `${n.name} needs a ${effectiveTopology(n) === "splice" ? "splice" : "daisy chain"}, not allowed at ${ctx.ped.name}.` }));
+        .filter((n) => joinKind(n) !== null)
+        .map((n) => ({ objectIds: [n.id], objectKind: "net", message: `${n.name} needs a ${joinKind(n) === "splice" ? "splice" : "double crimp (daisy chain)"}, not allowed at ${ctx.ped.name}.` }));
     },
   },
   {
