@@ -85,6 +85,14 @@ describe("engine", () => {
     expect(errs.map((r) => `${r.eff.rule.id}: ${r.violations[0]?.message}`)).toEqual([]);
   });
 
+  it("rules are named by what's wrong, not by what's checked", () => {
+    const lib = JSON.parse(readFileSync(join(PUB, "library.json"), "utf8"));
+    const titles = [...profile.rules.map((r) => r.title), ...lib.rulesets.flatMap((rs: { rules: { title: string }[] }) => rs.rules.map((r) => r.title)), ...RULE_TYPES.map((t) => t.name)];
+    const checkPhrasing = /\b(present|reviewed|confirmed|chosen|sealed|terminated|named|unique|in stock|in catalog|fits|within|above minimum|supported for|carries|matches|rated for|lands on|has a band|are |is |every |no \w+ finishes|only)\b/i;
+    const allowed = /^(Wire has no route|Named pin has no wire|360° termination has no band-clamp platform)$|not |n't |missing|without|exceeds|over |below|too |outside|used|short|duplicate|overlap|by hand|manual|adjacent|loops|confusable|shares|share |only one/i;
+    expect(titles.filter((t) => checkPhrasing.test(t) && !allowed.test(t))).toEqual([]);
+  });
+
   it("every rule type referenced by the profile exists", () => {
     const ids = new Set(RULE_TYPES.map((t) => t.id));
     for (const r of profile.rules) expect(ids.has(r.type), r.type).toBe(true);

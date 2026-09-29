@@ -357,11 +357,12 @@ export function ReportDocument({ data, sections, hideQuote: hideQuoteIn, redact 
           </Section>
         )}
         {on("appendix") && (
-          <Section title="Appendix A — wire list, BOM, passed checks, metadata">
+          <Section title="Appendix A — wire list, BOM, checks with no findings, metadata">
             <Table cols={[{ label: "Wire", w: 0.6, mono: true }, { label: "Net", w: 1.5, mono: true }, { label: "From", w: 0.9, mono: true }, { label: "To", w: 0.9, mono: true }, { label: "AWG", w: 0.4 }, { label: "Color", w: 1.6 }, { label: "Length", w: 0.8, align: "right" }]} rows={data.wireRows.map((w) => [w.id, w.net, w.from, w.to, w.gauge, <Swatch key="s" codes={w.colorCode} text={w.color} wire={data.printWire} />, fmtLen(w.lengthMm, u)])} />
             <Text style={s.h2}>BOM</Text>
             <Table cols={[{ label: "#", w: 0.3 }, { label: "Part number", w: 1.8, mono: true }, { label: "Description", w: 3 }, { label: "Qty", w: 0.5, align: "right" }, { label: "UoM", w: 0.4 }, ...(hideQuote ? [] : [{ label: "Ext. (demo)", w: 0.8, align: "right" as const }])]} rows={bom.lines.map((l) => [l.line, l.pn, l.description, l.uom === "ea" ? l.qty : (Math.ceil(l.qty * 1000 - 1e-9) / 1000).toFixed(3), l.uom, ...(hideQuote ? [] : [money(l.extCost)])])} />
-            <Text style={s.h2}>Passed checks</Text>
+            <Text style={s.h2}>Checks with no findings</Text>
+            <Text style={s.small}>Each check is named by the problem it looks for; none of these problems were found.</Text>
             <Text style={{ ...s.small, lineHeight: 1.4 }}>{dfm.results.filter((r) => r.status === "pass").map((r) => `${r.eff.rule.id} ${r.eff.rule.title}`).join(" · ")}</Text>
             <Text style={s.h2}>Report metadata</Text>
             <Text style={s.p}>Tool Harness Studio {data.toolVersion} · machine profile {data.profile.version} · catalog {data.cat.version.hash} ({data.cat.version.date}) · rulesets {project.rulesets.map((r) => `${r.id}@${r.version}`).join(", ") || "none"} · pedigree scheme {project.pedigreeScheme.name} v{project.pedigreeScheme.version} · design hash {data.designHash} · generated {data.generatedAt}.</Text>

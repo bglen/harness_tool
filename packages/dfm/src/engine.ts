@@ -38,12 +38,13 @@ export interface DfmOptions {
 export function pedigreeRules(ped: ResolvedPedigree): RuleInstance[] {
   const out: RuleInstance[] = [];
   const r = (id: string, type: string, title: string, severity: Severity, params: Record<string, unknown> = {}): RuleInstance => ({ id: `PED-${ped.code}-${id}`, type, category: "Process", severity, title, description: "", rationale: `Required by pedigree ${ped.name}.`, params, enabled: true });
-  if (ped.process.noSplices) out.push(r("SPL", "no_splices", "No splices or daisy chains", "error"));
-  if (ped.process.noPotting) out.push(r("POT", "no_potting", "No potting", "error"));
-  if (ped.process.requireBoots) out.push(r("BOOT", "require_boots", "Boots at every backshell", "error"));
-  if (ped.process.serializedLabels) out.push(r("SER", "serialized_labels", "Serialized identification label", "error"));
-  if (ped.partsPolicy.qplOnly) out.push(r("QPL", "qpl_only", "QPL / standard parts only", "warning"));
-  if (ped.partsPolicy.bannedFinishes?.length) out.push(r("FIN", "allowed_parts", `Banned shell classes: ${ped.partsPolicy.bannedFinishes.join(", ")}`, "error", { bannedFinishes: ped.partsPolicy.bannedFinishes }));
+  // Titles name the finding (what's wrong), not the requirement.
+  if (ped.process.noSplices) out.push(r("SPL", "no_splices", "Splice or daisy chain used (not allowed)", "error"));
+  if (ped.process.noPotting) out.push(r("POT", "no_potting", "Potting used (not allowed)", "error"));
+  if (ped.process.requireBoots) out.push(r("BOOT", "require_boots", "Backshell without a boot", "error"));
+  if (ped.process.serializedLabels) out.push(r("SER", "serialized_labels", "Serialized ID label missing", "error"));
+  if (ped.partsPolicy.qplOnly) out.push(r("QPL", "qpl_only", "Part without qualification evidence", "warning"));
+  if (ped.partsPolicy.bannedFinishes?.length) out.push(r("FIN", "allowed_parts", `Banned shell class used (${ped.partsPolicy.bannedFinishes.join(", ")})`, "error", { bannedFinishes: ped.partsPolicy.bannedFinishes }));
   return out;
 }
 

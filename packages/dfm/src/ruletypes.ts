@@ -100,7 +100,7 @@ export const RULE_TYPES: RuleType[] = [
   // Connectivity
   {
     id: "net_single_member",
-    name: "Net with a single member",
+    name: "Net with only one pin",
     description: "Flags nets that connect only one pin.",
     example: "CAN_H assigned on P1-4 but on no other connector.",
     category: "Connectivity",
@@ -112,7 +112,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "pin_unwired",
-    name: "Named pin without a wire",
+    name: "Named pin has no wire",
     description: "A pin is on a multi-member net but no wire lands on it.",
     example: "Ratsnest line not yet committed.",
     category: "Connectivity",
@@ -132,7 +132,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "loopback",
-    name: "Loopback wire",
+    name: "Wire loops back to the same connector",
     description: "Both ends of a wire are on the same connector.",
     example: "Jumper P1-A to P1-B.",
     category: "Connectivity",
@@ -149,7 +149,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "unrouted_wire",
-    name: "Unrouted wire",
+    name: "Wire has no route",
     description: "No path of bundle segments connects the wire's ends.",
     example: "A branch segment was deleted.",
     category: "Connectivity",
@@ -161,7 +161,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "duplicate_pin",
-    name: "Pin assigned twice",
+    name: "Pin assigned to two nets",
     description: "A cavity belongs to more than one net.",
     example: "Imported wire list assigns P1-3 to two signals.",
     category: "Connectivity",
@@ -183,7 +183,7 @@ export const RULE_TYPES: RuleType[] = [
   // Electrical
   {
     id: "gauge_vs_contact",
-    name: "Gauge vs contact size",
+    name: "Wire gauge outside contact range",
     description: "Wire gauge must be within the contact's crimp range.",
     example: "16 AWG into a size 22D contact.",
     category: "Electrical",
@@ -215,7 +215,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "gauge_vs_current",
-    name: "Gauge vs current (derating)",
+    name: "Wire too small for net current (derating)",
     description: "Wire current rating × derating factor must exceed the net's current.",
     example: "5 A on 24 AWG with 0.5 derating.",
     category: "Electrical",
@@ -247,7 +247,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "contact_current",
-    name: "Contact current rating",
+    name: "Net current exceeds contact rating",
     description: "Net current must not exceed the contact size rating.",
     example: "10 A through a size 22D contact (5 A).",
     category: "Electrical",
@@ -269,7 +269,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "twisted_pair_pins",
-    name: "Twisted pair on adjacent pins",
+    name: "Twisted pair not on adjacent pins",
     description: "Members of a twisted pair should land on adjacent cavities at each connector.",
     example: "CAN_H on P1-1 and CAN_L on P1-9.",
     category: "Electrical",
@@ -317,7 +317,7 @@ export const RULE_TYPES: RuleType[] = [
   // Mechanical
   {
     id: "bundle_vs_backshell_clamp",
-    name: "Bundle vs backshell clamp range",
+    name: "Bundle doesn't fit backshell clamp",
     description: "Bundle diameter at the connector must be within the backshell cable-clamp range.",
     example: "12 mm bundle into a clamp for 3–9 mm.",
     category: "Mechanical",
@@ -348,7 +348,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "min_segment_length",
-    name: "Minimum segment length",
+    name: "Segment shorter than minimum",
     description: "Segments shorter than the minimum can't be laid automatically.",
     example: "15 mm branch.",
     category: "Mechanical",
@@ -361,7 +361,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "breakout_spacing",
-    name: "Breakout spacing",
+    name: "Breakouts too close together",
     description: "Adjacent breakouts must be at least the minimum distance apart.",
     example: "Two breakouts 20 mm apart.",
     category: "Mechanical",
@@ -377,7 +377,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "bend_radius",
-    name: "Minimum bend radius",
+    name: "Not enough room for bend radius",
     description: "Segments leaving a 90° backshell or a breakout need room for a bend of N × bundle OD.",
     example: "60 mm segment with a 10 mm bundle at 10× OD.",
     category: "Mechanical",
@@ -411,7 +411,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "max_wire_length",
-    name: "Maximum wire length",
+    name: "Wire longer than maximum",
     description: "Wire cut length must not exceed the maximum.",
     example: "7 m wire on a 6 m machine.",
     category: "Mechanical",
@@ -425,7 +425,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "min_wire_length",
-    name: "Minimum wire length",
+    name: "Wire shorter than minimum",
     description: "Wires shorter than the minimum cut length need manual processing.",
     example: "80 mm jumper.",
     category: "Mechanical",
@@ -439,7 +439,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "min_braid_segment",
-    name: "Minimum overbraid length",
+    name: "Overbraid segment too short",
     description: "Overbraid can't be applied to very short runs.",
     example: "Overbraid on a 40 mm segment.",
     category: "Mechanical",
@@ -462,7 +462,7 @@ export const RULE_TYPES: RuleType[] = [
   // Machine capability
   {
     id: "connector_machine_ready",
-    name: "Connector machine-ready",
+    name: "Connector not machine-ready",
     description: "Connector must be supported for automated placement.",
     example: "Inactive insert arrangement or coax cavities.",
     category: "Machine capability",
@@ -490,7 +490,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "contact_machine_insertable",
-    name: "Contact machine-insertable",
+    name: "Contact not machine-insertable",
     description: "Contacts must be of a size and type the insertion head supports.",
     example: "Size 10 power contact.",
     category: "Machine capability",
@@ -519,7 +519,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "max_connectors",
-    name: "Connector count",
+    name: "Too many connectors",
     description: "Number of connectors must not exceed the build limit.",
     example: "14 connectors on a 12-position plate.",
     category: "Machine capability",
@@ -532,7 +532,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "harness_envelope",
-    name: "Harness envelope",
+    name: "Harness exceeds working area",
     description: "Longest end-to-end run must fit the machine working area.",
     example: "4.5 m run on a 4 m table.",
     category: "Machine capability",
@@ -554,7 +554,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "manual_topology",
-    name: "Splices and daisy chains",
+    name: "Splice or daisy chain needs manual work",
     description: "Nets with 3 or more members need splices or double crimps.",
     example: "GND on P1, P2 and P3.",
     category: "Machine capability",
@@ -570,7 +570,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "unsupported_covering",
-    name: "Covering automated",
+    name: "Covering applied by hand",
     description: "Only some covering types are applied by the machine.",
     example: "Heat-shrink jacket.",
     category: "Machine capability",
@@ -586,7 +586,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "wire_machine_ready",
-    name: "Wire machine-ready",
+    name: "Wire not machine-ready",
     description: "Wire gauge must be within the cut/strip range.",
     example: "10 AWG power feed.",
     category: "Machine capability",
@@ -604,7 +604,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "max_bundle_od",
-    name: "Maximum bundle diameter",
+    name: "Bundle diameter over maximum",
     description: "Bundle outside diameter must not exceed the limit.",
     example: "45 mm trunk.",
     category: "Machine capability",
@@ -618,7 +618,7 @@ export const RULE_TYPES: RuleType[] = [
   // Components
   {
     id: "lifecycle",
-    name: "Part lifecycle",
+    name: "Part obsolete, NRND or inactive",
     description: "Parts should be active (not obsolete, NRND or inactive for new design).",
     example: "Class F finish (inactive).",
     category: "Components",
@@ -633,7 +633,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "out_of_stock",
-    name: "Stock",
+    name: "Part short of stock",
     description: "Stock must cover the selected quantity.",
     example: "0 in stock.",
     category: "Components",
@@ -648,7 +648,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "lead_time_vs_tier",
-    name: "Lead time vs quote tier",
+    name: "Part lead time exceeds quote tier",
     description: "Part lead times must fit the selected lead-time tier.",
     example: "42-day part on a 15-day tier.",
     category: "Components",
@@ -663,7 +663,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "backshell_required",
-    name: "Backshell present",
+    name: "Backshell missing",
     description: "Harness connectors need a backshell for strain relief.",
     example: "P2 has no backshell.",
     category: "Components",
@@ -681,7 +681,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "unreviewed_geometry",
-    name: "Insert geometry reviewed",
+    name: "Insert geometry not reviewed",
     description: "Cavity coordinates for this insert are machine-extracted and not yet reviewed.",
     example: "Insert 13-35 (unreviewed).",
     category: "Components",
@@ -697,7 +697,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "reference_data_status",
-    name: "Reference data approved",
+    name: "Reference data not reviewed",
     description: "Catalog fields the build depends on (contact tooling, wire OD/mass, finishing part dimensions) must be reviewed, not seed values.",
     example: "Crimp tool for M39029/58-360 is seed data.",
     category: "Components",
@@ -721,7 +721,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "contact_compatibility",
-    name: "Contact matches connector and cavity",
+    name: "Contact doesn't match connector or cavity",
     description: "Contact gender must match the connector, contact size must match the cavity, and the contact must exist in the catalog.",
     example: "M39029/58-360 (pin) on a socket connector.",
     category: "Electrical",
@@ -757,7 +757,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "net_topology",
-    name: "Multi-pin net construction chosen",
+    name: "Multi-pin net construction not chosen",
     description:
       "A net with 3 or more pins needs a construction that puts one conductor in each contact, or an explicitly chosen one: parallel wires (pins on exactly two connectors, same count on each, wired pin-to-pin), a splice, or a confirmed daisy chain (two wires in one contact).",
     example: "GND on P1, P2 and P3 with no splice and no confirmation.",
@@ -787,7 +787,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "assumed_dimensions",
-    name: "Dimensions confirmed",
+    name: "Dimension not confirmed",
     description: "Segment lengths created from defaults are assumptions until someone enters or confirms them.",
     example: "Segment P1–P2 is the default 12 in.",
     category: "Documentation",
@@ -806,7 +806,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "unknown_part",
-    name: "Part in catalog",
+    name: "Part not in catalog",
     description: "Every part number must resolve in the component catalog.",
     example: "Typo in an imported PN.",
     category: "Components",
@@ -823,7 +823,7 @@ export const RULE_TYPES: RuleType[] = [
   // Documentation
   {
     id: "missing_refdes",
-    name: "Missing refDes",
+    name: "Connector missing reference designator",
     description: "Every connector needs a reference designator.",
     example: "Blank refDes.",
     category: "Documentation",
@@ -835,7 +835,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "duplicate_refdes",
-    name: "Duplicate refDes",
+    name: "Duplicate reference designator",
     description: "No two connectors may share a refDes.",
     example: "Two connectors named P1.",
     category: "Documentation",
@@ -849,7 +849,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "unnamed_nets",
-    name: "Unnamed nets",
+    name: "Net not named",
     description: "Nets still carry an automatic name.",
     example: "NET_003.",
     category: "Documentation",
@@ -861,7 +861,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "label_length",
-    name: "Label text length",
+    name: "Label text too long for the label",
     description: "Resolved label text must fit the printable length.",
     example: "40 characters on a 25 mm sleeve.",
     category: "Documentation",
@@ -889,7 +889,7 @@ export const RULE_TYPES: RuleType[] = [
   // Finishing
   {
     id: "layer_size_fit",
-    name: "Covering size fits",
+    name: "Covering size doesn't fit the diameter",
     description: "Braid, sleeve and heat shrink must fit the diameter underneath.",
     example: "6 mm braid over a 9 mm bundle.",
     category: "Finishing",
@@ -919,7 +919,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "clamp_size_fit",
-    name: "Band clamp size",
+    name: "Band clamp size doesn't fit",
     description: "Band clamp range must contain the diameter under the clamp.",
     example: "Small clamp on a 20 mm braid.",
     category: "Finishing",
@@ -940,7 +940,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "boot_size_fit",
-    name: "Boot size",
+    name: "Boot size doesn't fit",
     description: "Boot or transition must fit the diameter at the node.",
     example: "Boot too small for the jacketed bundle.",
     category: "Finishing",
@@ -959,7 +959,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "band360_without_platform",
-    name: "360° termination needs band platform",
+    name: "360° termination has no band-clamp platform",
     description: "A 360° band-clamp termination needs an EMI backshell with a band platform.",
     example: "Overbraid band-clamped to a strain-relief backshell.",
     category: "Finishing",
@@ -984,7 +984,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "shield_unterminated",
-    name: "Shield terminated",
+    name: "Shield or braid not terminated",
     description: "Shields and braids need a grounded termination at one end at least.",
     example: "Shield floating at both ends.",
     category: "Finishing",
@@ -1006,7 +1006,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "layer_stack_order",
-    name: "Layer stack order",
+    name: "Layer stack order not buildable",
     description: "Layers must be in a buildable order.",
     example: "Jacket under an overbraid.",
     category: "Finishing",
@@ -1031,7 +1031,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "extent_overlap",
-    name: "Overlapping layers",
+    name: "Partial layers of the same type overlap",
     description: "Two layers of the same type overlap on a segment.",
     example: "Two abrasion sleeves overlapping.",
     category: "Finishing",
@@ -1054,7 +1054,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "grommet_sealing",
-    name: "Grommet sealing range",
+    name: "Wire OD outside grommet sealing range",
     description: "Finished wire OD must be within the grommet sealing range for the contact size.",
     example: "0.9 mm wire in a size 20 cavity (1.02–2.11 mm).",
     category: "Finishing",
@@ -1086,7 +1086,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "manual_finishing",
-    name: "Manual finishing steps",
+    name: "Finishing step done by hand",
     description: "Potting, boots and splice covers are manual operations.",
     example: "Potted P1.",
     category: "Finishing",
@@ -1102,7 +1102,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "drain_pin_ground",
-    name: "Drain on a ground pin",
+    name: "Drain not on a ground pin",
     description: "A drain-to-pin termination needs a pin on a ground-class net.",
     example: "Drain landed on a signal pin.",
     category: "Finishing",
@@ -1124,7 +1124,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "braid_coverage_min",
-    name: "Minimum braid coverage",
+    name: "Braid coverage below minimum",
     description: "Optical coverage of shields and overbraids must meet the minimum.",
     example: "80 % braid where 90 % is required.",
     category: "Finishing",
@@ -1143,7 +1143,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "sealed_cavities",
-    name: "Every cavity sealed",
+    name: "Cavity not sealed",
     description: "Each cavity must hold a contact with one conductor or a catalog sealing plug. Checks unsupported cavities, missing plugs, named-but-unwired pins, contacts without a conductor, and two wires in one grommet hole.",
     example: "P1-4 has a contact override but no wire.",
     category: "Finishing",
@@ -1175,7 +1175,7 @@ export const RULE_TYPES: RuleType[] = [
   // ─── Design rule types (§9.5.2) ───────────────────────────────────────────
   {
     id: "gauge_min_by_class",
-    name: "Gauge minimum by net class",
+    name: "Wire thinner than net-class minimum",
     description: "Nets of a class must use this gauge or heavier.",
     example: "Power nets ≥ 18 AWG.",
     category: "Electrical",
@@ -1194,7 +1194,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "derating_table",
-    name: "Derating table",
+    name: "Wire over derated current (table)",
     description: "Maximum current per gauge, reduced for bundle size (table-driven, e.g. from an AS50881-style table you enter).",
     example: "22 AWG ≤ 3 A in bundles of 15+ wires.",
     category: "Electrical",
@@ -1221,7 +1221,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "required_twist",
-    name: "Required twisting",
+    name: "Required twist missing",
     description: "Nets matching a class or name pattern must be twisted.",
     example: "^CAN_ must be a twisted pair.",
     category: "EMC",
@@ -1236,7 +1236,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "required_shield",
-    name: "Required shielding",
+    name: "Required shield missing",
     description: "Nets matching a class or name pattern must be individually shielded.",
     example: "RF_* must be shielded.",
     category: "EMC",
@@ -1251,7 +1251,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "pin_adjacency",
-    name: "Pin adjacency / separation",
+    name: "Pins of separated classes too close",
     description: "Nets of class A must not sit in cavities adjacent to class B (uses insert cavity coordinates).",
     example: "Power not next to analog.",
     category: "EMC",
@@ -1286,7 +1286,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "segregation",
-    name: "Segregation",
+    name: "Segregated nets share a bundle",
     description: "Net classes that must not share a bundle segment.",
     example: "Noisy power and sensitive analog.",
     category: "EMC",
@@ -1306,7 +1306,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "spare_pins",
-    name: "Spare pin policy",
+    name: "Too few spare pins",
     description: "Minimum share of unused cavities per connector.",
     example: "≥ 10 % spares at T1.",
     category: "Design",
@@ -1327,7 +1327,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "allowed_parts",
-    name: "Allowed parts",
+    name: "Part not allowed",
     description: "Connector finishes, wire specs and colors that are allowed or banned.",
     example: "No cadmium finishes (W, J).",
     category: "Parts",
@@ -1355,7 +1355,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "naming",
-    name: "Naming convention",
+    name: "Name doesn't follow convention",
     description: "Regex on net names, refDes, wire IDs or labels.",
     example: "Nets upper-case only.",
     category: "Documentation",
@@ -1373,7 +1373,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "required_labels",
-    name: "Required labels",
+    name: "Required label missing",
     description: "Every connector, wire (both ends) or segment must carry a label.",
     example: "Every connector end labeled.",
     category: "Documentation",
@@ -1388,7 +1388,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "color_coding",
-    name: "Color coding",
+    name: "Wire color doesn't match coding",
     description: "Net class or name pattern → required wire color (MIL-STD-681 code).",
     example: "Power = 2 (red).",
     category: "Documentation",
@@ -1407,7 +1407,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "cvd_confusable",
-    name: "CVD-confusable colors",
+    name: "CVD-confusable wire colors",
     description: "Flags wires on the same connector whose colors are easily confused by color-vision-deficient technicians and have no other distinguishing feature.",
     example: "Red and green wires on P1 without stripes.",
     category: "Human factors",
@@ -1432,7 +1432,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "max_length",
-    name: "Maximum length",
+    name: "Wire or segment too long",
     description: "Maximum length per wire or per segment.",
     example: "No segment longer than 2 m.",
     category: "Mechanical",
@@ -1449,7 +1449,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "max_weight",
-    name: "Weight budget",
+    name: "Harness over weight budget",
     description: "Total harness weight must not exceed a budget.",
     example: "≤ 500 g.",
     category: "Mechanical",
@@ -1462,7 +1462,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "keying_unique",
-    name: "Unique keying",
+    name: "Duplicate keying on mating connectors",
     description: "No two connectors of the same kind with the same shell, insert and keying (prevents cross-mating).",
     example: "P1 and P2 both D38999/26WB35SN.",
     category: "Design",
@@ -1482,7 +1482,7 @@ export const RULE_TYPES: RuleType[] = [
   // Pedigree process requirements (§10.1)
   {
     id: "no_splices",
-    name: "No splices",
+    name: "Splice or daisy chain used",
     description: "Splices (and daisy chains) not allowed at this build class.",
     example: "No splices at T1.",
     category: "Process",
@@ -1496,7 +1496,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "no_potting",
-    name: "No potting",
+    name: "Potting used",
     description: "Potting not allowed at this build class.",
     example: "No potting on Dev units.",
     category: "Process",
@@ -1508,7 +1508,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "require_boots",
-    name: "Boots required",
+    name: "Backshell without a boot",
     description: "Every backshell needs a boot at this build class.",
     example: "Boots at T1.",
     category: "Process",
@@ -1525,7 +1525,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "serialized_labels",
-    name: "Serialized identification",
+    name: "Serialized ID label missing",
     description: "A serialized harness identification label is required.",
     example: "FLIGHT label with S/N.",
     category: "Process",
@@ -1537,7 +1537,7 @@ export const RULE_TYPES: RuleType[] = [
   },
   {
     id: "qpl_only",
-    name: "Qualified parts only",
+    name: "Part without qualification evidence",
     description: "Every part needs a qualified-source evidence record in the catalog (qualifications.csv). A specification-style part number is not evidence; parts without a record are unverified.",
     example: "D38999/26WB35SN with no QPL source on file.",
     category: "Parts",

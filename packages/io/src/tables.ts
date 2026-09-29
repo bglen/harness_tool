@@ -68,9 +68,9 @@ export function dfmTable(s: DfmSummary): Table {
     const base = [r.eff.rule.id, r.eff.source.name + (r.eff.source.version ? ` v${r.eff.source.version}` : ""), r.eff.rule.category, r.eff.rule.title, r.eff.severity];
     if (r.status === "fail") for (const v of r.violations) rows.push([...base, "fail", v.message, ""]);
     else if (r.waived.length) for (const v of r.waived) rows.push([...base, "waived", v.message, v.note]);
-    else rows.push([...base, r.status, "", ""]);
+    else rows.push([...base, r.status === "pass" ? "none found" : r.status, r.error ?? "", ""]);
   }
-  return { name: "DFM results", header: ["Rule ID", "Source", "Category", "Check", "Severity", "Status", "Message", "Waiver note"], rows };
+  return { name: "DFM results", header: ["Rule ID", "Source", "Category", "Finding", "Severity", "Status", "Message", "Waiver note"], rows };
 }
 
 /** Deterministic CSV (fixed column order, \n line endings, no BOM) for byte-identical regeneration. */

@@ -60,7 +60,7 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
             ))}
             <button className="flex w-full items-center gap-1 border-t border-border-subtle px-3 py-2 text-left text-xs text-text-secondary hover:text-text-primary" onClick={() => setShowPassed(!showPassed)} aria-expanded={showPassed}>
               {showPassed ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-              <SeverityIcon severity="pass" size={12} /> {passed.length} passed{off.length ? ` · ${off.length} off` : ""}
+              <SeverityIcon severity="pass" size={12} /> {passed.length} checks with no findings{off.length ? ` · ${off.length} off` : ""}
             </button>
             {showPassed &&
               [...passed, ...off].map((r) => (
@@ -84,7 +84,7 @@ function RuleRow({ r, active, onClick }: { r: RuleResult; active: boolean; onCli
       <span className="min-w-0 flex-1 truncate">{r.eff.rule.title}</span>
       {across && <span className="hidden text-2xs text-text-tertiary xl:inline">{across}</span>}
       <Chip>{r.eff.source.layer === "manufacturer" ? "Manufacturer" : r.eff.source.layer === "project" ? "Project" : r.eff.source.name}</Chip>
-      <span className="tnum w-16 text-right text-xs text-text-secondary">{r.status === "fail" ? `${r.violations.length} affected` : r.status === "waived" ? "waived" : r.status === "engineError" ? "rule error" : r.status === "missingInput" ? "missing input" : r.status === "notEvaluated" ? "not run" : r.status === "notApplicable" ? "n/a" : r.status}</span>
+      <span className="tnum w-16 text-right text-xs text-text-secondary">{r.status === "fail" ? `${r.violations.length} affected` : r.status === "waived" ? "waived" : r.status === "engineError" ? "rule error" : r.status === "missingInput" ? "missing input" : r.status === "notEvaluated" ? "not run" : r.status === "notApplicable" ? "n/a" : r.status === "pass" ? "none found" : r.status}</span>
     </button>
   );
 }
