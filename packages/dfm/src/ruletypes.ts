@@ -5,6 +5,7 @@ import {
   cavityStates,
   contactPnFor,
   diameterUnderLayer,
+  effectiveTopology,
   extentCoverage,
   formatWireColor,
   isAutoNetName,
@@ -563,8 +564,8 @@ export const RULE_TYPES: RuleType[] = [
     evaluate(ctx) {
       if (ctx.profile.capabilities.supportsSplices && ctx.profile.capabilities.supportsDaisyChain) return [];
       return ctx.h.nets
-        .filter((n) => n.members.length >= 3)
-        .map((n) => ({ objectIds: [n.id, ...n.members.map((m) => m.connectorId)], objectKind: "net", message: `${n.name} (${n.members.length} pins) needs ${n.topology === "splice" ? "a splice" : "daisy-chain double crimps"}: manual operation.` }));
+        .filter((n) => n.members.length >= 3 && effectiveTopology(n) !== "parallel")
+        .map((n) => ({ objectIds: [n.id, ...n.members.map((m) => m.connectorId)], objectKind: "net", message: `${n.name} (${n.members.length} pins) needs ${effectiveTopology(n) === "splice" ? "a splice" : "daisy-chain double crimps"}: manual operation.` }));
     },
   },
   {
@@ -757,20 +758,31 @@ export const RULE_TYPES: RuleType[] = [
   {
     id: "net_topology",
     name: "Multi-pin net construction chosen",
-    description: "A net with 3 or more pins needs an explicit construction: a splice, or a confirmed daisy chain (two wires in one contact).",
+    description:
+      "A net with 3 or more pins needs a construction that puts one conductor in each contact, or an explicitly chosen one: parallel wires (pins on exactly two connectors, same count on each, wired pin-to-pin), a splice, or a confirmed daisy chain (two wires in one contact).",
     example: "GND on P1, P2 and P3 with no splice and no confirmation.",
     category: "Connectivity",
     params: [],
     depends: ["net", "splice"],
     evaluate(ctx) {
       return ctx.h.nets
-        .filter((n) => n.members.length >= 3 && !(n.topology === "splice" && ctx.h.splices.some((s) => s.netId === n.id)) && !n.topologyConfirmed)
-        .map((n) => ({
-          objectIds: [n.id, ...n.members.map((m) => m.connectorId)],
-          objectKind: "net" as const,
-          message: `${n.name} joins ${n.members.length} pins with an assumed daisy chain (two wires crimped in one contact). Confirm the daisy chain or use a splice.`,
-          fix: { label: "Use a splice", commands: [setNetProps({ ids: [n.id], topology: "splice" })] },
-        }));
+        .filter((n) => {
+          if (n.members.length < 3) return false;
+          const t = effectiveTopology(n);
+          if (t === "parallel") return false; // one wire per contact, no splice: nothing to confirm
+          if (t === "splice") return !ctx.h.splices.some((s) => s.netId === n.id);
+          return !n.topologyConfirmed;
+        })
+        .map((n) => {
+          const conns = new Set(n.members.map((m) => m.connectorId)).size;
+          const why = conns === 2 ? "its pins aren't split evenly between the two connectors, so they can't be wired pin-to-pin" : conns > 2 ? `it spans ${conns} connectors` : "all its pins are on one connector";
+          return {
+            objectIds: [n.id, ...n.members.map((m) => m.connectorId)],
+            objectKind: "net" as const,
+            message: `${n.name} joins ${n.members.length} pins and ${why}. It's assumed to be a daisy chain (two wires crimped in one contact): confirm that or use a splice.`,
+            fix: { label: "Use a splice", commands: [setNetProps({ ids: [n.id], topology: "splice" })] },
+          };
+        });
     },
   },
   {
@@ -1477,7 +1489,9 @@ export const RULE_TYPES: RuleType[] = [
     params: [],
     depends: ["splice", "net"],
     evaluate(ctx) {
-      return ctx.h.nets.filter((n) => n.members.length >= 3).map((n) => ({ objectIds: [n.id], objectKind: "net", message: `${n.name} needs a ${n.topology === "splice" ? "splice" : "daisy chain"}, not allowed at ${ctx.ped.name}.` }));
+      return ctx.h.nets
+        .filter((n) => n.members.length >= 3 && effectiveTopology(n) !== "parallel")
+        .map((n) => ({ objectIds: [n.id], objectKind: "net", message: `${n.name} needs a ${effectiveTopology(n) === "splice" ? "splice" : "daisy chain"}, not allowed at ${ctx.ped.name}.` }));
     },
   },
   {

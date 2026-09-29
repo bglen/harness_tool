@@ -17,6 +17,8 @@ import {
   setConnectorProps,
   setLabelRules,
   setNetProps,
+  effectiveTopology,
+  parallelPairs,
   setSegmentProps,
   setShieldProps,
   setSpliceProps,
@@ -168,18 +170,34 @@ export function NetPopover({ x, y, ids }: { x: number; y: number; ids: string[] 
         <input className={cx(inputCls, "mono w-28")} value={cur} placeholder="—" onChange={(e) => setCur(e.target.value)} onBlur={() => dispatch(setNetProps({ ids, currentA: cur.trim() ? Number(cur) : null }))} />
       </Field>
       {nets.some((x) => x.members.length >= 3) && (
-        <Field label="Topology (3+ members)">
-          <div className="flex gap-1">
-            {(["daisy", "splice"] as const).map((t) => (
-              <button key={t} onClick={() => dispatch(setNetProps({ ids, topology: t }))} className={cx("rounded-chip border px-2 py-0.5 text-xs", nets.every((x) => x.topology === t) ? "border-accent text-text-primary" : "border-border-subtle text-text-secondary")}>
-                {t === "daisy" ? "Daisy chain" : "Splice (star)"}
-              </button>
-            ))}
+        <Field label="Construction (3+ pins)">
+          <div className="flex flex-wrap gap-1">
+            {(["parallel", "splice", "daisy"] as const).map((t) => {
+              const ok = t !== "parallel" || nets.every((x) => x.members.length < 3 || parallelPairs(x));
+              return (
+                <button
+                  key={t}
+                  disabled={!ok}
+                  title={t === "parallel" ? (ok ? "One wire per pin, pin-to-pin between the two connectors (no splice, no double crimp)" : "Needs the pins on exactly two connectors with the same count on each") : t === "splice" ? "All pins wired to a splice" : "Chained pin to pin: two wires crimped in intermediate contacts"}
+                  onClick={() => dispatch(setNetProps({ ids, topology: t }))}
+                  className={cx("rounded-chip border px-2 py-0.5 text-xs disabled:opacity-40", nets.every((x) => effectiveTopology(x) === t) ? "border-accent text-text-primary" : "border-border-subtle text-text-secondary")}
+                >
+                  {t === "daisy" ? "Daisy chain" : t === "splice" ? "Splice (star)" : "Parallel wires"}
+                </button>
+              );
+            })}
           </div>
         </Field>
       )}
       <div className="text-2xs text-text-tertiary">
-        {n.members.length} pins · {n.members.length >= 3 ? "manual operation (splice or double crimp)" : "point-to-point"}
+        {n.members.length} pins ·{" "}
+        {n.members.length < 3
+          ? "point-to-point"
+          : effectiveTopology(n) === "parallel"
+            ? `parallel: ${n.members.length / 2} wires pin-to-pin${!n.topologyConfirmed ? " (automatic: pins split evenly across two connectors)" : ""}`
+            : effectiveTopology(n) === "splice"
+              ? "splice: manual operation"
+              : `daisy chain${n.topologyConfirmed ? "" : " (assumed, not confirmed)"}: double crimps are a manual operation`}
       </div>
     </Floating>
   );

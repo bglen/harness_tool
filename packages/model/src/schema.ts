@@ -64,8 +64,12 @@ export const NetSchema = z.object({
   name: z.string(),
   cls: NetClass.default("signal"),
   currentA: z.number().nonnegative().optional(),
-  topology: z.enum(["daisy", "splice"]).default("daisy"),
-  /** A 3+ pin daisy chain (two wires in one contact) was explicitly chosen, not assumed. */
+  /**
+   * daisy = chain through the pins (two wires in intermediate contacts); splice = star to a splice;
+   * parallel = pins on exactly two connectors, equal count on each, wired pin-to-pin (no splice, no double crimp).
+   */
+  topology: z.enum(["daisy", "splice", "parallel"]).default("daisy"),
+  /** The construction was explicitly chosen, not assumed. */
   topologyConfirmed: z.boolean().default(false),
   members: z.array(NetMemberSchema),
 });

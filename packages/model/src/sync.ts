@@ -14,13 +14,51 @@ export interface SyncContext {
   autoRoute?: boolean;
 }
 
+const cavityCmp = (a: string, b: string) => a.localeCompare(b, "en", { numeric: true });
+
+/**
+ * Parallel pairing: the net's pins sit on exactly two connectors with the same count on each, so every pin gets
+ * exactly one wire (1st↔1st, 2nd↔2nd … in cavity order). Returns null when the net isn't shaped that way.
+ */
+export function parallelPairs(net: Net): [Net["members"][number], Net["members"][number]][] | null {
+  const by = new Map<string, Net["members"]>();
+  for (const m of net.members) (by.get(m.connectorId) ?? by.set(m.connectorId, []).get(m.connectorId)!).push(m);
+  if (by.size !== 2) return null;
+  const [a, b] = [...by.values()].map((ms) => [...ms].sort((x, y) => cavityCmp(x.cavityId, y.cavityId))) as [Net["members"], Net["members"]];
+  if (a.length !== b.length) return null;
+  return a.map((m, i) => [m, b[i]!]);
+}
+
+/**
+ * The construction actually used for a net. An explicit choice wins; otherwise a net that can be wired as
+ * parallel pin-to-pin wires is, and anything else falls back to an (unconfirmed, flagged) daisy chain.
+ */
+export function effectiveTopology(net: Net): "daisy" | "splice" | "parallel" {
+  if (net.members.length < 3) return "daisy";
+  if (net.topology === "splice") return "splice";
+  if (net.topology === "parallel") return parallelPairs(net) ? "parallel" : "daisy";
+  if (net.topologyConfirmed) return "daisy";
+  return parallelPairs(net) ? "parallel" : "daisy";
+}
+
 /** Desired wire endpoint pairs for a net (§4.2). */
 export function desiredPairs(h: Harness, net: Net): [WireEnd, WireEnd][] {
   const members = orderedMembers(h, net);
   if (members.length < 2) return [];
-  if (net.topology === "splice" && members.length >= 3) {
+  const topo = effectiveTopology(net);
+  if (topo === "splice") {
     const sp = h.splices.find((s) => s.netId === net.id);
     if (sp) return members.map((m) => [{ kind: "pin", connectorId: m.connectorId, cavityId: m.cavityId }, { kind: "splice", spliceId: sp.id }]);
+  }
+  if (topo === "parallel") {
+    const idx = new Map(h.connectors.map((c, i) => [c.id, i]));
+    return parallelPairs(net)!.map(([x, y]) => {
+      const [a, b] = (idx.get(x.connectorId) ?? 0) <= (idx.get(y.connectorId) ?? 0) ? [x, y] : [y, x];
+      return [
+        { kind: "pin", connectorId: a.connectorId, cavityId: a.cavityId },
+        { kind: "pin", connectorId: b.connectorId, cavityId: b.cavityId },
+      ];
+    });
   }
   const out: [WireEnd, WireEnd][] = [];
   for (let i = 0; i + 1 < members.length; i++) {
@@ -134,7 +172,7 @@ function bestSpliceNode(h: Harness, net: Net): string | undefined {
 }
 
 function syncSplices(h: Harness, cat: CatalogIndex) {
-  const spliceNets = new Set(h.nets.filter((n) => n.topology === "splice" && n.members.length >= 3).map((n) => n.id));
+  const spliceNets = new Set(h.nets.filter((n) => effectiveTopology(n) === "splice").map((n) => n.id));
   const nodeSet = new Set(plain(h).nodes.map((n) => n.id));
   prune(h, "splices", (s) => spliceNets.has(s.netId) && nodeSet.has(s.nodeId));
   for (const n of h.nets) {

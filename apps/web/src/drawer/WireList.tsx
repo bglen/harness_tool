@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { currentRevision, formatLength, formatWireColor, parseWireColor, renameNet, setNetProps, setWireProps, type Harness, type Wire } from "@hs/model";
+import { currentRevision, effectiveTopology, formatLength, formatWireColor, parseWireColor, renameNet, setNetProps, setWireProps, type Harness, type Wire } from "@hs/model";
 import { ChevronDown, ChevronUp, Columns3, GripHorizontal, Search } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
 import { storage, useUi } from "../store/ui";
@@ -287,7 +287,7 @@ function NetsTable({ h }: { h: Harness }) {
               </td>
               <td className="tnum px-2 py-1">{n.currentA != null ? `${n.currentA} A` : "—"}</td>
               <td className="mono px-2 py-1">{n.members.map((m) => `${h.connectors.find((c) => c.id === m.connectorId)?.refDes}-${m.cavityId}`).join(", ")}</td>
-              <td className="px-2 py-1">{n.members.length >= 3 ? n.topology : "point-to-point"}</td>
+              <td className="px-2 py-1">{n.members.length >= 3 ? effectiveTopology(n) : "point-to-point"}</td>
             </tr>
           ))}
         </tbody>

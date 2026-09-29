@@ -423,6 +423,40 @@ describe("sealing check is real", () => {
   });
 });
 
+describe("multi-pin nets: parallel wires", () => {
+  const net3x3 = (bPins = ["4", "5", "6"]) =>
+    run(base("par"), [setPinSignals({ connectorId: "A", entries: ["1", "2", "3"].map((c) => ({ cavityId: c, name: "GND" })) }), setPinSignals({ connectorId: "B", entries: bPins.map((c) => ({ cavityId: c, name: "GND" })) })]);
+  const rule = (p: Project, type: string) => runDfm({ project: p, cat, profile }).results.find((r) => r.eff.rule.type === type)!;
+
+  it("3 pins on each of two connectors are wired pin-to-pin, with no splice, double crimp or finding", () => {
+    const p = net3x3();
+    const h = currentHarness(p);
+    const ends = h.wires.map((w) => [w.from, w.to].map((e) => (e.kind === "pin" ? `${e.connectorId}${e.cavityId}` : "splice")).sort().join("-")).sort();
+    expect(ends).toEqual(["A1-B4", "A2-B5", "A3-B6"]);
+    expect(h.splices).toHaveLength(0);
+    expect(rule(p, "net_topology").status).toBe("pass");
+    expect(rule(p, "manual_topology").status).toBe("pass");
+    expect(rule(p, "sealed_cavities").violations.map((v) => v.message).join(" ")).not.toMatch(/grommet hole/);
+  });
+
+  it("unequal counts or 3+ connectors still need a splice or a confirmed daisy chain", () => {
+    expect(rule(net3x3(["4", "5"]), "net_topology").status).toBe("fail");
+    const three = run(net3x3(["4"]), [addConnector({ id: "C", pn: PIN, position: { x: 600, y: 400 }, rotation: 180 }), setPinSignals({ connectorId: "C", entries: [{ cavityId: "1", name: "GND" }] })]);
+    const r = rule(three, "net_topology");
+    expect(r.status).toBe("fail");
+    expect(r.violations[0]!.message).toMatch(/spans 3 connectors/);
+  });
+
+  it("an explicit choice wins, and parallel is refused when the pins can't pair up", () => {
+    const p = net3x3();
+    const net = currentHarness(p).nets[0]!;
+    const daisy = run(p, [setNetProps({ ids: [net.id], topology: "daisy" })]);
+    expect(currentHarness(daisy).wires).toHaveLength(5);
+    const q = net3x3(["4", "5"]);
+    expect(() => run(q, [setNetProps({ ids: [currentHarness(q).nets[0]!.id], topology: "parallel" })])).toThrow(/two connectors with the same count/);
+  });
+});
+
 describe("BOM arithmetic", () => {
   it("keeps engineering quantities unrounded and rounds purchases up", () => {
     const p = wired(1, "bom");

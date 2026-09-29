@@ -1,4 +1,4 @@
-import { formatWireColor, isAutoNetName, type CustomCond, type CustomRule } from "@hs/model";
+import { effectiveTopology, formatWireColor, isAutoNetName, type CustomCond, type CustomRule } from "@hs/model";
 import { safeRegExp } from "./regex";
 import type { RuleCtx, Violation, EntityKind } from "./types";
 
@@ -34,7 +34,7 @@ export const CUSTOM_FIELDS: Record<CustomRule["forEach"], FieldDef[]> = {
     { key: "class", label: "Class", type: "enum", options: ["power", "signal", "rf", "ground", "spare"] },
     { key: "currentA", label: "Current", type: "number", unit: "A" },
     { key: "pins", label: "Pin count", type: "number" },
-    { key: "topology", label: "Topology", type: "enum", options: ["daisy", "splice"] },
+    { key: "topology", label: "Topology", type: "enum", options: ["daisy", "splice", "parallel"] },
     { key: "autoNamed", label: "Automatic name", type: "boolean" },
   ],
   connector: [
@@ -97,7 +97,7 @@ function views(ctx: RuleCtx, kind: CustomRule["forEach"]): View[] {
         return { id: w.id, ids: [w.id], name: w.label, props: { id: w.label, net: net?.name, netClass: net?.cls, gauge: w.gauge, spec: w.spec, color: formatWireColor(w.color).split(" ")[0], lengthMm: ctx.d.wireLengthMm.get(w.id), twisted: !!w.twistGroupId, shielded: !!w.shieldId, inCable: !!w.cableId, from: ends[0], to: ends[1] } };
       });
     case "net":
-      return h.nets.map((n) => ({ id: n.id, ids: [n.id], name: n.name, props: { name: n.name, class: n.cls, currentA: n.currentA, pins: n.members.length, topology: n.topology, autoNamed: isAutoNetName(n.name) } }));
+      return h.nets.map((n) => ({ id: n.id, ids: [n.id], name: n.name, props: { name: n.name, class: n.cls, currentA: n.currentA, pins: n.members.length, topology: effectiveTopology(n), autoNamed: isAutoNetName(n.name) } }));
     case "connector":
       return h.connectors.map((c) => {
         const part = ctx.cat.connector(c.pn);

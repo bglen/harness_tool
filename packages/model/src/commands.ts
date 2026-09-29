@@ -35,7 +35,7 @@ import type {
   Waiver,
   WireEnd,
 } from "./schema";
-import { normalize } from "./sync";
+import { normalize, parallelPairs } from "./sync";
 import type { WireColor } from "./colors";
 
 enablePatches();
@@ -466,7 +466,7 @@ export const renameNet = def<{ id: string; name: string }>("renameNet", {
   },
 });
 
-export const setNetProps = def<{ ids: string[]; cls?: NetClass; currentA?: number | null; topology?: "daisy" | "splice" }>("setNetProps", {
+export const setNetProps = def<{ ids: string[]; cls?: NetClass; currentA?: number | null; topology?: "daisy" | "splice" | "parallel" }>("setNetProps", {
   label: (p) => (p.topology ? `Set topology: ${p.topology}` : p.cls ? `Set net class: ${p.cls}` : "Edit net"),
   run(proj, p) {
     for (const id of p.ids) {
@@ -478,6 +478,10 @@ export const setNetProps = def<{ ids: string[]; cls?: NetClass; currentA?: numbe
         n.currentA = p.currentA ?? undefined;
       }
       if (p.topology) {
+        if (p.topology === "parallel" && n.members.length >= 3 && !parallelPairs(n)) {
+          const counts = [...new Set(n.members.map((m) => m.connectorId))].map((cid) => `${connectorById(H(proj), cid)?.refDes ?? "?"}: ${n.members.filter((m) => m.connectorId === cid).length}`);
+          throw new CommandRejectedError(`${n.name} can't be parallel wires: that needs its pins on exactly two connectors with the same count on each (${counts.join(", ")}). Use a splice.`);
+        }
         n.topology = p.topology;
         // Choosing the construction explicitly (either way) resolves the "assumed daisy chain" finding.
         n.topologyConfirmed = true;
