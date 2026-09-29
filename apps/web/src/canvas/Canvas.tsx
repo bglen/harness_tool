@@ -26,7 +26,7 @@ import { activePedigreeOf, useActiveAnalysis, useDerived } from "../store/analys
 import { svc } from "../lib/services";
 import { bundleWidth, layoutConnector, nodePos, projectOnSegment, zoomLevel, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 import { ConnectorView, type RowState } from "./ConnectorView";
-import { BundleLayer, SegmentHandles } from "./BundleLayer";
+import { BundleChips, BundleLayer, SegmentHandles } from "./BundleLayer";
 import { WireLayer } from "./WireLayer";
 import { canvasToScreen, zoomToFit } from "../lib/viewport";
 import { EmptyState } from "./EmptyState";
@@ -322,6 +322,9 @@ export function Canvas() {
     if (hit.hit === "collapsed") dispatch(setConnectorProps({ id: hit.id, showUnused: true }));
     if (hit.hit === "chip-length") {
       const s = h.segments.find((x) => x.id === hit.id)!;
+      // Stop the browser's default mousedown focus change, which would blur (and close) the editor opened here.
+      e.preventDefault();
+      ui.select("segment", [s.id]);
       setLengthEdit({ segId: s.id, screen: { x: e.clientX, y: e.clientY }, value: formatLength(s.lengthMm, project.units, { unit: true }).replace(" ", "") });
     }
     if (hit.hit === "chip-od") ui.openPopover({ kind: "covering", screen: { x: e.clientX, y: e.clientY }, data: { ids: [hit.id] } });
@@ -733,6 +736,7 @@ export function Canvas() {
             />
           ))}
           <NotesLayer notes={h.notes} theme={theme} selected={sel.kind === "note" ? selSet : EMPTY} offset={drag?.kind === "note" && drag.moved ? { id: drag.id, dx: drag.cur.x - drag.start.x, dy: drag.cur.y - drag.start.y } : null} />
+          <BundleChips h={h} d={d} level={level} theme={theme} units={project.units} selectedSegs={sel.kind === "segment" ? selSet : EMPTY} sev={sev} />
           {sel.kind === "segment" && <SegmentHandles h={h} selected={selSet} k={kq} theme={theme} />}
           {preview}
         </g>

@@ -24,11 +24,14 @@ interface Props {
 
 const lerp = (a: Point, b: Point, t: number): Point => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
 
+const chipWidth = (text: string, sub?: string) => Math.max(38, text.length * 6.6 + (sub ? sub.length * 5.6 + 8 : 0) + 12);
+
 function Chip({ x, y, text, sub, hit, id, theme, sev }: { x: number; y: number; text: string; sub?: string; hit: string; id: string; theme: "dark" | "light"; sev?: Severity }) {
-  const w = Math.max(38, text.length * 6.6 + (sub ? sub.length * 5.6 + 8 : 0) + 12);
+  const w = chipWidth(text, sub);
   const col = sev === "error" ? "var(--status-error)" : sev === "warning" ? "var(--status-warning)" : undefined;
   return (
-    <g data-hit={hit} data-id={id} style={{ cursor: "text" }}>
+    <g data-hit={hit} data-id={id} style={{ cursor: hit === "chip-length" ? "text" : "pointer" }}>
+      <title>{hit === "chip-length" ? "Click to edit the length" : "Bundle diameter: click for coverings"}</title>
       <rect x={x - w / 2} y={y - 9} width={w} height={18} rx={4} fill={semantic("bg.surface-2", theme)} stroke={col ?? semantic("border.control", theme)} strokeWidth={col ? 1.4 : 0.8} strokeDasharray={col ? "3 2" : undefined} />
       <text className="mono" x={x - w / 2 + 6} y={y + 3.8} fontSize={10.5} fill={semantic("text.primary", theme)}>
         {text}
@@ -65,8 +68,6 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
         const stack = d.segStack.get(s.id) ?? [];
         const selected = selectedSegs.has(s.id) || flash.has(s.id);
         const segSev = sev[s.id]?.severity;
-        const m = lerp(a, b, 0.5);
-        const od = d.segOuterOdMm.get(s.id) ?? 0;
         return (
           <g key={s.id}>
             {selected && <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={accent} strokeWidth={w + 8} strokeLinecap="round" opacity={0.55} />}
@@ -124,15 +125,7 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
                   </g>
                 );
               })}
-            {/* chips */}
-            {level !== "overview" ? (
-              <>
-                <Chip x={m.x} y={m.y - w / 2 - 14} text={formatLength(s.lengthMm, units)} sub={`${n}w`} hit="chip-length" id={s.id} theme={theme} sev={segSev} />
-                {od > 0 && level === "detail" && <Chip x={m.x} y={m.y + w / 2 + 14} text={formatDiameter(od, units)} hit="chip-od" id={s.id} theme={theme} />}
-              </>
-            ) : (
-              <Chip x={m.x} y={m.y - w / 2 - 14} text={`${n} · ${formatLength(s.lengthMm, units, { decimals: 0 })}`} hit="chip-length" id={s.id} theme={theme} />
-            )}
+            {/* length / OD chips are drawn by BundleChips, above wires and connectors */}
           </g>
         );
       })}
@@ -265,6 +258,49 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
 });
 
 export { lerp };
+
+/**
+ * Length (and at detail zoom, OD) chips for every bundle, drawn above wires and connectors so they're always
+ * visible and clickable. Each chip sits beside the bundle, offset along the bundle's normal (whatever its angle)
+ * far enough to clear the bundle and the chip's own size. The wire count shows only on selected bundles.
+ */
+export const BundleChips = memo(function BundleChips({ h, d, level, theme, units, selectedSegs, sev }: { h: Harness; d: Derived; level: ZoomLevel; theme: "dark" | "light"; units: LengthUnit; selectedSegs: Set<string>; sev: Record<string, { severity: Severity }> }) {
+  return (
+    <g>
+      {h.segments.map((s) => {
+        const a = nodePos(h, s.a);
+        const b = nodePos(h, s.b);
+        const L = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        const n = d.segWires.get(s.id)?.length ?? 0;
+        const w = bundleWidth(n, level);
+        const selected = selectedSegs.has(s.id);
+        // Unit normal pointing "up" (screen y negative); for vertical bundles, to the right.
+        let nx = -(b.y - a.y) / L;
+        let ny = (b.x - a.x) / L;
+        if (ny > 0.001 || (Math.abs(ny) <= 0.001 && nx < 0)) (nx = -nx), (ny = -ny);
+        const m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        const text = level === "overview" ? formatLength(s.lengthMm, units, { decimals: 0 }) : formatLength(s.lengthMm, units);
+        const sub = selected ? `${n}w` : undefined;
+        const place = (t: string, sb: string | undefined, side: 1 | -1) => {
+          const cw = chipWidth(t, sb);
+          // Distance from the bundle centre to the chip centre so the chip's box clears the bundle at this angle.
+          const off = w / 2 + 5 + Math.abs(nx) * (cw / 2) + Math.abs(ny) * 9;
+          return { x: m.x + side * nx * off, y: m.y + side * ny * off };
+        };
+        const p = place(text, sub, 1);
+        const od = d.segOuterOdMm.get(s.id) ?? 0;
+        const odText = formatDiameter(od, units);
+        const q = place(odText, undefined, -1);
+        return (
+          <g key={s.id}>
+            <Chip x={p.x} y={p.y} text={text} sub={sub} hit="chip-length" id={s.id} theme={theme} sev={sev[s.id]?.severity} />
+            {od > 0 && level === "detail" && <Chip x={q.x} y={q.y} text={odText} hit="chip-od" id={s.id} theme={theme} />}
+          </g>
+        );
+      })}
+    </g>
+  );
+});
 
 /**
  * End handles on selected bundles, drawn above connectors and wires so they're always grabbable:
