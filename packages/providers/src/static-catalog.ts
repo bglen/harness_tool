@@ -99,19 +99,40 @@ export class StaticCatalogProvider implements CatalogProvider {
       return (a.inactive ? 4 : 0) + (a.status === "verified" ? 0 : 1) + (machine ? 0 : 2);
     };
     filtered.sort((a, b) => rank(a) - rank(b) || b.score - a.score || a.shellSize - b.shellSize || Number(a.arrangement.split("-")[1]) - Number(b.arrangement.split("-")[1]) || b.slash.localeCompare(a.slash));
-    const gender = f.gender ?? "socket";
-    const hits: ConnectorSearchHit[] = filtered.slice(0, 60).map((d) => ({
-      pn: buildD38999({ slash: d.slash, finish: f.finish ?? "W", shellSize: d.shellSize, insert: d.arrangement.split("-")[1]!, contactStyle: gender === "pin" ? "P" : "S", keying: f.keying ?? "N" }),
-      slash: d.slash,
-      arrangement: d.arrangement,
-      kind: d.kind,
-      mount: d.mount,
-      shellSize: d.shellSize,
-      sizes: d.sizes,
-      count: d.count,
-      status: d.status,
-      score: d.score,
-    }));
+    // No hidden defaults: contact style, key and finish that aren't chosen (typed or clicked) expand into every
+    // variant, so a partly typed PN lists all the real part numbers it could be.
+    const genders: ("socket" | "pin")[] = f.gender ? [f.gender] : ["socket", "pin"];
+    const keys: string[] = f.keying ? [f.keying] : ["N", "A", "B", "C", "D", "E"];
+    const finishOrder = [...bundle.finishes].sort((a, b) => Number(a.lifecycle !== "active") - Number(b.lifecycle !== "active")).map((x) => x.code);
+    const finishes: string[] = f.finish ? [f.finish] : finishOrder;
+    // Variants in a useful order: common finish/key first, sockets and pins together.
+    const variants: { finish: string; keying: string; gender: "socket" | "pin" }[] = [];
+    for (const finish of finishes) for (const keying of keys) for (const g of genders) variants.push({ finish, keying, gender: g });
+    // Spread the result budget across families so a broad search still shows many families.
+    const MAX_HITS = 200;
+    const perFamily = Math.max(Math.min(genders.length, 2), Math.floor(MAX_HITS / Math.max(1, filtered.length)));
+    const hits: ConnectorSearchHit[] = [];
+    for (const d of filtered) {
+      if (hits.length >= MAX_HITS) break;
+      for (const v of variants.slice(0, perFamily)) {
+        if (hits.length >= MAX_HITS) break;
+        hits.push({
+          pn: buildD38999({ slash: d.slash, finish: v.finish, shellSize: d.shellSize, insert: d.arrangement.split("-")[1]!, contactStyle: v.gender === "pin" ? "P" : "S", keying: v.keying }),
+          slash: d.slash,
+          arrangement: d.arrangement,
+          kind: d.kind,
+          mount: d.mount,
+          shellSize: d.shellSize,
+          sizes: d.sizes,
+          count: d.count,
+          status: d.status,
+          score: d.score,
+          gender: v.gender,
+          keying: v.keying,
+          finish: v.finish,
+        });
+      }
+    }
     const base = docs.filter((d) => (!f.slash || d.slash === f.slash) && (!f.kind || d.kind === f.kind));
     return {
       hits,

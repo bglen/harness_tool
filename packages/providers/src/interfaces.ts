@@ -22,6 +22,10 @@ export interface ConnectorSearchHit {
   count: number;
   status: string;
   score: number;
+  /** The variant this hit's PN was built for. */
+  gender: "pin" | "socket";
+  keying: string;
+  finish: string;
 }
 
 export interface SearchResult {

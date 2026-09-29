@@ -54,7 +54,8 @@ export function PartPicker() {
   const hits = res?.hits ?? [];
   const cur = hits[active];
 
-  const pnFor = (hit: ConnectorSearchHit) => buildD38999({ slash: hit.slash, finish: eff.finish ?? "W", shellSize: hit.shellSize, insert: hit.arrangement.split("-")[1]!, contactStyle: (eff.gender ?? "socket") === "pin" ? "P" : "S", keying: eff.keying ?? "N" });
+  // Each hit is a complete PN variant (contacts/key/finish are never silently defaulted).
+  const pnFor = (hit: ConnectorSearchHit) => hit.pn;
 
   const place = (hit: ConnectorSearchHit) => {
     const pn = pnFor(hit);
@@ -156,14 +157,14 @@ export function PartPicker() {
         <div className="flex flex-wrap gap-4">
           <FacetRow label="Contacts">
             {(["socket", "pin"] as const).map((g) => (
-              <FacetChip key={g} on={(eff.gender ?? "socket") === g} onClick={() => setF((x) => ({ ...x, gender: g }))}>
+              <FacetChip key={g} on={eff.gender === g} onClick={() => set("gender", g)}>
                 {g === "pin" ? "Pins (P)" : "Sockets (S)"}
               </FacetChip>
             ))}
           </FacetRow>
           <FacetRow label="Key">
             {KEYINGS.map((k) => (
-              <FacetChip key={k} on={(eff.keying ?? "N") === k} onClick={() => setF((x) => ({ ...x, keying: k }))}>
+              <FacetChip key={k} on={eff.keying === k} onClick={() => set("keying", k)}>
                 {k}
               </FacetChip>
             ))}
@@ -173,7 +174,7 @@ export function PartPicker() {
               const fin = cat.finishes.get(k);
               if (!fin) return null;
               return (
-                <FacetChip key={k} on={(eff.finish ?? "W") === k} onClick={() => setF((x) => ({ ...x, finish: k }))} title={`${fin.material}, ${fin.finish}${fin.cadmium ? " (cadmium)" : ""}${fin.lifecycle !== "active" ? ` (${fin.lifecycle})` : ""}`}>
+                <FacetChip key={k} on={eff.finish === k} onClick={() => set("finish", k)} title={`${fin.material}, ${fin.finish}${fin.cadmium ? " (cadmium)" : ""}${fin.lifecycle !== "active" ? ` (${fin.lifecycle})` : ""}`}>
                   <span className={fin.lifecycle !== "active" ? "line-through opacity-60" : undefined}>{k}</span>
                 </FacetChip>
               );
@@ -189,7 +190,7 @@ export function PartPicker() {
             const sup = cat.supply(pn);
             return (
               <button
-                key={hit.slash + hit.arrangement}
+                key={hit.pn}
                 role="option"
                 aria-selected={i === active}
                 className={cx("flex w-full items-center gap-3 border-b border-border-subtle px-3 py-1.5 text-left", i === active ? "bg-bg-hover" : "hover:bg-bg-hover")}
@@ -199,7 +200,7 @@ export function PartPicker() {
                 <div className="min-w-0 flex-1">
                   <div className="mono text-sm text-text-primary">{pn}</div>
                   <div className="truncate text-2xs text-text-secondary">
-                    {part?.style.description} · shell {hit.shellSize} · {hit.arrangement} · {hit.count}× {hit.sizes.replace(/ /g, "/")} · {eff.gender ?? "socket"}s
+                    {part?.style.description} · shell {hit.shellSize} · {hit.arrangement} · {hit.count}× {hit.sizes.replace(/ /g, "/")} · {hit.gender}s · key {hit.keying} · class {hit.finish}
                   </div>
                 </div>
                 {hit.status !== "verified" && <Chip title="Cavity coordinates are machine-extracted from MIL-STD-1560C and not yet reviewed">Unreviewed geometry</Chip>}
@@ -220,7 +221,7 @@ export function PartPicker() {
         <div className="w-60 border-l border-border-subtle p-3">
           {cur && arr ? (
             <div className="flex flex-col items-center gap-2">
-              <FaceView arrangement={arr} gender={(eff.gender ?? "socket") as "pin" | "socket"} size={190} showIds />
+              <FaceView arrangement={arr} gender={cur.gender} size={190} showIds />
               <div className="text-center text-xs text-text-secondary">
                 Insert {arr.id} · {arr.contactCount} contacts
                 <br />
