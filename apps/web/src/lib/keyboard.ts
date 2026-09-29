@@ -33,7 +33,14 @@ export function useKeyboard() {
       if (e.key === "Delete" || e.key === "Backspace") return runAction("delete");
       if (ui.view !== "design" && !["1", "2", "3", "?"].includes(e.key)) return;
       if (k === "b") return e.preventDefault(), ui.setTool(ui.tool === "breakout" ? null : "breakout");
-      const map: Record<string, string> = { c: "addConnector", n: "addNote", f: "zoomFit", r: e.shiftKey ? "cFlip" : "commit", g: "shieldView", l: "wireList", t: "wTwist", "1": "viewDesign", "2": "viewBom", "3": "viewOutputs", "?": "shortcuts" };
+      // F flips the selected connector(s); Shift+F fits the view.
+      if (k === "f") {
+        e.preventDefault();
+        if (e.shiftKey) return runAction("zoomFit");
+        if (ui.selection.kind === "connector" && ui.selection.ids.length) return runAction("cFlip");
+        return ui.toast({ kind: "info", text: "Select a connector to flip it (F). Shift+F fits the view." });
+      }
+      const map: Record<string, string> = { c: "addConnector", n: "addNote", r: "commit", g: "shieldView", l: "wireList", t: "wTwist", "1": "viewDesign", "2": "viewBom", "3": "viewOutputs", "?": "shortcuts" };
       const id = map[k] ?? map[e.key];
       if (id) {
         e.preventDefault();

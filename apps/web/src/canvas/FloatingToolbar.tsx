@@ -24,7 +24,7 @@ export function FloatingToolbar() {
       <IconButton label="Shield view" shortcut="G" active={ui.shieldView} onClick={() => ui.toggleShieldView()}>
         <Shield size={18} />
       </IconButton>
-      <IconButton label="Zoom to fit" shortcut="F" onClick={() => runAction("zoomFit")}>
+      <IconButton label="Zoom to fit" shortcut="Shift+F" onClick={() => runAction("zoomFit")}>
         <Maximize size={18} />
       </IconButton>
     </div>

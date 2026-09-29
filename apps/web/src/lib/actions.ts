@@ -95,7 +95,7 @@ export const ACTIONS: Action[] = [
       useUi.getState().select("note", [id]);
     },
   },
-  { id: "zoomFit", label: "Zoom to fit", group: "View", icon: "maximize", shortcut: "F", run: () => zoomToFit() },
+  { id: "zoomFit", label: "Zoom to fit", group: "View", icon: "maximize", shortcut: "Shift+F", run: () => zoomToFit() },
   { id: "undo", label: "Undo", group: "Edit", icon: "undo", shortcut: "Ctrl+Z", run: () => useProject.getState().undo() },
   { id: "redo", label: "Redo", group: "Edit", icon: "redo", shortcut: "Ctrl+Shift+Z", run: () => useProject.getState().redo() },
   { id: "save", label: "Save .harness.json", group: "File", icon: "download", shortcut: "Ctrl+S", run: () => downloadProject(getProject()) },
@@ -163,9 +163,10 @@ export const ACTIONS: Action[] = [
     label: "Flip direction",
     group: "Connector",
     icon: "flip-horizontal",
-    shortcut: "Shift+R",
+    shortcut: "F",
     bar: ["connector"],
     menu: ["connector"],
+    when: (c) => c.kind === "connector" && c.ids.length > 0,
     run: (c) => dispatch(c.ids.map((id) => rotateConnector({ id, rotation: (c.h.connectors.find((x) => x.id === id)!.rotation + 180) % 360 }))),
   },
   {
