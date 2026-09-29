@@ -58,7 +58,7 @@ import {
   type RuleInstance,
   type Ruleset,
 } from "@hs/model";
-import { DfmCache, runDfm, type DfmSummary } from "@hs/dfm";
+import { DfmCache, runDfm, violationKey, type DfmSummary } from "@hs/dfm";
 import { buildQuoteSummary, computeBom, deriveOperations, purchaseQty, summaryHash } from "@hs/ops";
 import { loadTestCatalog } from "../../model/src/test-catalog";
 import { toCsv, wireListTable } from "./index";
@@ -454,6 +454,41 @@ describe("multi-pin nets: parallel wires", () => {
     expect(currentHarness(daisy).wires).toHaveLength(5);
     const q = net3x3(["4", "5"]);
     expect(() => run(q, [setNetProps({ ids: [currentHarness(q).nets[0]!.id], topology: "parallel" })])).toThrow(/two connectors with the same count/);
+  });
+});
+
+describe("waivers target one finding", () => {
+  const backshell = (p: Project) => runDfm({ project: p, cat, profile }).results.find((r) => r.eff.rule.id === "MFG-CMP-004")!;
+  const waive = (p: Project, v: { objectIds: string[]; message: string }, author = "J. Engineer") =>
+    run(p, [{ type: "addWaiver", payload: { waiver: { id: `w-${v.objectIds.join("")}`, ruleId: "MFG-CMP-004", objectId: v.objectIds[0]!, violationKey: violationKey(v), message: v.message, note: "customer supplies backshell", author, date: "2026-09-28" } } }]);
+
+  it("waiving one finding leaves the rule's other findings open, and records who waived it", () => {
+    const p = wired(1, "waive");
+    const r0 = backshell(p);
+    expect(r0.violations).toHaveLength(2); // A and B have no backshell
+    const q = waive(p, r0.violations[0]!);
+    const r1 = backshell(q);
+    expect(r1.status).toBe("fail");
+    expect(r1.violations).toHaveLength(1);
+    expect(r1.waived).toHaveLength(1);
+    expect(r1.waived[0]).toMatchObject({ author: "J. Engineer", date: "2026-09-28", note: "customer supplies backshell", changed: false });
+    const s = runDfm({ project: q, cat, profile });
+    expect(s.waivedByObject[r0.violations[0]!.objectIds[0]!]).toMatchObject({ count: 1 });
+  });
+
+  it("a waiver whose finding is fixed is reported as unmatched; engineer name is required", () => {
+    const p = wired(1, "waive2");
+    const v = backshell(p).violations.find((x) => x.objectIds.includes("A"))!;
+    let q = waive(p, v);
+    q = withBackshells(q);
+    const s = runDfm({ project: q, cat, profile });
+    expect(s.unmatchedWaivers).toEqual([`w-${v.objectIds.join("")}`]);
+    expect(() => waive(p, v, "  ")).toThrow(/engineer/);
+  });
+
+  it("legacy rule-wide waivers ('*') still apply", () => {
+    const p = { ...wired(1, "waive3"), waivers: [{ id: "old", ruleId: "MFG-CMP-004", objectId: "*", note: "legacy", author: "", date: "2026-01-01" }] };
+    expect(backshell(p).status).toBe("waived");
   });
 });
 

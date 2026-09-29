@@ -230,6 +230,11 @@ function trackedCtx(ctx: RuleCtx, deps: DepSet): RuleCtx {
   return out;
 }
 
+/** Identity of one finding for waivers: the exact set of objects it's about (order-independent). */
+export function violationKey(v: Pick<Violation, "objectIds">): string {
+  return [...v.objectIds].sort().join("|");
+}
+
 /** Thrown by a rule when a required input is absent: the outcome is `missingInput`, never a pass. */
 export class MissingInputError extends Error {}
 
@@ -285,6 +290,7 @@ export function runDfm(opts: DfmOptions): DfmSummary {
   const results: RuleResult[] = [];
   // Global inputs every rule may read: catalog identity, machine profile content, resolved pedigree, qty/tier.
   const globalKey = quickHash(stableStringify({ cat: cat.version.hash, profile, ped, qty, tierDays, units: project.units }));
+  const usedWaivers = new Set<string>();
   for (const eff of rules) {
     const r0 = typeof performance !== "undefined" ? performance.now() : Date.now();
     if (eff.severity === "off") {
@@ -323,10 +329,14 @@ export function runDfm(opts: DfmOptions): DfmSummary {
     }
     const waived: RuleResult["waived"] = [];
     if (!error && isWaivable(eff)) {
+      const ruleWaivers = project.waivers.filter((x) => x.ruleId === eff.rule.id);
       violations = violations.filter((v) => {
-        const w = project.waivers.find((x) => x.ruleId === eff.rule.id && (x.objectId === "*" || v.objectIds.includes(x.objectId)));
+        const key = violationKey(v);
+        // A waiver covers one specific finding (exact object set); legacy waivers fall back to object/"*" scope.
+        const w = ruleWaivers.find((x) => (x.violationKey !== undefined ? x.violationKey === key : x.objectId === "*" || v.objectIds.includes(x.objectId)));
         if (w) {
-          waived.push({ ...v, waiverId: w.id, note: w.note });
+          usedWaivers.add(w.id);
+          waived.push({ ...v, waiverId: w.id, note: w.note, author: w.author, date: w.date, changed: w.message !== undefined && w.message !== v.message, waivedMessage: w.message });
           return false;
         }
         return true;
@@ -349,6 +359,18 @@ export function runDfm(opts: DfmOptions): DfmSummary {
         }
       }
   }
+  // Waived findings per object, so a selected part can show what was waived on it.
+  const waivedByObject: DfmSummary["waivedByObject"] = {};
+  for (const r of results)
+    for (const w of r.waived)
+      for (const id of w.objectIds) {
+        const cur = (waivedByObject[id] ??= { ruleIds: [], count: 0 });
+        cur.count++;
+        if (!cur.ruleIds.includes(r.eff.rule.id)) cur.ruleIds.push(r.eff.rule.id);
+      }
+  // Waivers that no longer match any finding (fixed, or the finding moved): kept, but listed for clean-up.
+  const evaluated = new Set(results.filter((r) => r.status !== "off" && !INCOMPLETE_STATUSES.includes(r.status)).map((r) => r.eff.rule.id));
+  const unmatchedWaivers = project.waivers.filter((w) => !usedWaivers.has(w.id) && evaluated.has(w.ruleId)).map((w) => w.id);
   const tally = (rs: RuleResult[]) => {
     const active = rs.filter((r) => r.status !== "off");
     const count = (s: Severity) => active.filter((r) => r.status === "fail" && r.eff.severity === s).reduce((a, r) => a + r.violations.length, 0);
@@ -386,6 +408,8 @@ export function runDfm(opts: DfmOptions): DfmSummary {
     design: { ...des, rulesets },
     results,
     byObject,
+    waivedByObject,
+    unmatchedWaivers,
     durationMs: (typeof performance !== "undefined" ? performance.now() : Date.now()) - t0,
     hash,
     inputHash: dfmInputHash({ project, rev, cat, profile, pedigreeId: pedId, qty, tierDays }),

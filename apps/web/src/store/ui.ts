@@ -78,6 +78,9 @@ interface UiState {
   shieldView: boolean;
   /** Active canvas tool: "breakout" = next click on a bundle inserts a breakout there. */
   tool: "breakout" | null;
+  /** Signed-in engineer (Phase 1: a local mock identity; accounts arrive with Phase 2). */
+  userName: string;
+  setUserName(n: string): void;
   cvd: CvdType | null;
   wireColorLabels: "detail" | "always" | "hover";
   colorblindAssist: boolean;
@@ -139,6 +142,11 @@ export const useUi = create<UiState>((set, get) => ({
   dialogs: {},
   shieldView: false,
   tool: null,
+  userName: LS.get("userName", "Demo Engineer"),
+  setUserName(n) {
+    LS.set("userName", n);
+    set({ userName: n });
+  },
   cvd: null,
   wireColorLabels: LS.get("wireColorLabels", "detail"),
   colorblindAssist: LS.get("colorblindAssist", false),

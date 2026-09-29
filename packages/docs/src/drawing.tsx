@@ -41,7 +41,7 @@ export function drawingNotes(data: DocData): string[] {
   if (tools.size) notes.push(`Crimp tooling (verify before use): ${[...tools.values()].join("; ")}.`);
   const rs = project.rulesets.map((r) => `${r.name} v${r.version}${r.enforced ? " (enforced)" : ""}`);
   notes.push(`Checked against machine profile ${data.profile.version}${rs.length ? ` and design rulesets: ${rs.join(", ")}` : ""}${project.projectRules.length ? ` + ${project.projectRules.length} project rules` : ""}. DFM: ${dfm.manufacturability.errors} errors, ${dfm.manufacturability.warnings} warnings.`);
-  for (const w of project.waivers) notes.push(`WAIVER ${w.ruleId}: ${w.note}${w.author ? ` (${w.author}, ${w.date})` : ` (${w.date})`}.`);
+  for (const w of project.waivers) notes.push(`WAIVER ${w.ruleId}${w.message ? ` (${w.message.replace(/\.$/, "")})` : ""}: ${w.note}${w.author ? ` (${w.author}, ${w.date})` : ` (${w.date})`}.`);
   for (const n of project.titleBlock.notes) notes.push(n);
   return notes.map(pdfSafe);
 }

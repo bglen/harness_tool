@@ -1403,6 +1403,10 @@ export const addWaiver = def<{ waiver: Waiver }>("addWaiver", {
   label: () => "Waive",
   allowFrozen: true,
   run(proj, p) {
+    if (!p.waiver.note.trim()) throw new CommandRejectedError("A waiver needs a reason.");
+    if (!p.waiver.author.trim()) throw new CommandRejectedError("A waiver needs the name of the engineer approving it.");
+    // One waiver per finding: re-waiving replaces the earlier record.
+    if (p.waiver.violationKey !== undefined) proj.waivers = proj.waivers.filter((w) => !(w.ruleId === p.waiver.ruleId && w.violationKey === p.waiver.violationKey));
     proj.waivers.push(p.waiver);
   },
 });

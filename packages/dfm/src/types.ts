@@ -99,7 +99,15 @@ export interface RuleResult {
   eff: EffectiveRule;
   status: RuleStatus;
   violations: Violation[];
-  waived: (Violation & { waiverId: string; note: string })[];
+  waived: (Violation & {
+    waiverId: string;
+    note: string;
+    author: string;
+    date: string;
+    /** The finding's text differs from when it was waived: re-assess. */
+    changed: boolean;
+    waivedMessage?: string;
+  })[];
   error?: string;
   ms: number;
 }
@@ -128,6 +136,10 @@ export interface DfmSummary {
   results: RuleResult[];
   /** objectId → worst severity + rule ids */
   byObject: Record<string, { severity: Severity; ruleIds: string[] }>;
+  /** objectId → waived findings on it */
+  waivedByObject: Record<string, { ruleIds: string[]; count: number }>;
+  /** Ids of waivers that match no current finding. */
+  unmatchedWaivers: string[];
   durationMs: number;
   /** Identity of the result (rule ids × outcomes). */
   hash: string;

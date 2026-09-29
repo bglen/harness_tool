@@ -438,8 +438,14 @@ export type RuleOverride = z.infer<typeof RuleOverrideSchema>;
 export const WaiverSchema = z.object({
   id: z.string(),
   ruleId: z.string(),
-  objectId: z.string(), // "*" = all objects for the rule
+  /** Legacy/broad scope: "*" = every finding of the rule; an object id = findings that mention it. */
+  objectId: z.string(),
+  /** Specific finding: the exact object-id set of the violation (see violationKey). Takes precedence over objectId. */
+  violationKey: z.string().optional(),
+  /** The finding's text when it was waived, so a changed finding can be flagged for re-assessment. */
+  message: z.string().optional(),
   note: z.string().min(1),
+  /** Engineer who waived it (Phase 1: a local mock identity). */
   author: z.string().default(""),
   date: z.string(),
 });

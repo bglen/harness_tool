@@ -4,7 +4,9 @@ import { useUi } from "../store/ui";
 import { ACTIONS, type ActionCtx } from "../lib/actions";
 import { nodePos, type ConnLayout } from "../lib/geometry";
 import { Icon } from "../ui/icons";
-import { Floating, Kbd, MenuItem, Tip } from "../ui/primitives";
+import { Floating, Kbd, MenuItem, SeverityIcon, Tip } from "../ui/primitives";
+import { useActiveAnalysis } from "../store/analysis";
+import { ShieldCheck } from "lucide-react";
 
 /** Figma-style floating context bar above the selection with the 3–5 most relevant actions (§5.4). */
 export function ContextBar({ layouts }: { layouts: Map<string, ConnLayout> }) {
@@ -77,6 +79,7 @@ export function ContextBar({ layouts }: { layouts: Map<string, ConnLayout> }) {
   return (
     <div className="pop-in absolute z-20 flex -translate-x-1/2 items-center gap-0.5 rounded-card border border-border-subtle bg-bg-surface-2 p-1 shadow-lg" style={{ left: sx, top: Math.max(6, sy) }} role="toolbar" aria-label="Selection actions" onPointerDown={(e) => e.stopPropagation()}>
       <span className="mono max-w-[140px] truncate px-2 text-xs text-text-secondary">{title}</span>
+      <FindingsChip ids={sel.ids} />
       {sel.kind === "pin" && <span className="px-1 text-xs text-text-tertiary">Drag pins onto another connector to connect in order · double-click to name</span>}
       {sel.kind === "segment" && sel.ids.length === 1 && <span className="hidden whitespace-nowrap px-1 text-2xs text-text-tertiary 2xl:inline">Drag ○ ends to re-attach</span>}
       {sel.kind === "node" && sel.ids.length === 1 && <span className="hidden whitespace-nowrap px-1 text-2xs text-text-tertiary 2xl:inline">Drop on a connector/breakout to join</span>}
@@ -89,6 +92,37 @@ export function ContextBar({ layouts }: { layouts: Map<string, ConnLayout> }) {
         </Tip>
       ))}
     </div>
+  );
+}
+
+/** Open findings and waivers on the selected part; opens the checks view filtered to it. */
+function FindingsChip({ ids }: { ids: string[] }) {
+  const a = useActiveAnalysis();
+  const ui = useUi();
+  if (!a || ids.length !== 1) return null;
+  const id = ids[0]!;
+  const open = a.dfm.results.reduce((s, r) => s + (r.status === "fail" ? r.violations.filter((v) => v.objectIds.includes(id)).length : 0), 0);
+  const waived = a.dfm.waivedByObject[id]?.count ?? 0;
+  if (!open && !waived) return null;
+  const sev = a.dfm.byObject[id]?.severity;
+  return (
+    <button
+      className="flex h-7 items-center gap-1 rounded-control px-2 text-xs hover:bg-bg-hover"
+      title="Checks for this part (open findings and waivers)"
+      onClick={() => ui.openDialog("dfm", { objectId: id })}
+    >
+      {open > 0 && (
+        <>
+          <SeverityIcon severity={sev === "error" ? "error" : sev === "warning" ? "warning" : "info"} size={12} />
+          <span className="tnum">{open}</span>
+        </>
+      )}
+      {waived > 0 && (
+        <span className="flex items-center gap-0.5 text-text-tertiary">
+          <ShieldCheck size={12} /> <span className="tnum">{waived} waived</span>
+        </span>
+      )}
+    </button>
   );
 }
 

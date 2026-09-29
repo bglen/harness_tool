@@ -319,7 +319,11 @@ export function ReportDocument({ data, sections, hideQuote: hideQuoteIn, redact 
             {dfm.results.some((r) => r.waived.length) && (
               <>
                 <Text style={s.h2}>Waivers</Text>
-                {project.waivers.map((w) => <Text key={w.id} style={s.p}>{`${w.ruleId}: “${w.note}”${w.author ? ` — ${w.author}` : ""}, ${w.date}`}</Text>)}
+                {dfm.results.flatMap((r) =>
+                  r.waived.map((w) => (
+                    <Text key={w.waiverId} style={s.p}>{`${r.eff.rule.id} ${r.eff.rule.title}: ${w.message} Waived by ${w.author || "unknown engineer"} on ${w.date}: “${w.note}”${w.changed ? " (finding changed since waived: re-assess)" : ""}`}</Text>
+                  )),
+                )}
               </>
             )}
             <Text style={s.h2}>Operations</Text>
