@@ -290,6 +290,20 @@ export function SettingsDialog() {
         <Field label="Packing factor k (bundle diameter)">
           <input className={cx(inputCls, "mono")} defaultValue={st.packingFactor} onBlur={(e) => dispatch(setSettings({ packingFactor: Number(e.target.value) || 1.2 }))} />
         </Field>
+        <Field label="No-connect label" hint="Shown on pin cards, pinouts and drawings for pins marked no-connect.">
+          <input
+            className={cx(inputCls, "mono")}
+            defaultValue={st.noConnectLabel}
+            onBlur={(e) => {
+              const v = e.target.value.trim() || "NC";
+              // The label always works as an alias too, so typing what you see marks a pin NC.
+              dispatch(setSettings({ noConnectLabel: v, noConnectAliases: [...new Set([v, ...st.noConnectAliases])] }));
+            }}
+          />
+        </Field>
+        <Field label="No-connect names (comma separated)" hint="Typing any of these as a signal marks the pin no-connect instead of creating a net.">
+          <input className={cx(inputCls, "mono")} defaultValue={st.noConnectAliases.join(", ")} onBlur={(e) => dispatch(setSettings({ noConnectAliases: [...new Set([st.noConnectLabel, ...e.target.value.split(",").map((s) => s.trim()).filter(Boolean)])] }))} />
+        </Field>
         <div className="col-span-2 flex flex-col gap-2">
           <Toggle checked={st.autoCommit} onChange={(v) => dispatch(setSettings({ autoCommit: v }))} label="Auto-commit connections (off: same-name pins show dashed ratsnest lines until you commit with R)" />
           <Toggle checked={st.colorByClass} onChange={(v) => dispatch(setSettings({ colorByClass: v }))} label="Auto-assign wire color by net class (power red, ground black…)" />

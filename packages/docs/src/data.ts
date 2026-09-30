@@ -93,7 +93,7 @@ export function buildDocData(opts: {
           return {
             cavity: cav.id,
             size: cav.size,
-            signal: net?.name ?? "",
+            signal: net?.name ?? (c.pins[cav.id]?.noConnect ? project.settings.noConnectLabel : ""),
             wire: w?.label ?? "",
             gauge: w ? String(w.gauge) : "",
             color: w ? formatWireColor(w.color) : "",

@@ -6,7 +6,7 @@ function snapshot<T>(v: T): T {
 }
 import type { CatalogIndex } from "./catalog";
 import { derive } from "./derive";
-import { connectorById, currentHarness, currentRevision, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, prune, uid } from "./helpers";
+import { connectorById, currentHarness, currentRevision, isNoConnectName, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, prune, uid } from "./helpers";
 import { normalizePn } from "./pn38999";
 import type {
   Accessory,
@@ -154,6 +154,9 @@ function mergeNets(h: Harness, keep: Net, drop: Net) {
 
 /** Connect two pins, recording the connection as drawn so the wire follows it (see Net.links). */
 function connectTwo(h: Harness, a: NetMember, b: NetMember) {
+  // Connecting a pin overrides a no-connect marking.
+  setNoConnect(h, a, false);
+  setNoConnect(h, b, false);
   const na = netOfPin(h, a.connectorId, a.cavityId);
   const nb = netOfPin(h, b.connectorId, b.cavityId);
   if (na && nb) mergeNets(h, na, nb);
@@ -301,7 +304,7 @@ export const pasteConnectors = def<{ items: { id: string; pn: string; position: 
     for (const it of p.items) {
       const kind = cat.connector(it.pn)?.kind ?? "plug";
       h.connectors.push({ id: it.id, refDes: nextRefDes(h, kind), pn: it.pn, position: it.position, rotation: it.rotation, clocking: "N", backshell: it.backshell, accessories: [], pins: {}, showUnused: false, description: "" });
-      for (const [cav, v] of Object.entries(it.pins)) assignSignal(h, { connectorId: it.id, cavityId: cav }, v.name, v.cls);
+      for (const [cav, v] of Object.entries(it.pins)) assignSignal(h, { connectorId: it.id, cavityId: cav }, v.name, v.cls, proj.settings);
     }
   },
 });
@@ -375,9 +378,25 @@ export const setPinContact = def<{ connectorId: string; cavityIds: string[]; con
 
 // ─── Signals / nets ─────────────────────────────────────────────────────────
 
-function assignSignal(h: Harness, m: NetMember, rawName: string, cls?: NetClass) {
+/** Set or clear a pin's no-connect state (creating/removing the pin record as needed). */
+function setNoConnect(h: Harness, m: NetMember, on: boolean) {
+  const c = connectorById(h, m.connectorId);
+  if (!c) return;
+  const pin = c.pins[m.cavityId];
+  if (on) (c.pins[m.cavityId] ??= { netId: null }).noConnect = true;
+  else if (pin?.noConnect) delete pin.noConnect;
+}
+
+function assignSignal(h: Harness, m: NetMember, rawName: string, cls?: NetClass, settings?: Settings) {
   const name = rawName.trim();
   const cur = netOfPin(h, m.connectorId, m.cavityId);
+  // "NC" and its aliases mark the pin no-connect: it leaves any net and never gets a wire (not a net called NC).
+  if (isNoConnectName(settings, name)) {
+    if (cur) setPinNet(h, m, null);
+    setNoConnect(h, m, true);
+    return;
+  }
+  setNoConnect(h, m, false);
   if (!name) {
     if (cur) setPinNet(h, m, null);
     return;
@@ -411,7 +430,35 @@ export const setPinSignals = def<{ connectorId: string; entries: { cavityId: str
   label: (p) => (p.entries.length === 1 ? `Set ${p.entries[0]!.cavityId} = ${p.entries[0]!.name || "(none)"}` : `Set ${p.entries.length} signals`),
   run(proj, p) {
     const h = H(proj);
-    for (const e of p.entries) assignSignal(h, { connectorId: p.connectorId, cavityId: e.cavityId }, e.name);
+    for (const e of p.entries) assignSignal(h, { connectorId: p.connectorId, cavityId: e.cavityId }, e.name, undefined, proj.settings);
+  },
+});
+
+/**
+ * Mark every pin that has no signal as no-connect (or clear NC markings). Skips pins on a net, wired spares and
+ * drain pins; coax/twinax cavities are included (they also need a decision).
+ */
+export const markNoConnect = def<{ connectorIds: string[]; cavityIds?: string[]; clear?: boolean }>("markNoConnect", {
+  label: (p) => (p.clear ? "Clear no-connect" : p.cavityIds ? "Mark pins no-connect" : "Mark unused pins no-connect"),
+  run(proj, p, { cat }) {
+    const h = H(proj);
+    const drains = new Set(h.terminations.flatMap((t) => (t.method === "drainToPin" && t.drainPin ? [memberKey(t.drainPin)] : [])));
+    for (const cid of p.connectorIds) {
+      const c = connectorById(h, cid);
+      const part = c && cat.connector(c.pn);
+      if (!c || !part) continue;
+      for (const cav of part.arrangement.cavities) {
+        if (p.cavityIds && !p.cavityIds.includes(cav.id)) continue;
+        const m = { connectorId: c.id, cavityId: cav.id };
+        if (p.clear) {
+          setNoConnect(h, m, false);
+          continue;
+        }
+        const pin = c.pins[cav.id];
+        if (pin?.netId || pin?.filler || drains.has(memberKey(m))) continue;
+        setNoConnect(h, m, true);
+      }
+    }
   },
 });
 

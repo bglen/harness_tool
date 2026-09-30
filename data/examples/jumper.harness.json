@@ -42,7 +42,16 @@
     "cutResolutionMm": 1,
     "packingFactor": 1.2,
     "defaultLabelDistanceMm": 50,
-    "wiredSpares": false
+    "wiredSpares": false,
+    "noConnectAliases": [
+      "NC",
+      "N/C",
+      "N.C.",
+      "NO_CONNECT",
+      "NOCONNECT",
+      "NO CONNECT"
+    ],
+    "noConnectLabel": "NC"
   },
   "pedigreeScheme": {
     "id": "standard",
@@ -174,6 +183,18 @@
               },
               "10": {
                 "netId": "8e15187a-d63a-41b6-a2f1-2a875cfb2561"
+              },
+              "11": {
+                "netId": null,
+                "noConnect": true
+              },
+              "12": {
+                "netId": null,
+                "noConnect": true
+              },
+              "13": {
+                "netId": null,
+                "noConnect": true
               }
             },
             "showUnused": false,
@@ -225,6 +246,18 @@
               },
               "10": {
                 "netId": "8e15187a-d63a-41b6-a2f1-2a875cfb2561"
+              },
+              "11": {
+                "netId": null,
+                "noConnect": true
+              },
+              "12": {
+                "netId": null,
+                "noConnect": true
+              },
+              "13": {
+                "netId": null,
+                "noConnect": true
               }
             },
             "showUnused": false,
@@ -279,6 +312,7 @@
                 "cavityId": "1"
               }
             ],
+            "links": [],
             "currentA": 2
           },
           {
@@ -297,6 +331,7 @@
                 "cavityId": "2"
               }
             ],
+            "links": [],
             "currentA": 2
           },
           {
@@ -314,7 +349,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "3"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "2a389810-8625-40a6-a448-977dbc413719",
@@ -331,7 +367,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "4"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "67683e81-d5bd-45f2-a5a2-0eacfa8bdedd",
@@ -348,7 +385,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "5"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "99567eb6-652d-44a6-a539-db2b4ab63709",
@@ -365,7 +403,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "6"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "d6862527-9e83-4ed2-a37c-f35ac913b4dd",
@@ -382,7 +421,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "7"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "1ef731d4-63f5-4a36-a425-84495e596421",
@@ -399,7 +439,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "8"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "5c26d845-4447-405a-a937-8aa82a180eed",
@@ -416,7 +457,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "9"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "8e15187a-d63a-41b6-a2f1-2a875cfb2561",
@@ -433,7 +475,8 @@
                 "connectorId": "456d99e3-881d-4c6e-afd2-e3543d3a3b79",
                 "cavityId": "10"
               }
-            ]
+            ],
+            "links": []
           }
         ],
         "wires": [

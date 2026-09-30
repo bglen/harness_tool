@@ -2,7 +2,7 @@ import { current, isDraft } from "immer";
 import type { CatalogIndex } from "./catalog";
 import { sameColor } from "./colors";
 import { derive, diameterUnderLayer, shortestPath, buildAdjacency, type Derived } from "./derive";
-import { currentRevision, defaultColorFor, defaultGaugeForEnds, memberKey, nextLabel, pairKey, prune, uid } from "./helpers";
+import { currentRevision, defaultColorFor, defaultGaugeForEnds, isNoConnectName, memberKey, nextLabel, pairKey, prune, uid } from "./helpers";
 import { resolvePedigree } from "./pedigree";
 import type { Harness, Label, Net, Project, Settings, Termination, Wire, WireEnd } from "./schema";
 
@@ -154,6 +154,21 @@ function ensureConnectorNodes(h: Harness) {
   prune(h, "segments", (s) => nodeIds.has(s.a) && nodeIds.has(s.b) && s.a !== s.b);
 }
 
+/** Nets named like "NC" (from older files or imports) become no-connect pins instead of a real net. */
+function convertNoConnectNets(h: Harness, settings: Settings, repairs?: string[]) {
+  const nc = plain(h).nets.filter((n) => isNoConnectName(settings, n.name));
+  if (!nc.length) return;
+  for (const n of nc) {
+    for (const m of n.members) {
+      const c = h.connectors.find((x) => x.id === m.connectorId);
+      if (c) (c.pins[m.cavityId] ??= { netId: null }).noConnect = true;
+    }
+    repairs?.push(`"${n.name}" is a no-connect name: its ${n.members.length} pin${n.members.length === 1 ? "" : "s"} are now marked no-connect instead of joined by wires.`);
+  }
+  const ids = new Set(nc.map((n) => n.id));
+  prune(h, "nets", (n) => !ids.has(n.id));
+}
+
 function cleanNets(h: Harness, cat: CatalogIndex, repairs?: string[]) {
   const snap = plain(h);
   const cavities = new Map<string, Set<string>>();
@@ -196,8 +211,12 @@ function cleanNets(h: Harness, cat: CatalogIndex, repairs?: string[]) {
     for (const [cav, pin] of Object.entries(c.pins)) {
       const key = `${c.id}:${cav}`;
       const w = want.get(key) ?? null;
-      if (!cavities.get(c.id)?.has(cav) || (!w && !pin.contactPn && !pin.filler)) delete dc.pins[cav];
-      else if (pin.netId !== w) dc.pins[cav]!.netId = w;
+      if (!cavities.get(c.id)?.has(cav) || (!w && !pin.contactPn && !pin.filler && !pin.noConnect)) delete dc.pins[cav];
+      else {
+        if (pin.netId !== w) dc.pins[cav]!.netId = w;
+        // A pin on a net can't also be no-connect.
+        if (w && pin.noConnect) delete dc.pins[cav]!.noConnect;
+      }
     }
     for (const [key, netId] of want) {
       if (!key.startsWith(`${c.id}:`)) continue;
@@ -627,6 +646,7 @@ export function normalize(p: Project, ctx: SyncContext): void {
     return r;
   };
   tm("nodes", () => ensureConnectorNodes(h));
+  tm("nc", () => convertNoConnectNets(h, p.settings, ctx.repairs));
   tm("nets", () => cleanNets(h, cat, ctx.repairs));
   tm("splices", () => syncSplices(h, cat));
   tm("wires", () => syncWires(h, p.settings, cat, p.settings.autoCommit, ctx.repairs));

@@ -6,6 +6,7 @@ import {
   applyPreset,
   CatalogIndex,
   currentHarness,
+  markNoConnect,
   newProject,
   seededUids,
   setBackshell,
@@ -74,6 +75,8 @@ export function buildExamples(bundle: CatalogBundle, _caps: Record<string, unkno
       setBackshell({ id: P2, backshell: { pn: cat.backshellsFor(11).find((b) => b.style === "strainRelief" && b.angle === 0)!.pn, clockingDeg: 0, auto: true } }),
     ]);
     restore();
+    // Unused cavities are explicitly marked no-connect (good practice the examples should show).
+    p = run(p, cat, [markNoConnect({ connectorIds: currentHarness(p).connectors.map((c) => c.id) })]);
     out.push({ id: "jumper", name: "2-connector 38999 jumper", description: "Two D38999/26 plugs, 10 signals, three twisted pairs, 36 in.", project: p });
   }
 
@@ -150,6 +153,7 @@ export function buildExamples(bundle: CatalogBundle, _caps: Record<string, unkno
     };
     p = run(p, cat, [applyPreset({ preset })]);
     restore();
+    p = run(p, cat, [markNoConnect({ connectorIds: currentHarness(p).connectors.map((c) => c.id) })]);
     out.push({ id: "branched", name: "4-connector branched harness", description: "Receptacle to three plugs through a breakout; shielded twisted pair, overbraid, band clamps, labels.", project: p });
   }
   return out;

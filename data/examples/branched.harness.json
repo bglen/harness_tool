@@ -42,7 +42,16 @@
     "cutResolutionMm": 1,
     "packingFactor": 1.2,
     "defaultLabelDistanceMm": 50,
-    "wiredSpares": false
+    "wiredSpares": false,
+    "noConnectAliases": [
+      "NC",
+      "N/C",
+      "N.C.",
+      "NO_CONNECT",
+      "NOCONNECT",
+      "NO CONNECT"
+    ],
+    "noConnectLabel": "NC"
   },
   "pedigreeScheme": {
     "id": "standard",
@@ -198,6 +207,82 @@
               },
               "18": {
                 "netId": "21eecb50-73b0-4c82-a9cb-5d01d3a2a80d"
+              },
+              "19": {
+                "netId": null,
+                "noConnect": true
+              },
+              "20": {
+                "netId": null,
+                "noConnect": true
+              },
+              "21": {
+                "netId": null,
+                "noConnect": true
+              },
+              "22": {
+                "netId": null,
+                "noConnect": true
+              },
+              "23": {
+                "netId": null,
+                "noConnect": true
+              },
+              "24": {
+                "netId": null,
+                "noConnect": true
+              },
+              "25": {
+                "netId": null,
+                "noConnect": true
+              },
+              "26": {
+                "netId": null,
+                "noConnect": true
+              },
+              "27": {
+                "netId": null,
+                "noConnect": true
+              },
+              "28": {
+                "netId": null,
+                "noConnect": true
+              },
+              "29": {
+                "netId": null,
+                "noConnect": true
+              },
+              "30": {
+                "netId": null,
+                "noConnect": true
+              },
+              "31": {
+                "netId": null,
+                "noConnect": true
+              },
+              "32": {
+                "netId": null,
+                "noConnect": true
+              },
+              "33": {
+                "netId": null,
+                "noConnect": true
+              },
+              "34": {
+                "netId": null,
+                "noConnect": true
+              },
+              "35": {
+                "netId": null,
+                "noConnect": true
+              },
+              "36": {
+                "netId": null,
+                "noConnect": true
+              },
+              "37": {
+                "netId": null,
+                "noConnect": true
               }
             },
             "showUnused": false,
@@ -237,6 +322,34 @@
               },
               "6": {
                 "netId": "b95c4df5-fb69-48fa-abc6-10d8698bbbe5"
+              },
+              "7": {
+                "netId": null,
+                "noConnect": true
+              },
+              "8": {
+                "netId": null,
+                "noConnect": true
+              },
+              "9": {
+                "netId": null,
+                "noConnect": true
+              },
+              "10": {
+                "netId": null,
+                "noConnect": true
+              },
+              "11": {
+                "netId": null,
+                "noConnect": true
+              },
+              "12": {
+                "netId": null,
+                "noConnect": true
+              },
+              "13": {
+                "netId": null,
+                "noConnect": true
               }
             },
             "showUnused": false,
@@ -282,6 +395,62 @@
               },
               "8": {
                 "netId": "a2d9817d-da29-4f2a-adc2-e9806088cff5"
+              },
+              "9": {
+                "netId": null,
+                "noConnect": true
+              },
+              "10": {
+                "netId": null,
+                "noConnect": true
+              },
+              "11": {
+                "netId": null,
+                "noConnect": true
+              },
+              "12": {
+                "netId": null,
+                "noConnect": true
+              },
+              "13": {
+                "netId": null,
+                "noConnect": true
+              },
+              "14": {
+                "netId": null,
+                "noConnect": true
+              },
+              "15": {
+                "netId": null,
+                "noConnect": true
+              },
+              "16": {
+                "netId": null,
+                "noConnect": true
+              },
+              "17": {
+                "netId": null,
+                "noConnect": true
+              },
+              "18": {
+                "netId": null,
+                "noConnect": true
+              },
+              "19": {
+                "netId": null,
+                "noConnect": true
+              },
+              "20": {
+                "netId": null,
+                "noConnect": true
+              },
+              "21": {
+                "netId": null,
+                "noConnect": true
+              },
+              "22": {
+                "netId": null,
+                "noConnect": true
               }
             },
             "showUnused": false,
@@ -315,6 +484,14 @@
               },
               "4": {
                 "netId": "21eecb50-73b0-4c82-a9cb-5d01d3a2a80d"
+              },
+              "5": {
+                "netId": null,
+                "noConnect": true
+              },
+              "6": {
+                "netId": null,
+                "noConnect": true
               }
             },
             "showUnused": false,
@@ -422,6 +599,7 @@
                 "cavityId": "1"
               }
             ],
+            "links": [],
             "currentA": 3
           },
           {
@@ -439,7 +617,8 @@
                 "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
                 "cavityId": "2"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "33239bdb-da86-4716-adff-53c6ede25d61",
@@ -456,7 +635,8 @@
                 "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
                 "cavityId": "3"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "86d60ec4-869a-4be6-a435-1e75d07a5ff5",
@@ -473,7 +653,8 @@
                 "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
                 "cavityId": "4"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "c405b535-fbda-4ffa-aa85-e01cd8e77239",
@@ -490,7 +671,8 @@
                 "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
                 "cavityId": "5"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "b95c4df5-fb69-48fa-abc6-10d8698bbbe5",
@@ -507,7 +689,8 @@
                 "connectorId": "a6fc54c1-6cfc-4f12-a9a7-31faf0d7d38d",
                 "cavityId": "6"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "7c2ca784-d070-4a56-a750-29d1115b6f31",
@@ -525,6 +708,7 @@
                 "cavityId": "1"
               }
             ],
+            "links": [],
             "currentA": 3
           },
           {
@@ -542,7 +726,8 @@
                 "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
                 "cavityId": "2"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "f68bf466-2b2a-47fe-aa32-cabb1dd86681",
@@ -559,7 +744,8 @@
                 "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
                 "cavityId": "3"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "c49db431-7360-4d5a-a653-1e34f8f12085",
@@ -576,7 +762,8 @@
                 "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
                 "cavityId": "4"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "876e0dc0-5468-433e-a4a0-b8cd54d2edb9",
@@ -593,7 +780,8 @@
                 "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
                 "cavityId": "5"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "3efd0113-1cc6-47b2-abd9-a026ad5b243d",
@@ -610,7 +798,8 @@
                 "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
                 "cavityId": "6"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "01cd5aa2-dce0-47c6-af55-537765da99f9",
@@ -627,7 +816,8 @@
                 "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
                 "cavityId": "7"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "a2d9817d-da29-4f2a-adc2-e9806088cff5",
@@ -644,7 +834,8 @@
                 "connectorId": "69ccae50-3376-47f8-a7cf-cee130c2b1ad",
                 "cavityId": "8"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "65a9db0c-47e1-4be6-aa41-6c1930c60d41",
@@ -662,6 +853,7 @@
                 "cavityId": "1"
               }
             ],
+            "links": [],
             "currentA": 3
           },
           {
@@ -679,7 +871,8 @@
                 "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
                 "cavityId": "2"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "d97dbea3-c5c0-420e-acf6-06bac2e9e4e1",
@@ -696,7 +889,8 @@
                 "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
                 "cavityId": "3"
               }
-            ]
+            ],
+            "links": []
           },
           {
             "id": "21eecb50-73b0-4c82-a9cb-5d01d3a2a80d",
@@ -713,7 +907,8 @@
                 "connectorId": "215ba1a3-3b2e-49b2-a4e5-c99018ea4991",
                 "cavityId": "4"
               }
-            ]
+            ],
+            "links": []
           }
         ],
         "wires": [

@@ -8,6 +8,7 @@ import {
   effectiveTopology,
   extentCoverage,
   joinKind,
+  markNoConnect,
   formatWireColor,
   isAutoNetName,
   resolveLabelTemplate,
@@ -785,6 +786,35 @@ export const RULE_TYPES: RuleType[] = [
             fix: { label: "Use a splice", commands: [setNetProps({ ids: [n.id], topology: "splice" })] },
           };
         });
+    },
+  },
+  {
+    id: "unspecified_pins",
+    name: "Pin neither assigned nor marked no-connect",
+    description: "Every cavity needs a decision: a signal, a wired spare, or an explicit no-connect (type NC). Blank pins are treated as not yet decided.",
+    example: "P1-7 has no signal and isn't marked NC.",
+    category: "Documentation",
+    params: [],
+    depends: ["connector", "net", "termination"],
+    evaluate(ctx) {
+      const out: Violation[] = [];
+      for (const c of ctx.h.connectors) {
+        const part = ctx.cat.connector(c.pn);
+        if (!part) continue;
+        const open = part.arrangement.cavities.filter((cav) => {
+          const pin = c.pins[cav.id];
+          return !pin?.netId && !pin?.noConnect && !pin?.filler;
+        });
+        if (!open.length) continue;
+        const ids = open.map((x) => x.id);
+        out.push({
+          objectIds: [c.id],
+          objectKind: "connector",
+          message: `${c.refDes}: ${ids.length} pin${ids.length > 1 ? "s" : ""} (${ids.slice(0, 8).join(", ")}${ids.length > 8 ? ", …" : ""}) ${ids.length > 1 ? "have" : "has"} no signal and ${ids.length > 1 ? "aren't" : "isn't"} marked no-connect.`,
+          fix: { label: `Mark ${ids.length} as NC`, commands: [markNoConnect({ connectorIds: [c.id], cavityIds: ids })] },
+        });
+      }
+      return out;
     },
   },
   {

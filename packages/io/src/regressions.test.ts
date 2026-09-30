@@ -62,7 +62,7 @@ import {
 import { DfmCache, runDfm, violationKey, type DfmSummary } from "@hs/dfm";
 import { buildQuoteSummary, computeBom, deriveOperations, purchaseQty, summaryHash } from "@hs/ops";
 import { loadTestCatalog } from "../../model/src/test-catalog";
-import { toCsv, wireListTable } from "./index";
+import { pinoutTable, toCsv, wireListTable } from "./index";
 
 const cat = loadTestCatalog();
 const PUB = join(import.meta.dirname, "..", "..", "..", "apps", "web", "public", "catalog");
@@ -455,6 +455,51 @@ describe("multi-pin nets: parallel wires", () => {
     expect(currentHarness(daisy).wires).toHaveLength(5);
     const q = net3x3(["4", "5"]);
     expect(() => run(q, [setNetProps({ ids: [currentHarness(q).nets[0]!.id], topology: "parallel" })])).toThrow(/two connectors with the same count/);
+  });
+});
+
+describe("no-connect pins", () => {
+  const nc = (p: Project, c: string) => Object.entries(currentHarness(p).connectors.find((x) => x.id === c)!.pins).filter(([, v]) => v.noConnect).map(([k]) => k).sort();
+  const unspecified = (p: Project) => runDfm({ project: p, cat, profile }).results.find((r) => r.eff.rule.type === "unspecified_pins")!;
+
+  it("typing NC (any alias, any case) marks the pin no-connect: no net, no wire, no merging", () => {
+    const p = run(wired(1, "nc1"), [setPinSignals({ connectorId: "A", entries: [{ cavityId: "5", name: "NC" }, { cavityId: "6", name: "n/c" }] }), setPinSignals({ connectorId: "B", entries: [{ cavityId: "5", name: "No Connect" }] })]);
+    const h = currentHarness(p);
+    expect(h.nets.map((n) => n.name)).toEqual(["SIG_1"]);
+    expect(h.wires).toHaveLength(1);
+    expect(nc(p, "A")).toEqual(["5", "6"]);
+    expect(nc(p, "B")).toEqual(["5"]);
+    const pin = toCsv(pinoutTable(p, cat)).split("\n").find((l) => l.includes(",5,") && l.startsWith(h.connectors[0]!.refDes))!;
+    expect(pin).toMatch(/,NC,no connect,/);
+  });
+
+  it("naming or connecting an NC pin clears the NC mark", () => {
+    let p = run(wired(1, "nc2"), [setPinSignals({ connectorId: "A", entries: [{ cavityId: "5", name: "NC" }] })]);
+    p = run(p, [setPinSignals({ connectorId: "A", entries: [{ cavityId: "5", name: "SPARE_OUT" }] })]);
+    expect(nc(p, "A")).toEqual([]);
+    p = run(p, [setPinSignals({ connectorId: "A", entries: [{ cavityId: "6", name: "NC" }] }), connectPins({ pairs: [{ a: { connectorId: "A", cavityId: "6" }, b: { connectorId: "B", cavityId: "6" } }] })]);
+    expect(nc(p, "A")).toEqual([]);
+  });
+
+  it("an existing net named NC (old file or import) is converted, with a message", () => {
+    const p = wired(1, "nc3");
+    const q = structuredClone(p);
+    currentHarness(q).nets.push({ id: "ncnet", name: "NC", cls: "signal", topology: "daisy", topologyConfirmed: false, members: [{ connectorId: "A", cavityId: "7" }, { connectorId: "B", cavityId: "7" }], links: [] });
+    const r = applyCommand(q, setProjectProps({ name: "x" }), ctx);
+    expect(currentHarness(r.project).nets.map((n) => n.name)).toEqual(["SIG_1"]);
+    expect(nc(r.project, "A")).toEqual(["7"]);
+    expect(r.repairs.join(" ")).toMatch(/no-connect name/);
+  });
+
+  it("the check flags undecided pins and its fix marks them NC", () => {
+    const p = wired(1, "nc4");
+    const r = unspecified(p);
+    expect(r.status).toBe("fail");
+    const cavities = cat.connector(SOCKET)!.arrangement.cavities.length;
+    expect(r.violations.find((v) => v.objectIds.includes("A"))!.message).toMatch(new RegExp(`${cavities - 1} pins`));
+    const fixed = run(p, r.violations.flatMap((v) => v.fix!.commands));
+    expect(unspecified(fixed).status).toBe("pass");
+    expect(nc(fixed, "A")).toHaveLength(cavities - 1);
   });
 });
 

@@ -741,6 +741,7 @@ export function Canvas() {
               wiresByPin={perConn.get(c.id)!.wires}
               potted={potted.has(c.id)}
               flash={flashSet.has(c.id)}
+              ncLabel={project.settings.noConnectLabel}
             />
           ))}
           <NotesLayer notes={h.notes} theme={theme} selected={sel.kind === "note" ? selSet : EMPTY} offset={drag?.kind === "note" && drag.moved ? { id: drag.id, dx: drag.cur.x - drag.start.x, dy: drag.cur.y - drag.start.y } : null} />
@@ -829,7 +830,9 @@ const EMPTY = new Set<string>();
 /** Inline signal-name editor: Enter moves down, Tab/Shift+Tab next/previous, paste a column fills downward (§5.4). */
 function PinEditor({ h, connectorId, cavityId, layout, screen, width, height, fontSize }: { h: Harness; connectorId: string; cavityId: string; layout: ConnLayout; screen: Point; width: number; height: number; fontSize: number }) {
   const ui = useUi.getState();
-  const cur = netOfPin(h, connectorId, cavityId)?.name ?? "";
+  const ncLabel = useProject.getState().project?.settings.noConnectLabel ?? "NC";
+  const isNc = !!h.connectors.find((c) => c.id === connectorId)?.pins[cavityId]?.noConnect;
+  const cur = netOfPin(h, connectorId, cavityId)?.name ?? (isNc ? ncLabel : "");
   const inputRef = useRef<HTMLInputElement>(null);
   const names = useMemo(() => [...new Set(h.nets.map((n) => n.name))].sort(), [h.nets]);
   const rows = layout.rows.filter((r) => !r.special);
@@ -887,6 +890,7 @@ function PinEditor({ h, connectorId, cavityId, layout, screen, width, height, fo
         }}
       />
       <datalist id="hs-net-names">
+        <option value={ncLabel}>No connect</option>
         {names.map((n) => (
           <option key={n} value={n} />
         ))}

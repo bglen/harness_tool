@@ -19,6 +19,8 @@ export const PinAssignmentSchema = z.object({
   contactPn: z.string().optional(),
   /** Wired spare / filler contact instead of sealing plug. */
   filler: z.boolean().optional(),
+  /** Deliberately left unconnected ("NC"): never on a net, never wired, sealed with a plug. */
+  noConnect: z.boolean().optional(),
 });
 export type PinAssignment = z.infer<typeof PinAssignmentSchema>;
 
@@ -479,6 +481,10 @@ export const SettingsSchema = z.object({
   packingFactor: z.number().default(1.2),
   defaultLabelDistanceMm: z.number().default(50),
   wiredSpares: z.boolean().default(false),
+  /** Signal names that mean "no connect" rather than a net (compared case-insensitively, ignoring spaces). */
+  noConnectAliases: z.array(z.string()).default(["NC", "N/C", "N.C.", "NO_CONNECT", "NOCONNECT", "NO CONNECT"]),
+  /** How no-connect pins are shown on pin cards, pinouts and drawings. */
+  noConnectLabel: z.string().default("NC"),
 });
 export type Settings = z.infer<typeof SettingsSchema>;
 

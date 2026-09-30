@@ -58,6 +58,16 @@ export function currentHarness(p: Project): Harness {
   return currentRevision(p).harness;
 }
 
+const DEFAULT_NC = ["NC", "N/C", "N.C.", "NO_CONNECT", "NOCONNECT", "NO CONNECT"];
+
+/** Is this signal name one of the project's no-connect aliases (case-insensitive, spaces ignored)? */
+export function isNoConnectName(settings: Pick<Settings, "noConnectAliases"> | undefined, name: string): boolean {
+  const norm = (s: string) => s.toUpperCase().replace(/\s+/g, "");
+  const n = norm(name);
+  if (!n) return false;
+  return (settings?.noConnectAliases ?? DEFAULT_NC).some((a) => norm(a) === n);
+}
+
 export function memberKey(m: NetMember): string {
   return `${m.connectorId}:${m.cavityId}`;
 }

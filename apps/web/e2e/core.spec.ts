@@ -60,7 +60,7 @@ test("example opens; unreviewed reference data is never claimed ready", async ({
   // Seed/unreviewed catalog data (insert geometry, tooling) blocks the "ready" claim (FIX-10).
   await expect(page.getByText("Needs review before it can be called ready").first()).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("Ready for automated build")).toHaveCount(0);
-  await expect(page.getByText("51 checks", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("52 checks", { exact: false }).first()).toBeVisible();
   await expect(page.getByText("Saved on this device")).toBeVisible({ timeout: 10_000 });
 });
 

@@ -25,6 +25,8 @@ interface Props {
   wiresByPin: Map<string, Wire[]>;
   potted: boolean;
   flash: boolean;
+  /** Label shown on no-connect pins (project setting). */
+  ncLabel: string;
 }
 
 function Glyph({ c, L, cat, theme, potted }: { c: ConnectorInstance; L: ConnLayout; cat: CatalogIndex; theme: "dark" | "light"; potted: boolean }) {
@@ -110,7 +112,7 @@ function ColorRect({ color, x, y, theme }: { color: Wire["color"]; x: number; y:
   );
 }
 
-export const ConnectorView = memo(function ConnectorView({ c, L, level, names, cat, theme, selected, selectedPins, severity, editingCavity, dragTargets, dimmed, wiresByPin, potted, flash }: Props) {
+export const ConnectorView = memo(function ConnectorView({ c, L, level, names, cat, theme, selected, selectedPins, severity, editingCavity, dragTargets, dimmed, wiresByPin, potted, flash, ncLabel }: Props) {
   const part = cat.connector(c.pn);
   const { card } = L;
   const accent = semantic("accent", theme);
@@ -192,8 +194,8 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
               {r.cavityId}
             </text>
             {!editing && (
-              <text className="mono" x={colSig} y={r.y + 4} fontSize={11.5} fill={name ? tp : tt} data-hit="signal" data-id={key}>
-                {r.special ? "coax/twinax (Phase 2)" : name ? (name.length > (wide ? 14 : 16) ? name.slice(0, wide ? 13 : 15) + "…" : name) : "—"}
+              <text className="mono" x={colSig} y={r.y + 4} fontSize={11.5} fill={name ? tp : tt} fontStyle={!name && pin?.noConnect ? "italic" : undefined} data-hit="signal" data-id={key}>
+                {name ? (name.length > (wide ? 14 : 16) ? name.slice(0, wide ? 13 : 15) + "…" : name) : pin?.noConnect ? ncLabel : r.special ? "coax/twinax (Phase 2)" : "—"}
               </text>
             )}
             {w && (

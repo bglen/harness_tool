@@ -38,7 +38,9 @@ export function pinoutTable(project: Project, cat: CatalogIndex, rev: Revision =
       const net = pin?.netId ? h.nets.find((n) => n.id === pin.netId) : undefined;
       const w = h.wires.find((x) => [x.from, x.to].some((e) => e.kind === "pin" && e.connectorId === c.id && e.cavityId === cav.id));
       const contact = net || pin?.filler ? contactPnFor(h, cat, c.id, cav.id, w?.gauge) ?? "" : cat.sealingPlug(cav.size)?.pn ?? "";
-      rows.push([c.refDes, c.pn, cav.id, cav.size, net?.name ?? "", net ? "" : "spare", w?.label ?? "", w?.gauge ?? "", w ? formatWireColor(w.color) : "", contact]);
+      const nc = !net && pin?.noConnect;
+      const status = net ? "" : nc ? "no connect" : pin?.filler ? "wired spare" : "unassigned";
+      rows.push([c.refDes, c.pn, cav.id, cav.size, net?.name ?? (nc ? project.settings.noConnectLabel : ""), status, w?.label ?? "", w?.gauge ?? "", w ? formatWireColor(w.color) : "", contact]);
     }
   }
   return { name: "Pinouts", header: ["RefDes", "Connector PN", "Cavity", "Contact size", "Signal", "Status", "Wire ID", "Gauge (AWG)", "Color", "Contact / plug PN"], rows };
