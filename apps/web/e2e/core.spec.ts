@@ -97,6 +97,22 @@ test("schematic is the default view; Tab flips to the bundle layout and back", a
   await expect(page.locator("[data-hit='segment']")).toHaveCount(0);
 });
 
+test("fitted backshells are drawn on the connector in both views; clicking one opens the picker", async ({ page }) => {
+  await page.goto("/");
+  await page.getByText("open an example", { exact: false }).click();
+  // The jumper example fits a straight strain-relief backshell to both connectors
+  const tags = page.locator("[data-hit='backshell']");
+  await expect(tags).toHaveCount(2, { timeout: 15_000 });
+  await expect(tags.first()).toContainText("Strain relief");
+  await page.keyboard.press("Tab");
+  await expect(tags).toHaveCount(2);
+  await tags.first().click();
+  await expect(page.getByText(/^Backshell for P\d$/)).toBeVisible();
+  // Removing it removes the drawing
+  await page.getByRole("button", { name: "None", exact: true }).click();
+  await expect(tags).toHaveCount(1);
+});
+
 test("three connectors: combine two bundles into a trunk and re-attach a branch", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText("Add your first connector")).toBeVisible();

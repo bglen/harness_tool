@@ -2,6 +2,7 @@ import { memo } from "react";
 import { formatWireColor, type CatalogIndex, type ConnectorInstance, type Severity, type Wire } from "@hs/model";
 import { needsCasing, semantic, wireColor } from "@hs/ui-tokens";
 import { ROW_H, HEADER_H, type ConnLayout, type ZoomLevel } from "../lib/geometry";
+import { BackshellShape, backshellLabel, bendOf, bendReach, REAR } from "./BackshellGlyph";
 
 export interface RowState {
   valid?: boolean;
@@ -62,17 +63,35 @@ function Glyph({ c, L, cat, theme, potted }: { c: ConnectorInstance; L: ConnLayo
           <rect x={mount === "jam nut" ? 32 : 26} y={7} width={mount === "jam nut" ? 16 : 22} height={h - 14} rx={2} fill={fill} stroke={stroke} strokeWidth={1} />
         </>
       )}
-      {/* backshell */}
-      {bs &&
-        (bs.angle === 90 ? (
-          <path d={`M48,${9} h10 a10,10 0 0 1 10,10 v${h / 2} h-10 v-${h / 2 - 6} a4,4 0 0 0 -4,-4 h-6z`} fill={fill} stroke={stroke} strokeWidth={1} />
-        ) : bs.angle === 45 ? (
-          <path d={`M48,9 h8 l12,-10 v6 l-8,${h - 6} h-12z`} fill={fill} stroke={stroke} strokeWidth={1} />
-        ) : (
-          <path d={`M48,9 h14 l6,4 v${h - 26} l-6,4 h-14z`} fill={fill} stroke={stroke} strokeWidth={1} />
-        ))}
-      {bs?.bandPlatform && <rect x={60} y={11} width={3} height={h - 22} fill={stroke} opacity={0.7} />}
+      {bs && c.backshell && <BackshellShape bs={bs} fit={c.backshell} h={h} theme={theme} />}
       {potted && <rect x={44} y={10} width={6} height={h - 20} fill={stroke} />}
+    </g>
+  );
+}
+
+/**
+ * Click target over a fitted backshell (drawn after the card's hit area so it wins) with its name underneath.
+ * Clicking opens the backshell picker.
+ */
+function BackshellTag({ c, L, cat, theme, level }: { c: ConnectorInstance; L: ConnLayout; cat: CatalogIndex; theme: "dark" | "light"; level: ZoomLevel }) {
+  const bs = c.backshell ? cat.backshell(c.backshell.pn) : undefined;
+  if (!bs || !c.backshell) return null;
+  const { x, y, w, h } = L.glyph;
+  // Backshell span in canvas coordinates (the glyph is mirrored for left-facing connectors).
+  const x0 = L.facing === 1 ? x + REAR : x;
+  const x1 = L.facing === 1 ? x + w : x + w - REAR;
+  const bend = bs.angle ? bendOf(c.backshell.clockingDeg) : null;
+  const extra = bend === "up" || bend === "down" ? bendReach(bs.angle, h) : 0;
+  const clocking = bs.angle ? `, clocked ${c.backshell.clockingDeg}° (${bend === "toward" ? "toward the viewer" : bend === "away" ? "away from the viewer" : bend})` : "";
+  return (
+    <g data-hit="backshell" data-id={c.id} style={{ cursor: "pointer" }}>
+      <title>{`Backshell ${bs.pn}: ${bs.description}${clocking}. Clamp ${bs.clampMinMm}–${bs.clampMaxMm} mm${c.backshell.auto ? ", size follows the design" : ""}. Click to change.`}</title>
+      <rect x={x0 - 2} y={y - (bend === "up" ? extra : 0) - 2} width={x1 - x0 + 4} height={h + extra + 4} fill="transparent" />
+      {level !== "overview" && (
+        <text x={x + w / 2} y={y + h + (bend === "down" ? extra : 0) + 11} fontSize={9} textAnchor="middle" fill={semantic("text.secondary", theme)}>
+          {backshellLabel(bs)}
+        </text>
+      )}
     </g>
   );
 }
@@ -158,6 +177,7 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
             </>
           )}
         </g>
+        <BackshellTag c={c} L={L} cat={cat} theme={theme} level={level} />
         {severity && (
           <g transform={`translate(${card.x + card.w - 6},${card.y - 6})`} data-hit="badge" data-id={c.id}>
             <circle r={7} fill={surface} />
@@ -202,6 +222,7 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
           </g>
         )}
       </g>
+      <BackshellTag c={c} L={L} cat={cat} theme={theme} level={level} />
       <FaceThumb c={c} L={L} cat={cat} theme={theme} cx={card.x + card.w - 22} cy={card.y + 22} r={16} />
       <line x1={card.x} x2={card.x + card.w} y1={card.y + HEADER_H - 3} y2={card.y + HEADER_H - 3} stroke={border} />
       {L.rows.map((r) => {

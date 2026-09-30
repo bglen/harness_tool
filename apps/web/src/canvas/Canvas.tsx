@@ -340,6 +340,10 @@ export function Canvas() {
       setLengthEdit({ segId: s.id, screen: { x: e.clientX, y: e.clientY }, value: formatLength(s.lengthMm, project.units, { unit: true }).replace(" ", "") });
     }
     if (hit.hit === "chip-od") ui.openPopover({ kind: "covering", screen: { x: e.clientX, y: e.clientY }, data: { ids: [hit.id] } });
+    if (hit.hit === "backshell") {
+      ui.select("connector", [hit.id]);
+      ui.openPopover({ kind: "backshell", screen: { x: e.clientX, y: e.clientY + 12 }, data: { ids: [hit.id] } });
+    }
     if (hit.hit === "face") ui.openPopover({ kind: "face", screen: { x: e.clientX, y: e.clientY }, data: { connectorId: hit.id } });
     if (hit.hit === "badge") ui.openDialog("dfm", { objectId: hit.id });
   };
@@ -573,7 +577,7 @@ export function Canvas() {
   const onContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     const hit = hitAt(e);
-    const kinds: Record<string, Parameters<typeof ui.select>[0]> = { connector: "connector", pin: "pin", signal: "pin", wire: "wire", segment: "segment", node: "node", label: "label", splice: "splice", note: "note", clamp: "clamp", boot: "boot", hardware: "hardware", shield: "shield", "chip-length": "segment" };
+    const kinds: Record<string, Parameters<typeof ui.select>[0]> = { connector: "connector", backshell: "connector", pin: "pin", signal: "pin", wire: "wire", segment: "segment", node: "node", label: "label", splice: "splice", note: "note", clamp: "clamp", boot: "boot", hardware: "hardware", shield: "shield", "chip-length": "segment" };
     if (hit && kinds[hit.hit]) {
       const k = kinds[hit.hit]!;
       if (!(ui.selection.kind === k && selSet.has(hit.id))) ui.select(k, [hit.id]);

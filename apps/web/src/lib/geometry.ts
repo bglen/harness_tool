@@ -11,6 +11,8 @@ export const COMPACT_W = 168;
 export const COMPACT_H = 44;
 export const GLYPH_W = 70;
 export const GLYPH_H = 40;
+/** Extra glyph length when a backshell is fitted (drawn behind the connector body, toward the card). */
+export const BACKSHELL_W = 14;
 export const LANE = 2.4;
 export const COLLAPSE_OVER = 26;
 
@@ -67,14 +69,15 @@ export function layoutConnector(c: ConnectorInstance, cat: CatalogIndex, level: 
   const anchor = c.position;
   const cardX = facing === 1 ? anchor.x - fan - w : anchor.x + fan;
   const cardY = anchor.y - h / 2;
-  const glyphX = facing === 1 ? cardX - GLYPH_W - 10 : cardX + w + 10;
+  const glyphW = c.backshell && cat.backshell(c.backshell.pn) ? GLYPH_W + BACKSHELL_W : GLYPH_W;
+  const glyphX = facing === 1 ? cardX - glyphW - 10 : cardX + w + 10;
   const rows: RowLayout[] = visible.map((cv, i) => ({ cavityId: cv.id, top: cardY + HEADER_H + i * ROW_H, y: cardY + HEADER_H + i * ROW_H + ROW_H / 2, netId: c.pins[cv.id]?.netId ?? null, size: cv.size, special: !!(cv as { special?: boolean }).special }));
   return {
     id: c.id,
     facing,
     anchor,
     card: { x: cardX, y: cardY, w, h },
-    glyph: { x: glyphX, y: anchor.y - GLYPH_H / 2, w: GLYPH_W, h: GLYPH_H },
+    glyph: { x: glyphX, y: anchor.y - GLYPH_H / 2, w: glyphW, h: GLYPH_H },
     attachX: facing === 1 ? cardX + w : cardX,
     rows,
     rowByCavity: new Map(rows.map((r) => [r.cavityId, r])),
