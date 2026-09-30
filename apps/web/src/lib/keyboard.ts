@@ -22,6 +22,12 @@ export function useKeyboard() {
       if (mod && k === "v") return runAction("paste");
       if (mod && k === "a") return e.preventDefault(), runAction("selectAll");
       if (mod) return;
+      // Tab flips the design canvas between the schematic and the bundle layout (focus moves normally inside dialogs and menus).
+      if (e.key === "Tab" && !e.altKey) {
+        if (ui.view !== "design" || (e.target as HTMLElement).closest?.("[role=dialog],[role=menu],[role=listbox],[role=alertdialog]")) return;
+        e.preventDefault();
+        return runAction("canvasToggle");
+      }
       if (e.key === "Escape") {
         if (ui.picker) return ui.openPicker(null);
         if (ui.popover) return ui.openPopover(null);

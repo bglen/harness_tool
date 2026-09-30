@@ -23,7 +23,7 @@ export function canvasToScreen(p: Point): Point {
 export function zoomToFit(pad = 60) {
   const h = currentHarness(getProject());
   const { w, h: ch } = useUi.getState().canvasSize;
-  const b = bounds(h, svc().cat, "harness");
+  const b = bounds(h, svc().cat, "harness", useUi.getState().canvasMode === "bundles");
   if (!b) {
     useUi.getState().setViewport({ x: w / 2, y: ch / 2, k: 1 });
     return;
@@ -42,7 +42,7 @@ export function zoomToObjects(ids: string[]) {
   for (const id of ids) {
     const c = h.connectors.find((x) => x.id === id);
     if (c) {
-      const L = layoutConnector(c, cat, lvl);
+      const L = layoutConnector(c, cat, lvl, useUi.getState().canvasMode === "bundles");
       pts.push({ x: L.card.x, y: L.card.y }, { x: L.card.x + L.card.w, y: L.card.y + L.card.h });
     }
     const n = h.nodes.find((x) => x.id === id);

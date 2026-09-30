@@ -124,6 +124,9 @@ export const ACTIONS: Action[] = [
       ui.setTheme(ui.resolvedTheme === "dark" ? "light" : "dark");
     },
   },
+  { id: "canvasToggle", label: "Switch schematic / bundle layout", group: "View", icon: "layers", shortcut: "Tab", run: () => useUi.getState().toggleCanvasMode() },
+  { id: "canvasSchematic", label: "Schematic (pins, signals, wires)", group: "View", icon: "cable", run: () => useUi.getState().setCanvasMode("schematic") },
+  { id: "canvasBundles", label: "Bundle layout (routing, branches, sleeving)", group: "View", icon: "git-branch", run: () => useUi.getState().setCanvasMode("bundles") },
   { id: "shieldView", label: "Shield view", group: "View", icon: "shield", shortcut: "G", run: () => useUi.getState().toggleShieldView() },
   { id: "wireList", label: "Toggle wire list", group: "View", icon: "table", shortcut: "L", run: () => useUi.getState().setDrawer(useUi.getState().drawerHeight > 40 ? 36 : 300) },
   { id: "rightRail", label: "Toggle right rail", group: "View", icon: "panel-right", run: () => useUi.getState().toggleRightRail() },

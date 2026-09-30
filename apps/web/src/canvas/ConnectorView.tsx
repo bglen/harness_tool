@@ -124,19 +124,49 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
   const statusCol = severity === "error" ? "var(--status-error)" : severity === "warning" ? "var(--status-warning)" : "var(--status-info)";
   const unreviewed = part && part.arrangement.status !== "verified";
 
-  if (level === "overview") {
+  if (L.compact) {
+    const overview = level === "overview";
     return (
-      <g opacity={dimmed ? 0.25 : 1}>
+      <g opacity={dimmed ? 0.25 : 1} aria-label={`Connector ${c.refDes}, ${c.pn}`}>
+        {/* bundle attach stub from the block to the connector's bundle end */}
+        {!overview && <line x1={L.attachX} y1={L.anchor.y} x2={L.anchor.x} y2={L.anchor.y} stroke={semantic("bundle.fill", theme)} strokeWidth={5} strokeLinecap="round" />}
         <Glyph c={c} L={L} cat={cat} theme={theme} potted={potted} />
         <g data-hit="connector" data-id={c.id} style={{ cursor: "move" }}>
-          <rect x={card.x} y={card.y} width={card.w} height={card.h} rx={8} fill={surface} stroke={selected ? accent : border} strokeWidth={selected ? 2 : 1} />
-          <text x={card.x + 10} y={card.y + 21} fontSize={15} fontWeight={600} fill={tp}>
-            {c.refDes}
-          </text>
-          <text x={card.x + card.w - 10} y={card.y + 21} fontSize={12} textAnchor="end" fill={ts}>
-            {L.used}/{L.total} pins
-          </text>
+          <title>{`${c.refDes} ${c.pn}: ${L.used}/${L.total} pins used. Pins and wires are edited in the schematic (Tab).`}</title>
+          <rect x={L.glyph.x} y={L.glyph.y} width={L.glyph.w} height={L.glyph.h} fill="transparent" />
+          <rect x={card.x} y={card.y} width={card.w} height={card.h} rx={8} fill={surface} stroke={selected || flash ? accent : border} strokeWidth={selected || flash ? 2 : 1} />
+          {overview ? (
+            <>
+              <text x={card.x + 10} y={card.y + 21} fontSize={15} fontWeight={600} fill={tp}>
+                {c.refDes}
+              </text>
+              <text x={card.x + card.w - 10} y={card.y + 21} fontSize={12} textAnchor="end" fill={ts}>
+                {L.used}/{L.total} pins
+              </text>
+            </>
+          ) : (
+            <>
+              <text x={card.x + 10} y={card.y + 18} fontSize={14} fontWeight={600} fill={tp}>
+                {c.refDes || "—"}
+              </text>
+              <text x={card.x + card.w - 10} y={card.y + 18} fontSize={10.5} textAnchor="end" fill={ts}>
+                {L.used}/{L.total} pins
+              </text>
+              <text className="mono" x={card.x + 10} y={card.y + 34} fontSize={10} fill={ts}>
+                {c.pn.length > 24 ? c.pn.slice(0, 23) + "…" : c.pn}
+              </text>
+            </>
+          )}
         </g>
+        {severity && (
+          <g transform={`translate(${card.x + card.w - 6},${card.y - 6})`} data-hit="badge" data-id={c.id}>
+            <circle r={7} fill={surface} />
+            <text textAnchor="middle" y={4} fontSize={11} fontWeight={700} fill={statusCol}>
+              {severity === "error" ? "⨯" : severity === "warning" ? "!" : "i"}
+            </text>
+            <circle r={7} fill="none" stroke={statusCol} strokeWidth={1.5} />
+          </g>
+        )}
       </g>
     );
   }

@@ -2,6 +2,8 @@ import { memo, useMemo } from "react";
 import { colorAbbr, describeWireColor, ratsnest, type Derived, type Harness, type Point, type Severity, type Wire, type WireEnd } from "@hs/model";
 import { needsCasing, semantic, wireColor } from "@hs/ui-tokens";
 import { LANE, laneMap, nodePos, wirePath, wireTrunk, type ConnLayout, type ZoomLevel } from "../lib/geometry";
+import { connectorPairs, roundedPath, schematicRoutes, splicePoint } from "../lib/schematic";
+import type { CanvasMode } from "../store/ui";
 
 interface Props {
   h: Harness;
@@ -17,6 +19,8 @@ interface Props {
   colorLabels: "detail" | "always" | "hover";
   k: number;
   flash: Set<string>;
+  /** Schematic: every wire pin-to-pin. Bundle layout: wires hidden except ones no bundle carries yet (all of them in shield view). */
+  mode: CanvasMode;
 }
 
 interface WireGeom {
@@ -75,14 +79,22 @@ const WireView = memo(function WireView({ id, path, unrouted, base, stripes, tit
   );
 });
 
-export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, selected, hoverId, sev, focusNetId, shieldView, colorLabels, k, flash }: Props) {
-  const lanes = useMemo(() => laneMap(h, d), [h, d]);
+export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, selected, hoverId, sev, focusNetId, shieldView, colorLabels, k, flash, mode }: Props) {
+  const schematic = mode === "schematic";
+  const lanes = useMemo(() => (schematic ? new Map<string, Map<string, number>>() : laneMap(h, d)), [schematic, h, d]);
+  const routes = useMemo(() => (schematic && level !== "overview" ? schematicRoutes(h, layouts) : null), [schematic, level, h, layouts]);
   const gap = level === "detail" ? LANE : LANE * 0.75;
   const canvasBg = semantic("bg.canvas", theme);
   const accent = semantic("accent", theme);
   const geoms: WireGeom[] = useMemo(() => {
     if (level === "overview") return [];
-    return h.wires.map((w) => {
+    if (routes)
+      return h.wires.flatMap((w) => {
+        const pts = routes.get(w.id);
+        if (!pts) return [];
+        return [{ w, path: roundedPath(pts), start: endPoint(w.from, layouts, h)?.p ?? null, end: endPoint(w.to, layouts, h)?.p ?? null, trunk: pts, unrouted: false }];
+      });
+    const all = h.wires.map((w) => {
       const s = endPoint(w.from, layouts, h);
       const e = endPoint(w.to, layouts, h);
       const trunk = wireTrunk(h, d, lanes, w.id, gap);
@@ -93,15 +105,37 @@ export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, 
       }
       return { w, path: wirePath(s, trunk, e), start: s?.p ?? null, end: e?.p ?? null, trunk, unrouted: false };
     });
-  }, [h, d, layouts, lanes, gap, level]);
+    // Bundle layout: bundles stand in for their wires; only wires with no bundle to ride in stay visible (dashed).
+    return shieldView ? all : all.filter((g) => g.unrouted);
+  }, [h, d, layouts, lanes, gap, level, routes, shieldView]);
+  /** Twist marks, shield rings and drains need the individual wires drawn. */
+  const showDetail = schematic || shieldView;
 
-  const rats = useMemo(() => ratsnest(h), [h]);
+  const rats = useMemo(() => (schematic ? ratsnest(h) : []), [schematic, h]);
+  const pairs = useMemo(() => (schematic && level === "overview" ? connectorPairs(h) : []), [schematic, level, h]);
   const netNames = useMemo(() => new Map(h.nets.map((n) => [n.id, n.name])), [h.nets]);
   const sw = level === "detail" ? 1.7 : 1.25;
   const netDim = (w: Wire) => (focusNetId && w.netId !== focusNetId ? 0.18 : shieldView && !w.shieldId && !w.cableId ? 0.15 : 1);
 
   return (
     <g>
+      {/* zoomed-out schematic: one line per connected pair of connectors */}
+      {pairs.map(({ a, b, count }) => {
+        const La = layouts.get(a);
+        const Lb = layouts.get(b);
+        if (!La || !Lb) return null;
+        const pa = { x: La.attachX, y: La.anchor.y };
+        const pb = { x: Lb.attachX, y: Lb.anchor.y };
+        const mx = (pa.x + pb.x) / 2;
+        return (
+          <g key={`${a}|${b}`} pointerEvents="none">
+            <path d={roundedPath([pa, { x: mx, y: pa.y }, { x: mx, y: pb.y }, pb], 10)} stroke={semantic("text.secondary", theme)} strokeWidth={Math.min(8, 1.5 + Math.log2(1 + count))} fill="none" opacity={0.7} />
+            <text x={mx + 8} y={(pa.y + pb.y) / 2 - 6} fontSize={22} fill={semantic("text.secondary", theme)}>
+              {count} wire{count === 1 ? "" : "s"}
+            </text>
+          </g>
+        );
+      })}
       {geoms.map(({ w, path, unrouted }) => {
         const netName = netNames.get(w.netId) ?? "";
         return (
@@ -112,7 +146,7 @@ export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, 
             unrouted={unrouted}
             base={w.color.base}
             stripes={w.color.stripes.join(",")}
-            title={`Wire ${w.label}, net ${netName}, ${w.gauge} AWG ${w.spec}, ${describeWireColor(w.color)} (${[w.color.base, ...w.color.stripes].join("-")})`}
+            title={`Wire ${w.label}, net ${netName}, ${w.gauge} AWG ${w.spec}, ${describeWireColor(w.color)} (${[w.color.base, ...w.color.stripes].join("-")})${unrouted ? ". Not carried by any bundle yet: add or re-attach a bundle between its ends." : ""}`}
             theme={theme}
             sw={sw}
             opacity={netDim(w)}
@@ -124,6 +158,7 @@ export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, 
       })}
       {/* twist marks near both ends of each twisted group */}
       {level !== "overview" &&
+        showDetail &&
         h.twistGroups.map((g) => {
           const members = geoms.filter((x) => g.wireIds.includes(x.w.id) && !x.unrouted);
           if (members.length < 2) return null;
@@ -149,6 +184,7 @@ export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, 
         })}
       {/* shields: ellipse around member wires near each end; drain line */}
       {level !== "overview" &&
+        showDetail &&
         h.shields.map((s) => {
           const members = geoms.filter((x) => s.wireIds.includes(x.w.id) && !x.unrouted);
           if (!members.length) return null;
@@ -218,7 +254,7 @@ export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, 
       {/* color code labels (§16.5) */}
       {geoms.map(({ w, start, end }) => {
         const show = colorLabels === "always" || (colorLabels === "detail" && level === "detail") || (colorLabels === "hover" && hoverId === w.id);
-        if (!show || level === "overview") return null;
+        if (!show || level === "overview" || !schematic) return null;
         const text = [w.color.base, ...w.color.stripes].join("-") + (level === "detail" ? ` ${[w.color.base, ...w.color.stripes].map(colorAbbr).join("/")}` : "");
         const fs = Math.max(7, 8.5 / Math.max(0.8, k));
         return (
@@ -238,8 +274,8 @@ export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, 
       })}
       {/* ratsnest (same net, no wire yet) */}
       {rats.map((r, i) => {
-        const a = endPoint(r.a, layouts, h)?.p ?? (r.a.kind === "splice" ? nodePos(h, h.splices.find((s) => s.id === (r.a as { spliceId: string }).spliceId)!.nodeId) : null);
-        const b = endPoint(r.b, layouts, h)?.p ?? (r.b.kind === "splice" ? nodePos(h, h.splices.find((s) => s.id === (r.b as { spliceId: string }).spliceId)!.nodeId) : null);
+        const a = endPoint(r.a, layouts, h)?.p ?? (r.a.kind === "splice" ? splicePoint(h, r.a.spliceId) : null);
+        const b = endPoint(r.b, layouts, h)?.p ?? (r.b.kind === "splice" ? splicePoint(h, r.b.spliceId) : null);
         if (!a || !b) return null;
         return (
           <g key={i} data-hit="ratsnest" data-id={r.netId} style={{ cursor: "pointer" }}>

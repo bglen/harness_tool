@@ -3,6 +3,14 @@ import type { CvdType } from "@hs/ui-tokens";
 
 export type SelKind = "connector" | "wire" | "net" | "segment" | "node" | "pin" | "label" | "layer" | "splice" | "note" | "shield" | "clamp" | "boot" | "hardware";
 
+/** Design canvas mode: the schematic (pins, nets, wires) or the physical bundle layout (routing, branching, coverings). */
+export type CanvasMode = "schematic" | "bundles";
+
+/** Selection kinds that only exist on the bundle layout (hidden in the schematic). */
+export const BUNDLE_KINDS: SelKind[] = ["segment", "node", "label", "clamp", "boot", "hardware"];
+/** Selection kinds that only exist on the schematic (pins aren't drawn on the bundle layout). */
+export const SCHEMATIC_KINDS: SelKind[] = ["pin"];
+
 export interface Selection {
   kind: SelKind | null;
   ids: string[];
@@ -63,6 +71,7 @@ const LS = {
 
 interface UiState {
   view: "design" | "bom" | "outputs";
+  canvasMode: CanvasMode;
   selection: Selection;
   hover: { kind: SelKind; id: string } | null;
   viewport: Viewport;
@@ -92,6 +101,8 @@ interface UiState {
   dfmFilter: string | null;
   flash: { ids: string[]; at: number } | null;
   setView(v: UiState["view"]): void;
+  setCanvasMode(m: CanvasMode): void;
+  toggleCanvasMode(): void;
   select(kind: SelKind | null, ids: string[], additive?: boolean): void;
   clearSelection(): void;
   setHover(h: UiState["hover"]): void;
@@ -128,6 +139,7 @@ let toastId = 1;
 
 export const useUi = create<UiState>((set, get) => ({
   view: "design",
+  canvasMode: "schematic",
   selection: { kind: null, ids: [] },
   hover: null,
   viewport: { x: 0, y: 0, k: 1 },
@@ -158,7 +170,32 @@ export const useUi = create<UiState>((set, get) => ({
   dfmFilter: null,
   flash: null,
   setView: (view) => set({ view, popover: null, picker: null }),
+  setCanvasMode(canvasMode) {
+    const s = get();
+    if (s.canvasMode === canvasMode) return;
+    // Drop a selection the other mode can't show (bundles aren't drawn on the schematic, pins aren't on the bundle layout).
+    const hidden = canvasMode === "schematic" ? BUNDLE_KINDS : SCHEMATIC_KINDS;
+    const keep = !s.selection.kind || !hidden.includes(s.selection.kind);
+    set({
+      canvasMode,
+      popover: null,
+      picker: null,
+      contextMenu: null,
+      editing: null,
+      tool: canvasMode === "schematic" ? null : s.tool,
+      ...(keep ? {} : { selection: { kind: null, ids: [] } }),
+    });
+  },
+  toggleCanvasMode() {
+    get().setCanvasMode(get().canvasMode === "schematic" ? "bundles" : "schematic");
+  },
   select(kind, ids, additive) {
+    // Cross-probing (checks panel, wire list, BOM) to something only one canvas mode draws brings that mode up.
+    if (kind && ids.length) {
+      const mode = get().canvasMode;
+      if (mode === "schematic" && BUNDLE_KINDS.includes(kind)) set({ canvasMode: "bundles" });
+      if (mode === "bundles" && SCHEMATIC_KINDS.includes(kind)) set({ canvasMode: "schematic", tool: null });
+    }
     const cur = get().selection;
     if (additive && kind && cur.kind === kind) {
       const s = new Set(cur.ids);
@@ -190,7 +227,11 @@ export const useUi = create<UiState>((set, get) => ({
     set({ dialogs: x });
   },
   toggleShieldView: () => set({ shieldView: !get().shieldView }),
-  setTool: (tool) => set({ tool }),
+  // The breakout tool works on bundles, so it brings up the bundle layout.
+  setTool(tool) {
+    if (tool) get().setCanvasMode("bundles");
+    set({ tool });
+  },
   setCvd: (cvd) => set({ cvd }),
   setWireColorLabels(v) {
     LS.set("wireColorLabels", v);

@@ -257,6 +257,22 @@ export function TopBar() {
           </Tip>
         ))}
       </nav>
+      {ui.view === "design" && (
+        <nav className="ml-2 flex items-center rounded-control border border-border-subtle p-0.5" aria-label="Canvas mode">
+          {(
+            [
+              ["schematic", "Schematic", "Schematic: connectors, pins, signals and every wire pin-to-pin"],
+              ["bundles", "Bundles", "Bundle layout: routing, branches, lengths and sleeving (wires hidden)"],
+            ] as const
+          ).map(([m, label, tip]) => (
+            <Tip key={m} label={tip} shortcut="Tab" side="bottom">
+              <button onClick={() => ui.setCanvasMode(m)} aria-pressed={ui.canvasMode === m} className={cx("h-7 rounded-[5px] px-3 text-sm", ui.canvasMode === m ? "bg-bg-hover font-medium text-text-primary" : "text-text-secondary hover:text-text-primary")}>
+                {label}
+              </button>
+            </Tip>
+          ))}
+        </nav>
+      )}
       <div className="flex-1" />
       <Tip label="Import wire list (CSV/XLSX), WireViz YAML, ruleset" side="bottom">
         <button className="flex h-8 items-center gap-1.5 rounded-control px-2 text-sm text-text-secondary hover:bg-bg-hover hover:text-text-primary" onClick={() => ui.openDialog("import")}>

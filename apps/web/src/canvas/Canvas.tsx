@@ -26,7 +26,7 @@ import { activePedigreeOf, useActiveAnalysis, useDerived } from "../store/analys
 import { svc } from "../lib/services";
 import { bundleWidth, layoutConnector, nodePos, projectOnSegment, zoomLevel, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 import { ConnectorView, type RowState } from "./ConnectorView";
-import { BundleChips, BundleLayer, SegmentHandles } from "./BundleLayer";
+import { BundleChips, BundleLayer, SegmentHandles, SpliceMarks } from "./BundleLayer";
 import { WireLayer } from "./WireLayer";
 import { canvasToScreen, zoomToFit } from "../lib/viewport";
 import { EmptyState } from "./EmptyState";
@@ -34,6 +34,7 @@ import { FloatingToolbar } from "./FloatingToolbar";
 import { ContextBar } from "./ContextBar";
 import { NotesLayer } from "./NotesLayer";
 import { openFile } from "../lib/files";
+import { Kbd } from "../ui/primitives";
 
 type Drag =
   | { kind: "pan"; sx: number; sy: number; vx: number; vy: number }
@@ -99,6 +100,9 @@ export function Canvas() {
   const [lengthEdit, setLengthEdit] = useState<{ segId: string; screen: Point; value: string } | null>(null);
   const [hint, setHint] = useState<{ x: number; y: number; text: string } | null>(null);
   const level = zoomLevel(vp.k);
+  // Schematic: pin cards and every wire pin-to-pin. Bundle layout: compact connectors, bundles, branching and coverings.
+  const mode = ui.canvasMode;
+  const bundles = mode === "bundles";
   // Quantized zoom for text sizing inside memoized layers, so wheel zoom doesn't re-render every wire
   const kq = Math.round(vp.k * 4) / 4 || 0.25;
 
@@ -163,20 +167,20 @@ export function Canvas() {
   }, [h0, drag]);
 
   // Layout cached per connector object (Immer structural sharing keeps unchanged connectors identical)
-  const layoutCache = useRef(new WeakMap<object, { level: ZoomLevel; L: ConnLayout }>());
+  const layoutCache = useRef(new WeakMap<object, { level: ZoomLevel; bundles: boolean; L: ConnLayout }>());
   const layouts = useMemo(() => {
     const m = new Map<string, ConnLayout>();
     for (const c of h.connectors) {
       const hit = layoutCache.current.get(c);
-      if (hit && hit.level === level) m.set(c.id, hit.L);
+      if (hit && hit.level === level && hit.bundles === bundles) m.set(c.id, hit.L);
       else {
-        const L = layoutConnector(c, cat, level);
-        layoutCache.current.set(c, { level, L });
+        const L = layoutConnector(c, cat, level, bundles);
+        layoutCache.current.set(c, { level, bundles, L });
         m.set(c.id, L);
       }
     }
     return m;
-  }, [h.connectors, cat, level]);
+  }, [h.connectors, cat, level, bundles]);
   // Per-connector pin → wires and pin → name maps, reused when content is unchanged so memoized cards skip re-render
   const connCache = useRef(new Map<string, { wKey: string; wires: Map<string, Wire[]>; nKey: string; names: Map<string, string> }>());
   const perConn = useMemo(() => {
@@ -391,7 +395,9 @@ export function Canvas() {
       });
       if (conns.length) ui.select("connector", conns.map((c) => c.id), add);
       else if (pins.length) ui.select("pin", pins, add);
-      else {
+      else if (!bundles) {
+        if (!add) ui.clearSelection();
+      } else {
         const nodes = h.nodes.filter((n) => n.kind === "breakout" && n.position.x >= x0 && n.position.x <= x1 && n.position.y >= y0 && n.position.y <= y1);
         ui.select("node", nodes.map((n) => n.id), add);
       }
@@ -409,7 +415,7 @@ export function Canvas() {
       if (dr.hitKind === "connector" && dr.ids.length === 1) {
         const target = h.connectors.find((c) => {
           if (c.id === dr.hitId) return false;
-          const L = layoutConnector(h0.connectors.find((x) => x.id === c.id)!, cat, level);
+          const L = layoutConnector(h0.connectors.find((x) => x.id === c.id)!, cat, level, bundles);
           return dr.cur.x >= L.card.x && dr.cur.x <= L.card.x + L.card.w && dr.cur.y >= L.card.y && dr.cur.y <= L.card.y + L.card.h;
         });
         if (target) {
@@ -610,6 +616,16 @@ export function Canvas() {
   }, [h0.connectors.length, vp]);
 
   const selectedPins = useMemo(() => new Set(sel.kind === "pin" ? sel.ids : []), [sel]);
+  // Bundle layout: wires aren't drawn, so a selected wire/net (e.g. from the wire list) lights up the bundles it runs through.
+  const routeSegs = useMemo(() => {
+    if (!bundles) return EMPTY;
+    const wireIds = sel.kind === "wire" ? sel.ids : sel.kind === "net" || focusNet ? h.wires.filter((w) => (sel.kind === "net" ? selSet.has(w.netId) : w.netId === focusNet)).map((w) => w.id) : [];
+    if (!wireIds.length) return EMPTY;
+    const s = new Set<string>();
+    for (const id of wireIds) for (const seg of d.routes.get(id) ?? []) s.add(seg);
+    return s;
+  }, [bundles, sel, selSet, focusNet, h.wires, d]);
+  const selectedSegs = sel.kind === "segment" ? selSet : routeSegs;
   const potted = useMemo(() => new Set(h.potting.filter((p) => p.targetKind === "connector").map((p) => p.targetId)), [h.potting]);
   const dimAll = ui.shieldView;
   const bg = semantic("bg.canvas", theme);
@@ -704,25 +720,28 @@ export function Canvas() {
         </defs>
         <rect width="100%" height="100%" fill="url(#dots)" />
         <g transform={`translate(${vp.x},${vp.y}) scale(${vp.k})`} filter={ui.cvd ? "url(#cvd)" : undefined}>
-          <BundleLayer
-            h={h}
-            d={d}
-            cat={cat}
-            level={level}
-            theme={theme}
-            units={project.units}
-            selectedSegs={sel.kind === "segment" ? selSet : EMPTY}
-            selectedNodes={sel.kind === "node" ? selSet : EMPTY}
-            selectedLabels={sel.kind === "label" ? selSet : EMPTY}
-            sev={sev}
-            dimmed={!!focusNet}
-            shieldView={ui.shieldView}
-            harnessPN={project.partNumber}
-            rev={rev.label}
-            k={kq}
-            flash={flashSet}
-          />
-          <WireLayer h={h} d={d} layouts={layouts} level={level} theme={theme} selected={sel.kind === "wire" ? selSet : EMPTY} hoverId={ui.hover?.id ?? null} sev={sev} focusNetId={focusNet} shieldView={ui.shieldView} colorLabels={ui.wireColorLabels} k={kq} flash={flashSet} />
+          {bundles && (
+            <BundleLayer
+              h={h}
+              d={d}
+              cat={cat}
+              level={level}
+              theme={theme}
+              units={project.units}
+              selectedSegs={selectedSegs}
+              selectedNodes={sel.kind === "node" ? selSet : EMPTY}
+              selectedLabels={sel.kind === "label" ? selSet : EMPTY}
+              sev={sev}
+              dimmed={!!focusNet && !routeSegs.size}
+              shieldView={ui.shieldView}
+              harnessPN={project.partNumber}
+              rev={rev.label}
+              k={kq}
+              flash={flashSet}
+            />
+          )}
+          <WireLayer h={h} d={d} layouts={layouts} level={level} theme={theme} selected={sel.kind === "wire" ? selSet : EMPTY} hoverId={ui.hover?.id ?? null} sev={sev} focusNetId={focusNet} shieldView={ui.shieldView} colorLabels={ui.wireColorLabels} k={kq} flash={flashSet} mode={mode} />
+          <SpliceMarks h={h} level={level} theme={theme} selected={sel.kind === "splice" ? selSet : EMPTY} />
           {h.connectors.map((c) => (
             <ConnectorView
               key={c.id}
@@ -745,8 +764,8 @@ export function Canvas() {
             />
           ))}
           <NotesLayer notes={h.notes} theme={theme} selected={sel.kind === "note" ? selSet : EMPTY} offset={drag?.kind === "note" && drag.moved ? { id: drag.id, dx: drag.cur.x - drag.start.x, dy: drag.cur.y - drag.start.y } : null} />
-          <BundleChips h={h} d={d} level={level} theme={theme} units={project.units} selectedSegs={sel.kind === "segment" ? selSet : EMPTY} sev={sev} />
-          {sel.kind === "segment" && <SegmentHandles h={h} selected={selSet} k={kq} theme={theme} />}
+          {bundles && <BundleChips h={h} d={d} level={level} theme={theme} units={project.units} selectedSegs={sel.kind === "segment" ? selSet : EMPTY} sev={sev} />}
+          {bundles && sel.kind === "segment" && <SegmentHandles h={h} selected={selSet} k={kq} theme={theme} />}
           {preview}
         </g>
       </svg>
@@ -792,15 +811,38 @@ export function Canvas() {
       {!h.connectors.length && <EmptyState />}
       <ContextBar layouts={layouts} />
       <FloatingToolbar />
-      {level !== "harness" && (
-        <div className="pointer-events-none absolute bottom-3 left-3 rounded-chip bg-bg-surface-2 px-2 py-0.5 text-2xs text-text-tertiary">
-          {level === "overview" ? "Overview: zoom in for pin cards" : "Detail view"} · {Math.round(vp.k * 100)}%
-        </div>
-      )}
+      <div className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-2 rounded-chip bg-bg-surface-2 px-2 py-0.5 text-2xs text-text-tertiary" data-testid="canvas-mode">
+        <span className="font-medium text-text-secondary">{bundles ? "Bundle layout" : "Schematic"}</span>
+        <span>
+          <Kbd>Tab</Kbd> {bundles ? "schematic" : "bundles"}
+        </span>
+        {level !== "harness" && (
+          <span>
+            · {level === "overview" ? (bundles ? "Overview" : "Overview: zoom in for pin cards") : "Detail"} · {Math.round(vp.k * 100)}%
+          </span>
+        )}
+      </div>
       {ui.shieldView && <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-control border border-accent bg-bg-surface-2 px-3 py-1 text-xs text-text-primary">Shield view: grounding scheme (press G to exit)</div>}
       {ui.tool === "breakout" && <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-control border border-accent bg-bg-surface-2 px-3 py-1 text-xs text-text-primary">Click a bundle to add a breakout there (Esc to cancel)</div>}
       {ui.cvd && <div className="absolute right-3 top-3 rounded-control border border-border-subtle bg-bg-surface-2 px-2 py-1 text-xs text-text-secondary">Simulating {ui.cvd === "achroma" ? "achromatopsia" : `${ui.cvd}opia`} <button className="ml-2 text-accent" onClick={() => ui.setCvd(null)}>off</button></div>}
-      <BranchingTip count={h0.connectors.length} segments={h0.segments.length} />
+      {bundles ? <BranchingTip count={h0.connectors.length} segments={h0.segments.length} /> : <BundlesTip wires={h0.wires.length} />}
+    </div>
+  );
+}
+
+/** One-time tip once the schematic has wires: the bundle layout is one key away. */
+function BundlesTip({ wires }: { wires: number }) {
+  const ui = useUi();
+  if (wires < 1 || ui.hintsSeen.includes("canvasModes")) return null;
+  return (
+    <div className="absolute bottom-10 left-3 z-10 w-[290px] rounded-card border border-border-subtle bg-bg-surface-2 p-3 text-xs text-text-secondary shadow-lg" role="note">
+      <div className="mb-1 font-medium text-text-primary">Two views of one harness</div>
+      <p>
+        This <b>schematic</b> is for connections: pins, signals, wire colors and gauges. Press <Kbd>Tab</Kbd> for the <b>bundle layout</b>, where the wires are hidden and you shape the routing, branches, lengths and sleeving.
+      </p>
+      <button className="mt-2 text-accent hover:underline" onClick={() => ui.markHint("canvasModes")}>
+        Got it
+      </button>
     </div>
   );
 }

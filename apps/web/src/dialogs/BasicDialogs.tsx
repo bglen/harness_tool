@@ -68,11 +68,13 @@ export function CommandPalette() {
 export function ShortcutsDialog() {
   const ui = useUi();
   const rows: [string, string][] = [
+    ["Switch schematic ⇄ bundle layout", "Tab"],
     ["Add connector (part picker at cursor)", "C / double-click"],
     ["Drag pin → pin", "connect"],
     ["Drag pin → empty canvas", "new connector + wire"],
     ["Drag connector onto connector", "mate: by name / 1→1 / manual"],
-    ["Drag from middle of a bundle", "pull out a breakout"],
+    ["Drag from middle of a bundle (bundle layout)", "pull out a breakout"],
+    ["Add breakout on a bundle (opens bundle layout)", "B"],
     ["Commit ratsnest", "R"],
     ["Twist selected wires", "T"],
     ["Flip connector direction", "F"],

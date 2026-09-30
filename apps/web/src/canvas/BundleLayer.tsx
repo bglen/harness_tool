@@ -2,6 +2,7 @@ import { memo } from "react";
 import { extentCoverage, formatDiameter, formatLength, resolveLabelTemplate, type CatalogIndex, type Derived, type Harness, type LengthUnit, type Point, type Severity } from "@hs/model";
 import { semantic } from "@hs/ui-tokens";
 import { bundleWidth, nodePos, type ZoomLevel } from "../lib/geometry";
+import { splicePoint } from "../lib/schematic";
 
 interface Props {
   h: Harness;
@@ -196,23 +197,6 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
             </g>
           );
         })}
-      {/* splices: diamond near host node */}
-      {h.splices.map((s) => {
-        const p = nodePos(h, s.nodeId);
-        const x = p.x + 16;
-        const y = p.y + 16;
-        return (
-          <g key={s.id} data-hit="splice" data-id={s.id} style={{ cursor: "pointer" }}>
-            <title>{`Splice ${s.label} ${s.pn || ""} (${s.type}, ${s.cover}) for ${h.nets.find((n) => n.id === s.netId)?.name ?? ""}`}</title>
-            <rect x={x - 6} y={y - 6} width={12} height={12} transform={`rotate(45 ${x} ${y})`} fill={semantic("bg.surface-2", theme)} stroke={tp} strokeWidth={1.6} />
-            {level !== "overview" && (
-              <text x={x + 10} y={y + 4} fontSize={10} fill={ts}>
-                {s.label}
-              </text>
-            )}
-          </g>
-        );
-      })}
       {/* labels: tag icons at position */}
       {level !== "overview" &&
         h.labels.map((l) => {
@@ -257,6 +241,33 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
 });
 
 export { lerp };
+
+/** Splices: a diamond beside the host node. Drawn in both canvas modes (wires end on them in the schematic). */
+export const SpliceMarks = memo(function SpliceMarks({ h, level, theme, selected }: { h: Harness; level: ZoomLevel; theme: "dark" | "light"; selected: Set<string> }) {
+  const tp = semantic("text.primary", theme);
+  const ts = semantic("text.secondary", theme);
+  return (
+    <g>
+      {h.splices.map((s) => {
+        const p = splicePoint(h, s.id);
+        if (!p) return null;
+        const { x, y } = p;
+        return (
+          <g key={s.id} data-hit="splice" data-id={s.id} style={{ cursor: "pointer" }}>
+            <title>{`Splice ${s.label} ${s.pn || ""} (${s.type}, ${s.cover}) for ${h.nets.find((n) => n.id === s.netId)?.name ?? ""}`}</title>
+            {selected.has(s.id) && <circle cx={x} cy={y} r={11} fill="none" stroke={semantic("accent", theme)} strokeWidth={2} />}
+            <rect x={x - 6} y={y - 6} width={12} height={12} transform={`rotate(45 ${x} ${y})`} fill={semantic("bg.surface-2", theme)} stroke={tp} strokeWidth={1.6} />
+            {level !== "overview" && (
+              <text x={x + 10} y={y + 4} fontSize={10} fill={ts}>
+                {s.label}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </g>
+  );
+});
 
 /**
  * Length (and at detail zoom, OD) chips for every bundle, drawn above wires and connectors so they're always

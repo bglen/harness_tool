@@ -64,6 +64,39 @@ test("example opens; unreviewed reference data is never claimed ready", async ({
   await expect(page.getByText("Saved on this device")).toBeVisible({ timeout: 10_000 });
 });
 
+test("schematic is the default view; Tab flips to the bundle layout and back", async ({ page }) => {
+  await page.goto("/");
+  await page.getByText("open an example", { exact: false }).click();
+  await expect(page.getByRole("button", { name: "Schematic" })).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
+  // Schematic: pin rows and every wire pin-to-pin; no bundles
+  await expect(page.locator("[data-hit='wire']")).toHaveCount(10);
+  await expect(page.locator("[data-hit='pin']").first()).toBeVisible();
+  await expect(page.locator("[data-hit='segment']")).toHaveCount(0);
+  await expect(page.getByTestId("canvas-mode")).toContainText("Schematic");
+
+  // Bundle layout: bundles and length chips; wires and pin rows hidden
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Bundles" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("[data-hit='segment']")).toHaveCount(1);
+  await expect(page.locator("[data-hit='chip-length']")).toHaveCount(1);
+  await expect(page.locator("[data-hit='wire']")).toHaveCount(0);
+  await expect(page.locator("[data-hit='pin']")).toHaveCount(0);
+  await expect(page.getByTestId("canvas-mode")).toContainText("Bundle layout");
+
+  // Selecting a wire in the wire list lights up the bundle it runs through
+  await page.evaluate(() => {
+    const w = window as unknown as { __hs: { useUi: { getState(): { select(k: string, ids: string[]): void } }; useProject: { getState(): { project: { currentRevisionId: string; revisions: { id: string; harness: { wires: { id: string }[] } }[] } } } } };
+    const p = w.__hs.useProject.getState().project;
+    w.__hs.useUi.getState().select("wire", [p.revisions.find((r) => r.id === p.currentRevisionId)!.harness.wires[0]!.id]);
+  });
+  await expect(page.locator("[data-hit='wire']")).toHaveCount(0);
+
+  // Top-bar toggle returns to the schematic
+  await page.getByRole("button", { name: "Schematic" }).click();
+  await expect(page.locator("[data-hit='wire']")).toHaveCount(10);
+  await expect(page.locator("[data-hit='segment']")).toHaveCount(0);
+});
+
 test("three connectors: combine two bundles into a trunk and re-attach a branch", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText("Add your first connector")).toBeVisible();
@@ -86,6 +119,9 @@ test("three connectors: combine two bundles into a trunk and re-attach a branch"
   });
   let h = await hs();
   expect(h.segments).toHaveLength(2);
+  // Bundles live on the bundle layout (Tab)
+  await page.keyboard.press("Tab");
+  await expect(page.locator("[data-hit='segment']")).toHaveCount(2);
   // Select both bundles (Shift+click) and combine them into a trunk from the context bar
   await page.evaluate(() => {
     const w = window as unknown as { __hs: { useUi: { getState(): { select(k: string, ids: string[]): void } }; useProject: { getState(): { project: { currentRevisionId: string; revisions: { id: string; harness: { segments: { id: string }[] } }[] } } } } };

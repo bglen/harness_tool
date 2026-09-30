@@ -47,9 +47,26 @@ Toolchain: Node 24 LTS, pnpm 10 (installed to the user npm prefix; add `%APPDATA
   accessory PN formats, masses.
 * **Demo only:** `data/catalog/supply.csv` and `data/demo/pricing.json` — arbitrary numbers, never real costs.
 
+## Schematic and bundle layout
+
+The design canvas has two modes over the same connectors, which keep the same positions in both. Press **Tab**, or use
+the Schematic | Bundles toggle in the top bar, to switch between them.
+
+* **Schematic** (the default) is for connections. It shows full pin cards and draws every wire pin-to-pin in right-angle
+  runs, ignoring the bundles. Wires between the same two connectors share parallel lanes, ordered so a bus doesn't
+  cross itself. Here you name signals, drag pin to pin to connect, and set wire colors, gauges and part numbers.
+  Zoomed out, it shows one line per connected pair of connectors with its wire count.
+* **Bundle layout** is for the physical harness. It hides the wires and pin rows, draws connectors as compact blocks,
+  and shows the bundles with their branches, lengths, coverings, clamps, boots and labels. A wire that no bundle
+  carries yet stays visible as a dashed line. When you select a wire or net (for example in the wire list), the bundles
+  it runs through are highlighted. Shield view (G) draws the wires along their bundles again.
+
+Selecting an object that only one mode draws switches to that mode. For example, a bundle finding in the checks
+panel opens the bundle layout, and the breakout tool (B) does the same.
+
 ## Editing bundle branching
 
-With three or more connectors, the canvas shows a one-time tip. The gestures:
+These gestures work in the bundle layout. With three or more connectors, it shows a one-time tip:
 
 * **Branch off a bundle:** drag from the middle of a bundle. Drop on a connector to route that connector through
   the new breakout. Its now-redundant direct bundle is removed, and a message says so.

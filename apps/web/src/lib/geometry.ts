@@ -5,6 +5,10 @@ export const HEADER_H = 46;
 export const CARD_W = 236;
 export const CARD_W_DETAIL = 340;
 export const FAN = 72;
+/** Card-to-bundle gap on the bundle layout, where connectors are drawn as compact blocks without pin rows. */
+export const FAN_COMPACT = 26;
+export const COMPACT_W = 168;
+export const COMPACT_H = 44;
 export const GLYPH_W = 70;
 export const GLYPH_H = 40;
 export const LANE = 2.4;
@@ -35,6 +39,8 @@ export interface ConnLayout {
   rows: RowLayout[];
   rowByCavity: Map<string, RowLayout>;
   collapsed: { y: number; count: number } | null;
+  /** Drawn as a compact block (no pin rows): the overview zoom level, or the bundle layout. */
+  compact: boolean;
   total: number;
   used: number;
 }
@@ -44,19 +50,22 @@ export function facingOf(c: ConnectorInstance): 1 | -1 {
   return r > 90 && r < 270 ? -1 : 1;
 }
 
-export function layoutConnector(c: ConnectorInstance, cat: CatalogIndex, level: ZoomLevel): ConnLayout {
+/** Card geometry for a connector. `compact` (bundle layout) drops the pin rows and pulls the card close to the bundle end. */
+export function layoutConnector(c: ConnectorInstance, cat: CatalogIndex, level: ZoomLevel, compactMode = false): ConnLayout {
+  const compact = compactMode || level === "overview";
   const facing = facingOf(c);
   const part = cat.connector(c.pn);
   const cavs = part?.arrangement.cavities ?? Object.keys(c.pins).map((id) => ({ id, x: 0, y: 0, size: "?", special: false }));
   const usedSet = new Set(Object.entries(c.pins).filter(([, p]) => p.netId).map(([k]) => k));
   const showAll = c.showUnused || cavs.length <= COLLAPSE_OVER;
-  const visible = level === "overview" ? [] : showAll ? cavs : cavs.filter((x) => usedSet.has(x.id) || c.pins[x.id]?.filler);
-  const hidden = level === "overview" ? 0 : cavs.length - visible.length;
-  const rowsH = level === "overview" ? 0 : visible.length * ROW_H + (hidden ? ROW_H : 0);
-  const h = level === "overview" ? 34 : HEADER_H + rowsH + 4;
-  const w = level === "overview" ? 120 : level === "detail" ? CARD_W_DETAIL : CARD_W;
+  const visible = compact ? [] : showAll ? cavs : cavs.filter((x) => usedSet.has(x.id) || c.pins[x.id]?.filler);
+  const hidden = compact ? 0 : cavs.length - visible.length;
+  const rowsH = compact ? 0 : visible.length * ROW_H + (hidden ? ROW_H : 0);
+  const h = level === "overview" ? 34 : compact ? COMPACT_H : HEADER_H + rowsH + 4;
+  const w = level === "overview" ? 120 : compact ? COMPACT_W : level === "detail" ? CARD_W_DETAIL : CARD_W;
+  const fan = compactMode ? FAN_COMPACT : FAN;
   const anchor = c.position;
-  const cardX = facing === 1 ? anchor.x - FAN - w : anchor.x + FAN;
+  const cardX = facing === 1 ? anchor.x - fan - w : anchor.x + fan;
   const cardY = anchor.y - h / 2;
   const glyphX = facing === 1 ? cardX - GLYPH_W - 10 : cardX + w + 10;
   const rows: RowLayout[] = visible.map((cv, i) => ({ cavityId: cv.id, top: cardY + HEADER_H + i * ROW_H, y: cardY + HEADER_H + i * ROW_H + ROW_H / 2, netId: c.pins[cv.id]?.netId ?? null, size: cv.size, special: !!(cv as { special?: boolean }).special }));
@@ -69,6 +78,7 @@ export function layoutConnector(c: ConnectorInstance, cat: CatalogIndex, level: 
     attachX: facing === 1 ? cardX + w : cardX,
     rows,
     rowByCavity: new Map(rows.map((r) => [r.cavityId, r])),
+    compact,
     collapsed: hidden ? { y: cardY + HEADER_H + visible.length * ROW_H + ROW_H / 2, count: hidden } : null,
     total: cavs.length,
     used: usedSet.size,
@@ -182,7 +192,7 @@ export function projectOnSegment(a: Point, b: Point, p: Point): number {
   return Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2));
 }
 
-export function bounds(h: Harness, cat: CatalogIndex, level: ZoomLevel) {
+export function bounds(h: Harness, cat: CatalogIndex, level: ZoomLevel, compact = false) {
   let x0 = Infinity,
     y0 = Infinity,
     x1 = -Infinity,
@@ -194,7 +204,7 @@ export function bounds(h: Harness, cat: CatalogIndex, level: ZoomLevel) {
     y1 = Math.max(y1, y);
   };
   for (const c of h.connectors) {
-    const L = layoutConnector(c, cat, level);
+    const L = layoutConnector(c, cat, level, compact);
     add(Math.min(L.card.x, L.glyph.x), L.card.y - 20);
     add(Math.max(L.card.x + L.card.w, L.glyph.x + L.glyph.w), L.card.y + L.card.h);
   }
