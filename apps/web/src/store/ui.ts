@@ -22,7 +22,7 @@ export interface Viewport {
   k: number;
 }
 
-export type DialogId = "palette" | "settings" | "rules" | "pedigreeEditor" | "pedigreeCompare" | "import" | "order" | "finish" | "dfm" | "freeze" | "mate" | "open" | "shortcuts" | "potting";
+export type DialogId = "palette" | "settings" | "rules" | "pedigreeEditor" | "pedigreeCompare" | "import" | "order" | "finish" | "dfm" | "freeze" | "mate" | "open" | "shortcuts" | "potting" | "templateEditor";
 
 export interface PickerState {
   screen: { x: number; y: number };

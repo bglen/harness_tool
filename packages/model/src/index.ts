@@ -15,3 +15,6 @@ export * from "./validate";
 export * from "./cavities";
 export * from "./names";
 export * from "./release";
+export * from "./drawingTemplate";
+export * from "./schematic";
+export * from "./drawingTemplateBuiltins";

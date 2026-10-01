@@ -1,28 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { Harness, Point, Wire } from "@hs/model";
-import type { ConnLayout } from "./geometry";
-import { roundedPath, schematicRoutes, SCH_LANE } from "./schematic";
+import type { Harness, Point, Wire } from "./schema";
+import { roundedPath, schematicRoutes, SCH_LANE, type SchematicCard } from "./schematic";
 
 /** A pin card whose rows sit at the given heights, attaching wires at `attachX` on the `facing` side. */
-function card(id: string, attachX: number, facing: 1 | -1, rows: Record<string, number>): ConnLayout {
+function card(_id: string, attachX: number, facing: 1 | -1, rows: Record<string, number>): SchematicCard {
   const ys = Object.values(rows);
   const top = Math.min(...ys) - 40;
   const h = Math.max(...ys) - top + 20;
-  const rs = Object.entries(rows).map(([cavityId, y]) => ({ cavityId, y, top: y - 10, netId: null, size: "22", special: false }));
-  return {
-    id,
-    facing,
-    anchor: { x: attachX + facing * 72, y: top + h / 2 },
-    card: { x: facing === 1 ? attachX - 236 : attachX, y: top, w: 236, h },
-    glyph: { x: 0, y: 0, w: 0, h: 0 },
-    attachX,
-    rows: rs,
-    rowByCavity: new Map(rs.map((r) => [r.cavityId, r])),
-    collapsed: null,
-    compact: false,
-    total: rs.length,
-    used: rs.length,
-  };
+  return { facing, card: { y: top, h }, attachX, rowByCavity: new Map(Object.entries(rows).map(([cavityId, y]) => [cavityId, { y }])) };
 }
 
 let n = 0;

@@ -1,5 +1,19 @@
-import type { Harness, Point, Wire, WireEnd } from "@hs/model";
-import { nodePos, type ConnLayout } from "./geometry";
+import type { Harness, Point, Wire, WireEnd } from "./schema";
+
+/** What the router needs from a pin card: which side wires attach on, and where each pin row is. */
+export interface SchematicCard {
+  facing: 1 | -1;
+  attachX: number;
+  card: { y: number; h: number };
+  rowByCavity: Map<string, { y: number }>;
+}
+
+function nodePos(h: Harness, nodeId: string): Point {
+  const n = h.nodes.find((x) => x.id === nodeId);
+  if (!n) return { x: 0, y: 0 };
+  if (n.kind === "connector") return h.connectors.find((c) => c.id === n.connectorId)?.position ?? n.position;
+  return n.position;
+}
 
 /**
  * Schematic wire routing: every wire is drawn pin-to-pin with right-angle runs, ignoring the physical bundles.
@@ -58,7 +72,7 @@ export function splicePoint(h: Harness, spliceId: string): Point | null {
 
 type RawEnd = Omit<End, "dir"> & { dir: 1 | -1 | 0 };
 
-function pinEnd(e: WireEnd, layouts: Map<string, ConnLayout>): RawEnd | null {
+function pinEnd(e: WireEnd, layouts: Map<string, SchematicCard>): RawEnd | null {
   if (e.kind !== "pin") return null;
   const L = layouts.get(e.connectorId);
   if (!L) return null;
@@ -66,7 +80,7 @@ function pinEnd(e: WireEnd, layouts: Map<string, ConnLayout>): RawEnd | null {
   return { p: { x: L.attachX, y: r ? r.y : L.card.y + L.card.h / 2 }, dir: L.facing, box: { y: L.card.y, h: L.card.h }, key: e.connectorId, stub: SCH_STUB };
 }
 
-function endOf(h: Harness, e: WireEnd, layouts: Map<string, ConnLayout>): RawEnd | null {
+function endOf(h: Harness, e: WireEnd, layouts: Map<string, SchematicCard>): RawEnd | null {
   if (e.kind === "pin") return pinEnd(e, layouts);
   const p = splicePoint(h, e.spliceId);
   // A splice has no side: it faces whichever way the other end is (resolved by the caller).
@@ -112,7 +126,7 @@ function place(b: Block, placed: Block[]): number {
 }
 
 /** Orthogonal pin-to-pin polyline for every wire, keyed by wire id, running from `wire.from` to `wire.to`. */
-export function schematicRoutes(h: Harness, layouts: Map<string, ConnLayout>): Map<string, Point[]> {
+export function schematicRoutes(h: Harness, layouts: Map<string, SchematicCard>): Map<string, Point[]> {
   const reqs: Req[] = [];
   const out = new Map<string, Point[]>();
   for (const w of h.wires) {

@@ -2,7 +2,7 @@ import { memo } from "react";
 import { extentCoverage, formatDiameter, formatLength, resolveLabelTemplate, type CatalogIndex, type Derived, type Harness, type LengthUnit, type Point, type Severity } from "@hs/model";
 import { semantic } from "@hs/ui-tokens";
 import { bundleWidth, nodePos, type ZoomLevel } from "../lib/geometry";
-import { splicePoint } from "../lib/schematic";
+import { splicePoint } from "@hs/model";
 
 interface Props {
   h: Harness;

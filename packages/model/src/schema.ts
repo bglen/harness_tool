@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DrawingTemplateSchema } from "./drawingTemplate";
 
 export const SCHEMA_VERSION = 2;
 
@@ -541,6 +542,8 @@ export const ReleaseSnapshotSchema = z.object({
     waivers: z.array(WaiverSchema),
     presets: z.array(FinishingPresetSchema),
     titleBlock: TitleBlockSchema,
+    /** Drawing template in force at release (absent on releases made before templates existed). */
+    drawingTemplate: DrawingTemplateSchema.nullable().optional(),
     report: ReportTextSchema,
     quote: QuoteSettingsSchema,
   }),
@@ -599,6 +602,8 @@ export const ProjectSchema = z.object({
   waivers: z.array(WaiverSchema).default([]),
   presets: z.array(FinishingPresetSchema).default([]),
   titleBlock: TitleBlockSchema.default({}),
+  /** Copy of the drawing template this project generates its drawing from (null: the classic built-in layout). */
+  drawingTemplate: DrawingTemplateSchema.nullable().default(null),
   report: ReportTextSchema.default({}),
   quote: QuoteSettingsSchema,
   revisions: z.array(RevisionSchema).min(1),

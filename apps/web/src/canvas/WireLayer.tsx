@@ -2,7 +2,7 @@ import { memo, useMemo } from "react";
 import { colorAbbr, describeWireColor, ratsnest, type Derived, type Harness, type Point, type Severity, type Wire, type WireEnd } from "@hs/model";
 import { needsCasing, semantic, wireColor } from "@hs/ui-tokens";
 import { LANE, laneMap, nodePos, wirePath, wireTrunk, type ConnLayout, type ZoomLevel } from "../lib/geometry";
-import { connectorPairs, roundedPath, schematicRoutes, splicePoint } from "../lib/schematic";
+import { connectorPairs, roundedPath, schematicRoutes, splicePoint } from "@hs/model";
 import type { CanvasMode } from "../store/ui";
 
 interface Props {

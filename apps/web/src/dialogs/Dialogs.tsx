@@ -5,6 +5,7 @@ import { RulesManager } from "./RulesManager";
 import { PedigreeCompare, PedigreeEditor } from "./PedigreeDialogs";
 import { ImportDialog } from "./ImportDialog";
 import { OrderFlow } from "./OrderFlow";
+import { TemplateEditor } from "../drawing/TemplateEditor";
 
 export function Dialogs() {
   const d = useUi((s) => s.dialogs);
@@ -23,6 +24,7 @@ export function Dialogs() {
       {d.pedigreeCompare && <PedigreeCompare />}
       {d.import && <ImportDialog data={d.import} />}
       {d.order && <OrderFlow />}
+      {d.templateEditor && <TemplateEditor data={d.templateEditor} />}
     </>
   );
 }

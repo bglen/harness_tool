@@ -64,6 +64,31 @@ the Schematic | Bundles toggle in the top bar, to switch between them.
 Selecting an object that only one mode draws switches to that mode. For example, a bundle finding in the checks
 panel opens the bundle layout, and the breakout tool (B) does the same.
 
+## Drawing templates
+
+The drawing PDF (Outputs → Drawing) is generated from a **drawing template**: one or more sheets, each with
+positioned blocks. The blocks are the title block, logo, text, bundle layout (formboard), schematic, notes, revision
+block, connector tables, wire list, BOM and labels.
+
+* **Pick a template** in the *Drawing template* section. *Classic layout* is the fixed drawing from before templates
+  and stays the default. Two built-ins are provided: *Standard — ANSI B* and *Schematic + formboard — ANSI D*.
+* **Edit visually** with *Customize* / *Edit template*. Drag blocks to move them and drag the handles to resize; they
+  snap to ⅛ in or 2.5 mm, and Alt places them freely. The right panel edits the selected block or the template
+  (sheet size, border and zones, company, logo). Click a title-block cell to edit its label and value. Values mix
+  text and fields such as `{drawingNumber}`, `{rev}`, `{sheet} OF {sheets}` and `{company}`. *Preview PDF* renders
+  the current project with the template.
+* **Logo:** upload a PNG, JPEG or SVG. SVG is converted to a high-resolution PNG, because PDFs can't embed SVG
+  images. It appears in every Logo block.
+* **Save and share:** *Save to library* keeps the template in this browser. Saving a built-in makes an editable
+  copy. *Export* writes a `.harnesstemplate.json`, and *Upload…* adds one to the library and uses it for the
+  project. Files are validated, and a template with an id that already exists is added under a new id rather than
+  overwriting it.
+* **Reproducible:** the project stores its own copy of the template it uses, so later library edits don't change
+  it until you pick the template again. A frozen revision keeps the template it was released with. Revisions
+  released before templates existed keep the classic layout.
+* **Long tables and notes** that don't fit their box continue in the same box on extra pages of that sheet, marked
+  *(CONT.)*. `{sheets}` counts those pages.
+
 ## Editing bundle branching
 
 These gestures work in the bundle layout. With three or more connectors, it shows a one-time tip:

@@ -8,6 +8,8 @@ export function useKeyboard() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const ui = useUi.getState();
+      // The drawing template editor handles its own keys (Delete, arrows, undo) while open.
+      if (ui.dialogs.templateEditor) return;
       const typing = !!(e.target as HTMLElement).closest?.("input,textarea,select,[contenteditable=true]");
       const mod = e.ctrlKey || e.metaKey;
       const k = e.key.toLowerCase();

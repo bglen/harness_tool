@@ -1,5 +1,5 @@
 import { createStore, del, get, keys, set, type UseStore } from "idb-keyval";
-import { safeParseProject, type CatalogIndex, type Project } from "@hs/model";
+import { parseDrawingTemplate, safeParseProject, type CatalogIndex, type DrawingTemplate, type Project } from "@hs/model";
 import type { OrderProvider, OrderRequest, ProjectMeta, ProjectStore, SupplyInfo, SupplyProvider } from "./interfaces";
 
 /** Phase 1 ProjectStore: designs live only in the browser (IndexedDB) and in files the user saves (§4.3, §14.3). */
@@ -37,6 +37,31 @@ export class LocalProjectStore implements ProjectStore {
   }
   async setLastOpened(id: string) {
     await set("last", id, this.meta);
+  }
+}
+
+/** Drawing template library in this browser (IndexedDB). Unreadable entries are skipped and reported, never repaired. */
+export class LocalTemplateStore {
+  private store: UseStore;
+  constructor() {
+    this.store = createStore("harness-studio-templates", "templates");
+  }
+  async save(t: DrawingTemplate) {
+    await set(t.id, t, this.store);
+  }
+  async list(): Promise<{ templates: DrawingTemplate[]; problems: string[] }> {
+    const ids = (await keys(this.store)) as string[];
+    const templates: DrawingTemplate[] = [];
+    const problems: string[] = [];
+    for (const id of ids) {
+      const r = parseDrawingTemplate(await get(id, this.store));
+      if (r.ok) templates.push(r.template);
+      else problems.push(`Template ${id}: ${r.error}`);
+    }
+    return { templates: templates.sort((a, b) => a.name.localeCompare(b.name)), problems };
+  }
+  async remove(id: string) {
+    await del(id, this.store);
   }
 }
 

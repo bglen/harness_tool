@@ -23,6 +23,7 @@ function releaseInputs(p: Project): ReleaseSnapshot["inputs"] {
     waivers: p.waivers,
     presets: p.presets,
     titleBlock: p.titleBlock,
+    drawingTemplate: p.drawingTemplate,
     report: p.report,
     quote: p.quote,
   });
@@ -82,6 +83,8 @@ export function projectForRevision(p: Project, revId: string): Project {
     waivers: i.waivers,
     presets: i.presets,
     titleBlock: i.titleBlock,
+    // Releases from before templates keep the classic layout they were released with.
+    drawingTemplate: i.drawingTemplate ?? null,
     report: i.report,
     quote: i.quote,
     revisions: base.revisions.map((r) => (r.id === rev.id ? { ...r, activePedigreeId: rev.release!.pedigreeId } : r)),

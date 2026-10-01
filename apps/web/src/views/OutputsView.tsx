@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { currentRevision, setReportText, setTitleBlock } from "@hs/model";
+import { BUILTIN_TEMPLATES, currentRevision, setDrawingTemplate, setReportText, setTitleBlock, stableStringify, uid, type DrawingTemplate } from "@hs/model";
 import { REPORT_SECTIONS, autoSummary, type SectionId } from "@hs/docs";
 import { verifyZip, type Manifest } from "@hs/io";
-import { Download, FileCheck2, Loader2, RefreshCw } from "lucide-react";
+import { Download, FileCheck2, Loader2, Pencil, Plus, RefreshCw, Trash2, Upload } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
 import { buildOutputPackage, docData, drawingBlob, PACKAGE_PRESETS, reportBlob, type PackageItem } from "../lib/docs";
 import { downloadBlob, pickFile, safeName } from "../lib/files";
+import { allTemplates, exportTemplate, importTemplateFile, useTemplates } from "../lib/templates";
 import { useUi } from "../store/ui";
 import { Button, cx, DemoTag, Field, inputCls, Section, Select, Toggle } from "../ui/primitives";
 
@@ -79,12 +80,13 @@ function DrawingTab() {
   const project = useProject((s) => s.project)!;
   const rev = currentRevision(project);
   const tb = project.titleBlock;
-  const pdf = usePdf(() => drawingBlob(), [project.titleBlock]);
+  const pdf = usePdf(() => drawingBlob(), [project.titleBlock, project.drawingTemplate]);
   const [notes, setNotes] = useState(tb.notes.join("\n"));
   const set = (patch: Partial<typeof tb>) => dispatch(setTitleBlock(patch));
   return (
     <div className="flex h-full">
       <div className="scroll-thin w-80 shrink-0 overflow-auto border-r border-border-subtle p-3">
+        <TemplatePicker />
         <Section title="Title block">
           <Field label="Company"><input className={inputCls} defaultValue={tb.company} onBlur={(e) => set({ company: e.target.value })} /></Field>
           <Field label="Title"><input className={inputCls} defaultValue={tb.title || project.name} onBlur={(e) => set({ title: e.target.value })} /></Field>
@@ -94,7 +96,7 @@ function DrawingTab() {
             <Field label="Checked"><input className={inputCls} defaultValue={tb.checkedBy} onBlur={(e) => set({ checkedBy: e.target.value })} /></Field>
             <Field label="Approved"><input className={inputCls} defaultValue={tb.approvedBy} onBlur={(e) => set({ approvedBy: e.target.value })} /></Field>
           </div>
-          <Field label="Sheet size"><Select value={tb.sheetSize} onChange={(v) => set({ sheetSize: v })} options={["ANSI B", "ANSI D", "ISO A3", "ISO A1"].map((x) => ({ value: x as typeof tb.sheetSize, label: x }))} /></Field>
+          {!project.drawingTemplate && <Field label="Sheet size"><Select value={tb.sheetSize} onChange={(v) => set({ sheetSize: v })} options={["ANSI B", "ANSI D", "ISO A3", "ISO A1"].map((x) => ({ value: x as typeof tb.sheetSize, label: x }))} /></Field>}
           <Field label="Tolerances"><input className={inputCls} defaultValue={tb.tolerances} onBlur={(e) => set({ tolerances: e.target.value })} /></Field>
           <Field label="Export-control marking (every page)" hint="e.g. EAR99 / ITAR banner text. Phase 1 makes no compliance claims."><input className={inputCls} defaultValue={tb.exportControl} onBlur={(e) => set({ exportControl: e.target.value })} /></Field>
         </Section>
@@ -105,6 +107,100 @@ function DrawingTab() {
       </div>
       <Preview {...pdf} title={`${safeName(project.partNumber)}_Rev${rev.label}_Drawing.pdf`} />
     </div>
+  );
+}
+
+/** Choose, edit, import and export the drawing template this project generates its drawing from. */
+function TemplatePicker() {
+  const project = useProject((s) => s.project)!;
+  const ui = useUi();
+  const lib = useTemplates();
+  useEffect(() => {
+    if (!lib.loaded) void lib.load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const cur = project.drawingTemplate;
+  const rev = currentRevision(project);
+  const options = [
+    { value: "classic", label: "Classic layout (built-in, no template)" },
+    ...BUILTIN_TEMPLATES.map((t) => ({ value: t.id, label: `${t.name} (built-in)` })),
+    ...lib.library.map((t) => ({ value: t.id, label: t.name })),
+  ];
+  if (cur && !options.some((o) => o.value === cur.id)) options.push({ value: cur.id, label: `${cur.name} (in this project)` });
+  const use = (id: string) => {
+    if (id === "classic") return dispatch(setDrawingTemplate({ template: null }));
+    const t = allTemplates().find((x) => x.id === id) ?? (cur?.id === id ? cur : undefined);
+    if (t) dispatch(setDrawingTemplate({ template: t }));
+  };
+  const libCopy = cur && lib.library.find((t) => t.id === cur.id);
+  const edited = !!(cur && libCopy && stableStringify({ ...libCopy, updated: "" }) !== stableStringify({ ...cur, updated: "" }));
+  const open = (template: DrawingTemplate, source: "project" | "library" | "new") => ui.openDialog("templateEditor", { template: structuredClone(template), source });
+  const fresh = () => ({ ...structuredClone(BUILTIN_TEMPLATES[0]!), id: uid(), name: "New template", description: "" });
+  return (
+    <Section title="Drawing template" right={<span className="text-2xs text-text-tertiary">{lib.library.length} in library</span>}>
+      <Select ariaLabel="Drawing template" value={cur?.id ?? "classic"} onChange={use} options={options} />
+      <div className="text-2xs text-text-tertiary">
+        {cur ? (
+          <>
+            This project stores its own copy of “{cur.name}”{edited ? ", edited since it was taken from the library" : ""}. Library changes don't affect it until you pick it again.
+          </>
+        ) : (
+          "The fixed layout used before templates. Pick a template, or customize one, to add your logo and title block."
+        )}
+        {rev.frozen && " Released revisions keep the template they were released with."}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <Button size="sm" onClick={() => open(cur ?? fresh(), cur ? "project" : "new")}>
+          <Pencil size={12} /> {cur ? "Edit template" : "Customize"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => open(fresh(), "new")}>
+          <Plus size={12} /> New
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={async () => {
+            const t = await importTemplateFile();
+            if (t) dispatch(setDrawingTemplate({ template: t }));
+          }}
+        >
+          <Upload size={12} /> Upload…
+        </Button>
+        <Button size="sm" variant="ghost" disabled={!cur} onClick={() => cur && exportTemplate(cur)}>
+          <Download size={12} /> Export
+        </Button>
+      </div>
+      {lib.library.length > 0 && (
+        <div className="mt-1 flex flex-col rounded-control border border-border-subtle">
+          <div className="label-caps border-b border-border-subtle px-2 py-1">Your library (this browser)</div>
+          {lib.library.map((t) => (
+            <div key={t.id} className="flex items-center gap-1 border-b border-border-subtle px-2 py-1 text-xs last:border-0">
+              <span className={cx("flex-1 truncate", cur?.id === t.id && "font-medium text-accent")} title={t.description || t.name}>
+                {t.name}
+              </span>
+              <button className="text-text-secondary hover:text-text-primary" onClick={() => use(t.id)}>
+                Use
+              </button>
+              <button aria-label={`Edit ${t.name}`} className="text-text-tertiary hover:text-text-primary" onClick={() => open(t, "library")}>
+                <Pencil size={12} />
+              </button>
+              <button aria-label={`Export ${t.name}`} className="text-text-tertiary hover:text-text-primary" onClick={() => exportTemplate(t)}>
+                <Download size={12} />
+              </button>
+              <button
+                aria-label={`Delete ${t.name}`}
+                className="text-text-tertiary hover:text-status-error"
+                onClick={() => {
+                  if (window.confirm(`Delete “${t.name}” from your template library? Projects already using it keep their own copy.`)) void lib.remove(t.id);
+                }}
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Section>
   );
 }
 

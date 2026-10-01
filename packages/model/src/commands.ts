@@ -37,6 +37,7 @@ import type {
 } from "./schema";
 import { normalize, parallelPairs } from "./sync";
 import type { WireColor } from "./colors";
+import type { DrawingTemplate } from "./drawingTemplate";
 
 enablePatches();
 
@@ -1515,6 +1516,16 @@ export const setTitleBlock = def<Partial<TitleBlock>>("setTitleBlock", {
   allowFrozen: true,
   run(proj, p) {
     Object.assign(proj.titleBlock, p);
+  },
+});
+
+/** Use a drawing template for this project (a copy is stored in the project); null returns to the classic layout. */
+export const setDrawingTemplate = def<{ template: DrawingTemplate | null }>("setDrawingTemplate", {
+  label: (p) => (p.template ? `Use drawing template “${p.template.name}”` : "Use classic drawing layout"),
+  allowFrozen: true,
+  run(proj, p) {
+    proj.drawingTemplate = p.template ? structuredClone(p.template) : null;
+    if (p.template?.company && (!proj.titleBlock.company || proj.titleBlock.company === "Harness Studio")) proj.titleBlock.company = p.template.company;
   },
 });
 

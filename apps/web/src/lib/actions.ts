@@ -22,6 +22,7 @@ import {
   twistWires,
   untwist,
   uid,
+  BUILTIN_TEMPLATES,
   unpinWireProps,
   type Harness,
 } from "@hs/model";
@@ -130,6 +131,18 @@ export const ACTIONS: Action[] = [
   { id: "shieldView", label: "Shield view", group: "View", icon: "shield", shortcut: "G", run: () => useUi.getState().toggleShieldView() },
   { id: "wireList", label: "Toggle wire list", group: "View", icon: "table", shortcut: "L", run: () => useUi.getState().setDrawer(useUi.getState().drawerHeight > 40 ? 36 : 300) },
   { id: "rightRail", label: "Toggle right rail", group: "View", icon: "panel-right", run: () => useUi.getState().toggleRightRail() },
+  {
+    id: "drawingTemplate",
+    label: "Edit drawing template…",
+    group: "File",
+    icon: "pencil",
+    run: () => {
+      const ui = useUi.getState();
+      const p = getProject();
+      ui.setView("outputs");
+      ui.openDialog("templateEditor", { template: structuredClone(p.drawingTemplate ?? { ...BUILTIN_TEMPLATES[0]!, id: uid(), name: "New template" }), source: p.drawingTemplate ? "project" : "new" });
+    },
+  },
   { id: "viewDesign", label: "Go to Design", group: "View", shortcut: "1", run: () => useUi.getState().setView("design") },
   { id: "viewBom", label: "Go to BOM", group: "View", shortcut: "2", run: () => useUi.getState().setView("bom") },
   { id: "viewOutputs", label: "Go to Outputs", group: "View", shortcut: "3", run: () => useUi.getState().setView("outputs") },
