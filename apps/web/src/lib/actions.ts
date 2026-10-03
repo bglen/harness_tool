@@ -23,6 +23,11 @@ import {
   untwist,
   uid,
   BUILTIN_TEMPLATES,
+  SCH_GRID,
+  contactFill,
+  dissolveSplice,
+  endKey,
+  makeSplice,
   unpinWireProps,
   type Harness,
 } from "@hs/model";
@@ -31,7 +36,8 @@ import { useUi, type SelKind } from "../store/ui";
 import { copySelection, pasteClipboard } from "./clipboard";
 import { downloadProject, openProjectFile } from "./files";
 import { zoomToFit, screenToCanvas } from "./viewport";
-import { nodePos } from "./geometry";
+import { layoutConnector, nodePos } from "./geometry";
+import { svc } from "./services";
 
 export interface ActionCtx {
   kind: SelKind | null;
@@ -178,10 +184,12 @@ export const ACTIONS: Action[] = [
 
   // ─── Connector ───────────────────────────────────────────────────────────
   { id: "cPart", label: "Part", group: "Connector", icon: "cpu", bar: ["connector"], menu: ["connector"], when: (c) => c.ids.length === 1, run: (c) => useUi.getState().openPicker({ screen: c.anchor, canvas: screenToCanvas(c.anchor), mode: "replace", connectorId: c.ids[0] }) },
-  { id: "cBackshell", label: "Backshell", group: "Connector", icon: "cylinder", bar: ["connector"], menu: ["connector"], when: (c) => c.ids.length === 1, run: (c) => pop("backshell", c) },
-  { id: "cAccessories", label: "Accessories", group: "Connector", icon: "package", bar: ["connector"], menu: ["connector"], when: (c) => c.ids.length === 1, run: (c) => pop("accessories", c) },
-  { id: "cLabel", label: "Label", group: "Connector", icon: "tag", bar: ["connector", "wire", "segment"], menu: ["connector", "wire", "segment"], run: (c) => pop("label", c) },
-  { id: "cPotting", label: "Potting", group: "Connector", icon: "droplet", menu: ["connector"], when: (c) => c.ids.length === 1, run: (c) => useUi.getState().openDialog("potting", { connectorId: c.ids[0] }) },
+  { id: "cLeadEnd", label: "Lead ends", group: "Connector", icon: "scissors", bar: ["connector"], menu: ["connector"], when: (c) => flyingLeads(c), run: (c) => pop("leadEnd", c) },
+  { id: "cBackshell", label: "Backshell", group: "Connector", icon: "cylinder", bar: ["connector"], menu: ["connector"], when: (c) => c.ids.length === 1 && !flyingLeads(c), run: (c) => pop("backshell", c) },
+  { id: "cAccessories", label: "Accessories", group: "Connector", icon: "package", bar: ["connector"], menu: ["connector"], when: (c) => c.ids.length === 1 && !flyingLeads(c), run: (c) => pop("accessories", c) },
+  // Connector labels sit on the bundle, so they are added in the bundle layout (wires and bundles get the button anywhere).
+  { id: "cLabel", label: "Label", group: "Connector", icon: "tag", bar: ["connector", "wire", "segment"], menu: ["connector", "wire", "segment"], when: (c) => c.kind !== "connector" || useUi.getState().canvasMode === "bundles", run: (c) => pop("label", c) },
+  { id: "cPotting", label: "Potting", group: "Connector", icon: "droplet", menu: ["connector"], when: (c) => c.ids.length === 1 && !flyingLeads(c), run: (c) => useUi.getState().openDialog("potting", { connectorId: c.ids[0] }) },
   {
     id: "cFlip",
     label: "Flip direction",
@@ -238,7 +246,7 @@ export const ACTIONS: Action[] = [
 
   // ─── Wires ───────────────────────────────────────────────────────────────
   { id: "wGauge", label: "Gauge", group: "Wire", icon: "circle-dot", bar: ["wire"], menu: ["wire"], run: (c) => pop("wireProps", c, { ids: c.ids, focus: "gauge" }) },
-  { id: "wColor", label: "Color", group: "Wire", icon: "palette", bar: ["wire"], menu: ["wire"], run: (c) => pop("wireProps", c, { ids: c.ids, focus: "color" }) },
+  { id: "wColor", label: "Color", group: "Wire", icon: "palette", menu: ["wire"], run: (c) => pop("wireProps", c, { ids: c.ids, focus: "color" }) },
   {
     id: "wTwist",
     label: "Twist",
@@ -247,7 +255,8 @@ export const ACTIONS: Action[] = [
     shortcut: "T",
     bar: ["wire"],
     menu: ["wire"],
-    when: (c) => c.kind === "wire" && c.ids.length >= 2 && c.ids.length <= 4,
+    // Hidden once the selection is already one twisted group: "Untwist" takes its place.
+    when: (c) => c.kind === "wire" && c.ids.length >= 2 && c.ids.length <= 4 && !twistedTogether(c),
     run: (c) => dispatch(twistWires({ ids: c.ids, groupId: uid() })),
   },
   {
@@ -255,6 +264,8 @@ export const ACTIONS: Action[] = [
     label: "Untwist",
     group: "Wire",
     icon: "minus",
+    shortcut: "T",
+    bar: ["wire"],
     menu: ["wire"],
     when: (c) => c.kind === "wire" && c.ids.some((id) => c.h.wires.find((w) => w.id === id)?.twistGroupId),
     run: (c) => dispatch(untwist({ groupIds: [...new Set(c.ids.map((id) => c.h.wires.find((w) => w.id === id)?.twistGroupId).filter(Boolean) as string[])] })),
@@ -317,7 +328,22 @@ export const ACTIONS: Action[] = [
 
   // ─── Net ─────────────────────────────────────────────────────────────────
   { id: "netEdit", label: "Rename / class / topology", group: "Net", icon: "pencil", bar: ["net"], menu: ["net", "wire"], run: (c) => pop("net", c, { ids: c.kind === "wire" ? [...new Set(c.ids.map((id) => c.h.wires.find((w) => w.id === id)?.netId).filter(Boolean))] : c.ids }) },
-  { id: "spliceEdit", label: "Splice type & cover", group: "Splice", icon: "diamond", bar: ["splice"], menu: ["splice"], run: (c) => pop("splice", c) },
+  { id: "spliceEdit", label: "Part & CMA", group: "Splice", icon: "diamond", bar: ["splice"], menu: ["splice"], when: (c) => c.ids.length === 1, run: (c) => pop("splice", c) },
+  { id: "spliceDissolve", label: "Make double crimp", group: "Splice", icon: "git-merge", bar: ["splice"], menu: ["splice"], run: (c) => dispatch(c.ids.map((id) => dissolveSplice({ spliceId: id }))) },
+  {
+    id: "makeSplice",
+    label: "Make splice",
+    group: "Splice",
+    icon: "diamond",
+    bar: ["pin", "wire"],
+    menu: ["pin", "wire"],
+    when: (c) => !!spliceTarget(c),
+    run: (c) => {
+      const t = spliceTarget(c)!;
+      dispatch(makeSplice({ at: t.at, others: t.others, spliceId: uid(), position: splicePlacement(c.h, t.at) }));
+    },
+  },
+  { id: "pinBuildUp", label: "CMA build-up…", group: "Splice", icon: "plus", menu: ["pin"], when: (c) => c.kind === "pin" && c.ids.length === 1 && contactFill(c.h, ...(c.ids[0]!.split(":") as [string, string])).wires.length > 0, run: (c) => pop("pinBuildUp", c) },
 
   // ─── Delete ──────────────────────────────────────────────────────────────
   {
@@ -328,7 +354,7 @@ export const ACTIONS: Action[] = [
     shortcut: "Del",
     danger: true,
     bar: ["connector", "wire", "segment", "node", "label", "note", "layer", "clamp", "boot", "hardware"],
-    menu: ["connector", "wire", "segment", "node", "label", "note", "layer", "clamp", "boot", "hardware", "net"],
+    menu: ["connector", "wire", "segment", "node", "label", "note", "layer", "clamp", "boot", "hardware", "net", "splice"],
     when: (c) => !!c.kind && c.ids.length > 0,
     run: (c) => {
       const map: Partial<Record<SelKind, () => void>> = {
@@ -343,6 +369,8 @@ export const ACTIONS: Action[] = [
         boot: () => dispatch(removeBoots({ ids: c.ids })),
         hardware: () => dispatch(removeHardware({ ids: c.ids })),
         net: () => dispatch({ type: "deleteNets", payload: { ids: c.ids } }),
+        // Deleting a splice keeps the connection: it goes back to a double crimp.
+        splice: () => dispatch(c.ids.map((id) => dissolveSplice({ spliceId: id }))),
       };
       map[c.kind!]?.();
       useUi.getState().clearSelection();
@@ -358,6 +386,11 @@ export function actionCtx(anchor?: { x: number; y: number }): ActionCtx {
   return { kind: ui.selection.kind, ids: ui.selection.ids, h: currentHarness(p), anchor: anchor ?? ui.contextMenu?.screen ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 } };
 }
 
+export function actionAvailable(id: string): boolean {
+  const a = ACTION_BY_ID.get(id);
+  return !!a && (!a.when || a.when(actionCtx()));
+}
+
 export function runAction(id: string, anchor?: { x: number; y: number }) {
   const a = ACTION_BY_ID.get(id);
   if (!a) return;
@@ -368,4 +401,45 @@ export function runAction(id: string, anchor?: { x: number; y: number }) {
 
 export function isFrozen() {
   return currentRevision(getProject()).frozen;
+}
+
+/** Every selected wire is in the same twist group (so the selection's twist action is "Untwist"). */
+function twistedTogether(c: ActionCtx): boolean {
+  const g = c.h.wires.find((w) => w.id === c.ids[0])?.twistGroupId;
+  return !!g && c.ids.every((id) => c.h.wires.find((w) => w.id === id)?.twistGroupId === g);
+}
+
+/** The selection is flying-lead ends only (no connector-specific actions apply). */
+function flyingLeads(c: ActionCtx): boolean {
+  return c.kind === "connector" && c.ids.length > 0 && c.ids.every((id) => !!svc().cat.connector(c.h.connectors.find((x) => x.id === id)?.pn ?? "")?.flyingLead);
+}
+
+/**
+ * Where a splice can go for the selection: a pin carrying two or more wires (all of them branch from the splice), or
+ * two or more selected wires that share a pin (only those move to the splice).
+ */
+function spliceTarget(c: ActionCtx): { at: { connectorId: string; cavityId: string }; others?: string[] } | null {
+  const pinWires = (cid: string, cav: string) => c.h.wires.filter((w) => [w.from, w.to].some((e) => e.kind === "pin" && e.connectorId === cid && e.cavityId === cav));
+  if (c.kind === "pin" && c.ids.length === 1) {
+    const [cid, cav] = c.ids[0]!.split(":") as [string, string];
+    return pinWires(cid, cav).length >= 2 ? { at: { connectorId: cid, cavityId: cav } } : null;
+  }
+  if (c.kind === "wire" && c.ids.length >= 2) {
+    const ws = c.ids.map((id) => c.h.wires.find((w) => w.id === id)).filter(Boolean) as Harness["wires"];
+    const keysOf = (w: Harness["wires"][number]) => [w.from, w.to].filter((e) => e.kind === "pin").map((e) => endKey(e));
+    const shared = keysOf(ws[0]!).find((k) => ws.every((w) => keysOf(w).includes(k)));
+    if (!shared) return null;
+    const [cid, cav] = shared.split(":") as [string, string];
+    return { at: { connectorId: cid, cavityId: cav }, others: ws.map((w) => (endKey(w.from) === shared ? endKey(w.to) : endKey(w.from))) };
+  }
+  return null;
+}
+
+/** A new splice goes three grid steps out from the pin, on the side its wires leave. */
+function splicePlacement(h: Harness, at: { connectorId: string; cavityId: string }) {
+  const conn = h.connectors.find((x) => x.id === at.connectorId);
+  if (!conn) return undefined;
+  const L = layoutConnector(conn, svc().cat, "harness");
+  const row = L.rowByCavity.get(at.cavityId);
+  return { x: L.attachX + L.facing * 3 * SCH_GRID, y: row?.y ?? L.anchor.y };
 }

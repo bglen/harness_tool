@@ -18,6 +18,9 @@ import {
   CommandRejectedError,
   configureForPedigree,
   connectPins,
+  connectToSplice,
+  dissolveSplice,
+  makeSplice,
   currentHarness,
   currentRevision,
   derive,
@@ -43,6 +46,7 @@ import {
   setSettings,
   setTermination,
   setUidGenerator,
+  setWireProps,
   sha256HexSync,
   shieldWires,
   stableStringify,
@@ -662,5 +666,129 @@ describe("branch editing", () => {
     expect(lens(q).every((x) => x > 0)).toBe(true);
     expect(() => run(p, [reattachSegment({ segmentId: ac.id, end, toNodeId: node("C") })])).toThrow(CommandRejectedError);
     expect(() => run(p, [mergeNodes({ from: node("A"), into: node("B") })])).toThrow(CommandRejectedError);
+  });
+});
+
+describe("flying leads", () => {
+  const build = () => {
+    let p = newProject({ now: AT });
+    p = run(p, [addConnector({ id: "j1", pn: SOCKET, position: { x: 0, y: 0 } }), addConnector({ id: "fl", pn: "FL-4", position: { x: 400, y: 0 }, rotation: 180 })]);
+    p = run(p, [connectPins({ pairs: [1, 2, 3].map((i) => ({ a: { connectorId: "j1", cavityId: String(i) }, b: { connectorId: "fl", cavityId: String(i) } })) })]);
+    return p;
+  };
+
+  it("is a connector-like end: lead positions, refDes FL1, wires routed in one bundle to it", () => {
+    const p = build();
+    const h = currentHarness(p);
+    const fl = h.connectors.find((c) => c.id === "fl")!;
+    expect(fl.refDes).toBe("FL1");
+    expect(cat.connector("FL-4")!.arrangement.cavities.map((c) => c.id)).toEqual(["1", "2", "3", "4"]);
+    expect(h.wires).toHaveLength(3);
+    const d = derive(h, cat, p.settings);
+    // every lead ends at the same bundle end: one shared route
+    const routes = h.wires.map((w) => (d.routes.get(w.id) ?? []).join(","));
+    expect(new Set(routes).size).toBe(1);
+    expect(routes[0]).not.toBe("");
+  });
+
+  it("adds no connector, contact or plug parts; finishes each lead instead", () => {
+    const p = build();
+    const rev = currentRevision(p);
+    const bom = computeBom(p, rev, cat, derive(rev.harness, cat, p.settings), 1);
+    expect(bom.lines.some((l) => l.pn.startsWith("FL-"))).toBe(false);
+    expect(bom.lines.filter((l) => l.category === "Contacts").reduce((s, l) => s + l.qty, 0)).toBe(3); // J1 side only
+    const ops = deriveOperations(p, rev, cat, profile, resolvePedigree(p.pedigreeScheme, rev.activePedigreeId), inspections);
+    const lead = ops.ops.find((o) => o.kind === "leadEnd")!;
+    expect(lead.qty).toBe(3);
+    expect(lead.automated).toBe(false); // tinned by hand (default finish)
+    expect(ops.ops.some((o) => o.kind === "connectorLoad" && o.refs.includes("FL1"))).toBe(false);
+  });
+
+  it("skips connector-only checks (insert, sealing, keying, spare cavities, backshell) on flying leads", () => {
+    const p = build();
+    const dfm = runDfm({ project: p, rev: currentRevision(p), cat, profile });
+    const onFl = dfm.results.flatMap((r) => r.violations.filter((v) => v.objectIds.includes("fl")).map((v) => r.eff.rule.id));
+    expect(onFl).toEqual([]);
+  });
+});
+
+describe("splices placed in drawn wiring", () => {
+  const pin = (connectorId: string, cavityId: string) => ({ connectorId, cavityId });
+  const branched = (p0 = newProject({ now: AT })) => {
+    let p = run(p0, [addConnector({ id: "j1", pn: SOCKET, position: { x: 0, y: 0 } }), addConnector({ id: "p2", pn: SOCKET, position: { x: 400, y: -100 }, rotation: 180 }), addConnector({ id: "p3", pn: SOCKET, position: { x: 400, y: 100 }, rotation: 180 })]);
+    p = run(p, [connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p2", "1") }] })]);
+    p = run(p, [connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p3", "1") }] })]);
+    return p;
+  };
+  const ends = (p: Project) => currentHarness(p).wires.map((w) => [w.from, w.to].map((e) => (e.kind === "pin" ? `${e.connectorId}-${e.cavityId}` : `SP/${e.barrel}`)).join(">")).sort();
+
+  it("branching off a pin is a double crimp by default", () => {
+    expect(ends(branched())).toEqual(["j1-1>p2-1", "j1-1>p3-1"]);
+  });
+
+  it("makes a branch point a splice: one wire in, the branches out of the other barrel; part fits the CMA", () => {
+    const p = run(branched(), [makeSplice({ at: pin("j1", "1"), spliceId: "sp" })]);
+    expect(ends(p)).toEqual(["j1-1>SP/0", "p2-1>SP/1", "p3-1>SP/1"]);
+    const s = currentHarness(p).splices[0]!;
+    expect(s.barrels).toBe(2);
+    // 22 AWG: 754 CMA in, 1508 out → the 26-20 AWG butt splice
+    expect(s.pn).toBe("M81824/1-1");
+  });
+
+  it("turns a splice back into a double crimp", () => {
+    let p = run(branched(), [makeSplice({ at: pin("j1", "1"), spliceId: "sp" })]);
+    p = run(p, [dissolveSplice({ spliceId: "sp" })]);
+    expect(currentHarness(p).splices).toHaveLength(0);
+    expect(ends(p)).toEqual(["j1-1>p2-1", "j1-1>p3-1"]);
+  });
+
+  it("follows the pedigree's default: branches become splices, later branches join the same splice", () => {
+    let p = newProject({ now: AT });
+    const scheme = structuredClone(p.pedigreeScheme);
+    scheme.pedigrees[0]!.process = { ...scheme.pedigrees[0]!.process, branchJoin: "splice" };
+    p = run(p, [setPedigreeScheme({ scheme })]);
+    p = branched(p);
+    expect(ends(p)).toEqual(["j1-1>SP/0", "p2-1>SP/1", "p3-1>SP/1"]);
+    p = run(p, [addConnector({ id: "p4", pn: SOCKET, position: { x: 400, y: 300 }, rotation: 180 }), connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p4", "1") }] })]);
+    expect(currentHarness(p).splices).toHaveLength(1);
+    expect(ends(p)).toContain("p4-1>SP/1");
+  });
+
+  it("wires a pin into a splice barrel and keeps the splice when nets merge", () => {
+    let p = run(branched(), [makeSplice({ at: pin("j1", "1"), spliceId: "sp" })]);
+    p = run(p, [addConnector({ id: "p4", pn: SOCKET, position: { x: 400, y: 300 }, rotation: 180 }), connectToSplice({ pin: pin("p4", "2"), spliceId: "sp", barrel: 1 })]);
+    expect(ends(p)).toContain("p4-2>SP/1");
+    expect(currentHarness(p).nets).toHaveLength(1);
+  });
+});
+
+describe("circular mil area in crimp barrels", () => {
+  const pin = (connectorId: string, cavityId: string) => ({ connectorId, cavityId });
+  const branched = () => {
+    let p = run(newProject({ now: AT }), [addConnector({ id: "j1", pn: SOCKET, position: { x: 0, y: 0 } }), addConnector({ id: "p2", pn: SOCKET, position: { x: 400, y: -100 }, rotation: 180 }), addConnector({ id: "p3", pn: SOCKET, position: { x: 400, y: 100 }, rotation: 180 })]);
+    p = run(p, [connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p2", "1") }] })]);
+    return run(p, [connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p3", "1") }] })]);
+  };
+  const cma = (p: Project) => runDfm({ project: p, rev: currentRevision(p), cat, profile }).results.find((r) => r.eff.rule.id === "MFG-CMP-008")!.violations;
+
+  it("flags two 22 AWG wires in a size 22D contact and offers a splice", () => {
+    const v = cma(branched());
+    expect(v).toHaveLength(1);
+    expect(v[0]!.message).toMatch(/1,508 CMA in the contact \(max 754\)/);
+    expect(v[0]!.fix?.label).toBe("Make splice");
+    const fixed = run(branched(), v[0]!.fix!.commands);
+    expect(cma(fixed)).toHaveLength(0);
+  });
+
+  it("flags a splice barrel below the part's minimum and fixes it with build-up recorded on the splice", () => {
+    let p = run(branched(), [makeSplice({ at: pin("j1", "1"), spliceId: "sp" })]);
+    const inWire = currentHarness(p).wires.find((w) => w.from.kind === "pin" && w.from.connectorId === "j1")!;
+    p = run(p, [setWireProps({ ids: [inWire.id], gauge: 28 })]);
+    const v = cma(p);
+    expect(v).toHaveLength(1);
+    expect(v[0]!.message).toMatch(/SP1 barrel 1: 175 CMA, less than M81824\/1-1 needs \(min 300\)/);
+    p = run(p, v[0]!.fix!.commands);
+    expect(currentHarness(p).splices[0]!.buildUp).toEqual([{ barrel: 0, gauge: 28, count: 1 }]);
+    expect(cma(p)).toHaveLength(0);
   });
 });

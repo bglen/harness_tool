@@ -1,10 +1,12 @@
-import { cavityStates, derive, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
+import { buildUps, cavityStates, derive, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
 
 export type OpKind =
   | "connectorLoad"
   | "backshell"
   | "accessory"
   | "contactCrimpInsert"
+  | "leadEnd"
+  | "cmaBuildUp"
   | "sealingPlug"
   | "wireCutStrip"
   | "wireLayPerM"
@@ -62,6 +64,8 @@ const OP_LABEL: Record<OpKind, string> = {
   backshell: "Backshell assembly",
   accessory: "Accessory fit",
   contactCrimpInsert: "Contact crimp + insert",
+  leadEnd: "Flying-lead end finish",
+  cmaBuildUp: "CMA build-up",
   sealingPlug: "Sealing plug insertion",
   wireCutStrip: "Wire cut + strip",
   wireLayPerM: "Wire layup",
@@ -107,6 +111,13 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
 
   for (const c of h.connectors) {
     const part = cat.connector(c.pn);
+    if (part?.flyingLead) {
+      // Bare wire ends: nothing to place or insert; each wired lead is stripped (and tinned / ferruled) instead.
+      const fin = c.leadEnd?.finish ?? "tinned";
+      const leads = new Set(h.wires.flatMap((w) => [w.from, w.to]).flatMap((e) => (e.kind === "pin" && e.connectorId === c.id ? [e.cavityId] : [])));
+      if (fin !== "unterminated") push("leadEnd", leads.size, fin === "stripped", [...leads].map((l) => `${c.refDes}-${l}`), fin === "stripped" ? undefined : fin === "tinned" ? "Flying-lead ends tinned by hand" : "Flying-lead ferrules crimped by hand");
+      continue;
+    }
     const ok = !!part?.machineReady && caps.connectorSlashes.includes(part.slash);
     push("connectorLoad", 1, ok, [c.refDes], ok ? undefined : `${c.refDes}: connector not supported for automated placement`);
     if (c.backshell) push("backshell", 1, caps.automatedFinishing.includes("backshell") && !!cat.backshell(c.backshell.pn)?.machineReady, [c.refDes], cat.backshell(c.backshell.pn)?.machineReady ? undefined : "Potting-boot backshells are fitted by hand");
@@ -183,6 +194,7 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
   for (const c of h.clamps) push("bandClamp", c.quantity, caps.automatedFinishing.includes("bandClamp"));
   for (const l of h.labels) push("label", 1, caps.labelTypes.includes(l.type), [], caps.labelTypes.includes(l.type) ? undefined : `${l.type} labels applied by hand`);
   for (const s of h.splices) push("splice", 1, caps.supportsSplices, [s.label], caps.supportsSplices ? undefined : "Splices are manual operations");
+  for (const b of buildUps(h)) push("cmaBuildUp", 1, false, [b.where], "CMA build-up strands are added by hand");
   let cure = 0;
   for (const p of h.potting) {
     const comp = cat.potting(p.compoundPn);

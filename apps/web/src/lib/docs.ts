@@ -2,7 +2,7 @@ import inter400 from "@fontsource/inter/files/inter-latin-400-normal.woff?url";
 import inter600 from "@fontsource/inter/files/inter-latin-600-normal.woff?url";
 import mono400 from "@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff?url";
 import { currentRevision, projectForRevision, sha256HexSync, stableStringify, type Project, type Revision } from "@hs/model";
-import { buildDocData, registerFonts, renderDrawingPdf, renderReportPdf, type QuoteSnapshot, type Redaction, type SectionId } from "@hs/docs";
+import { buildDocData, registerFonts, renderDrawingPdf, renderMfgReportPdf, renderReportPdf, type MfgOrder, type QuoteSnapshot, type Redaction, type SectionId } from "@hs/docs";
 import type { DfmSummary } from "@hs/dfm";
 import { bomTable, buildZip, dfmTable, pinoutTable, toCsv, toXlsx, wireListTable, type PackageFile } from "@hs/io";
 import { computeBom } from "@hs/ops";
@@ -162,4 +162,9 @@ export async function buildOutputPackage(items: PackageItem[], opts: { revisionI
 function compareRelease(recorded: { path: string; sha256: string }[], now: { path: string; sha256: string }[]) {
   const differences = recorded.filter((r) => now.find((n) => n.path === r.path)?.sha256 !== r.sha256).map((r) => r.path);
   return { ok: differences.length === 0, differences };
+}
+
+/** Example manufacturing report (simulated lot record) for the current revision. */
+export async function mfgReportBlob(order: MfgOrder) {
+  return renderMfgReportPdf(docData(), order);
 }

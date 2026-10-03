@@ -9,6 +9,7 @@
     "backshell": 1.2,
     "accessory": 0.3,
     "contactCrimpInsert": 0.3,
+    "leadEnd": 0.2,
     "sealingPlug": 0.08,
     "wireCutStrip": 0.12,
     "wireLayPerM": 0.2,
@@ -23,6 +24,8 @@
   "manualOpMinutes": {
     "connectorLoad": 6,
     "contactCrimpInsert": 1.2,
+    "leadEnd": 0.9,
+    "cmaBuildUp": 1.5,
     "wireCutStrip": 0.6,
     "splice": 4,
     "daisyChain": 3,

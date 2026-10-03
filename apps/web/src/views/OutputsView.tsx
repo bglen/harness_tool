@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { BUILTIN_TEMPLATES, currentRevision, setDrawingTemplate, setReportText, setTitleBlock, stableStringify, uid, type DrawingTemplate } from "@hs/model";
-import { REPORT_SECTIONS, autoSummary, type SectionId } from "@hs/docs";
+import { BUILTIN_TEMPLATES, currentRevision, resolvePedigree, setDrawingTemplate, setReportText, setTitleBlock, stableStringify, uid, type DrawingTemplate } from "@hs/model";
+import { REPORT_SECTIONS, autoSummary, type MfgOrder, type SectionId } from "@hs/docs";
 import { verifyZip, type Manifest } from "@hs/io";
 import { Download, FileCheck2, Loader2, Pencil, Plus, RefreshCw, Trash2, Upload } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
-import { buildOutputPackage, docData, drawingBlob, PACKAGE_PRESETS, reportBlob, type PackageItem } from "../lib/docs";
+import { buildOutputPackage, docData, drawingBlob, mfgReportBlob, PACKAGE_PRESETS, reportBlob, type PackageItem } from "../lib/docs";
 import { downloadBlob, pickFile, safeName } from "../lib/files";
 import { allTemplates, exportTemplate, importTemplateFile, useTemplates } from "../lib/templates";
 import { useUi } from "../store/ui";
 import { Button, cx, DemoTag, Field, inputCls, Section, Select, Toggle } from "../ui/primitives";
 
-type Tab = "drawing" | "report" | "package";
+type Tab = "drawing" | "report" | "mfg" | "package";
+const TAB_LABEL: Record<Tab, string> = { drawing: "Drawing", report: "Design Report", mfg: "Example Manufacturing Report", package: "Package" };
 
 function usePdf(make: () => Promise<Blob>, deps: unknown[]) {
   const [url, setUrl] = useState<string | null>(null);
@@ -44,14 +45,14 @@ export default function OutputsView() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-1 border-b border-border-subtle px-4 py-2">
-        {(["drawing", "report", "package"] as Tab[]).map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={cx("rounded-control px-3 py-1 text-sm capitalize", tab === t ? "bg-bg-hover font-medium" : "text-text-secondary hover:text-text-primary")}>
-            {t}
+        {(["drawing", "report", "mfg", "package"] as Tab[]).map((t) => (
+          <button key={t} onClick={() => setTab(t)} className={cx("rounded-control px-3 py-1 text-sm", tab === t ? "bg-bg-hover font-medium" : "text-text-secondary hover:text-text-primary")}>
+            {TAB_LABEL[t]}
           </button>
         ))}
         <span className="ml-3 text-xs text-text-tertiary">Generated live from the model: nothing here is a separate document to maintain.</span>
       </div>
-      <div className="min-h-0 flex-1">{tab === "drawing" ? <DrawingTab /> : tab === "report" ? <ReportTab /> : <PackageTab />}</div>
+      <div className="min-h-0 flex-1">{tab === "drawing" ? <DrawingTab /> : tab === "report" ? <ReportTab /> : tab === "mfg" ? <MfgReportTab /> : <PackageTab />}</div>
     </div>
   );
 }
@@ -231,6 +232,63 @@ function ReportTab() {
         <div className="mt-2 flex items-center gap-1 text-2xs text-text-tertiary">Pricing and stock are frozen at generation time and labelled with a timestamp. <DemoTag /></div>
       </div>
       <Preview {...pdf} title={`${safeName(project.partNumber)}_Rev${rev.label}_Design_Report.pdf`} />
+    </div>
+  );
+}
+
+/** Documents an order can ask for on top of what the pedigree requires. */
+const ORDER_DOCS = ["Test data package", "AS9102 First Article Inspection", "Material certifications", "Lot traceability", "Serial traceability", "Customer source-inspection hold point"];
+
+/** Example of the report a manufacturer returns with a built lot, for a chosen pedigree and order (simulated data). */
+function MfgReportTab() {
+  const project = useProject((s) => s.project)!;
+  const rev = currentRevision(project);
+  const [order, setOrder] = useState<MfgOrder>(() => ({
+    customer: project.titleBlock.company || "Example Customer Inc.",
+    po: `PO-${new Date().getFullYear()}-0815`,
+    workOrder: `WO-${new Date().getFullYear()}-0142`,
+    qty: Math.max(1, Math.min(5, project.quote.selected.qty)),
+    serialPrefix: "SN",
+    buildDate: new Date().toISOString().slice(0, 10),
+    pedigreeId: rev.activePedigreeId,
+    extraDocs: [],
+  }));
+  const set = (patch: Partial<MfgOrder>) => setOrder((o) => ({ ...o, ...patch }));
+  const pdf = usePdf(() => mfgReportBlob(order), [order, project]);
+  const ped = resolvePedigree(project.pedigreeScheme, order.pedigreeId ?? rev.activePedigreeId);
+  return (
+    <div className="flex h-full">
+      <div className="scroll-thin w-80 shrink-0 overflow-auto border-r border-border-subtle p-3">
+        <div className="mb-2 flex items-center gap-2 text-2xs text-text-tertiary">
+          What a manufacturer returns with a built lot: certificate, inspection results and the test data the pedigree and order ask for. All names, serials and measurements are simulated. <DemoTag />
+        </div>
+        <Section title="Built to">
+          <Field label="Pedigree">
+            <Select value={order.pedigreeId ?? rev.activePedigreeId} onChange={(v) => set({ pedigreeId: v })} options={[...project.pedigreeScheme.pedigrees].sort((a, b) => a.rank - b.rank).map((p) => ({ value: p.id, label: `${p.code} ${p.name}${p.id === rev.activePedigreeId ? " (design)" : ""}` }))} />
+          </Field>
+          <div className="text-2xs text-text-tertiary">
+            {ped.inspections.filter((i) => i.sampling !== "none").length} inspections · documents: {ped.documentation.join(", ") || "none"}
+          </div>
+        </Section>
+        <Section title="Order">
+          <Field label="Customer"><input className={inputCls} defaultValue={order.customer} onBlur={(e) => set({ customer: e.target.value })} /></Field>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="Customer PO"><input className={cx(inputCls, "mono")} defaultValue={order.po} onBlur={(e) => set({ po: e.target.value })} /></Field>
+            <Field label="Work order"><input className={cx(inputCls, "mono")} defaultValue={order.workOrder} onBlur={(e) => set({ workOrder: e.target.value })} /></Field>
+            <Field label="Quantity"><input type="number" min={1} max={50} className={cx(inputCls, "mono")} defaultValue={order.qty} onBlur={(e) => set({ qty: Math.max(1, Math.min(50, Number(e.target.value) || 1)) })} /></Field>
+            <Field label="Serial prefix"><input className={cx(inputCls, "mono")} defaultValue={order.serialPrefix} onBlur={(e) => set({ serialPrefix: e.target.value })} /></Field>
+          </div>
+          <Field label="Final test date"><input type="date" className={inputCls} defaultValue={order.buildDate} onBlur={(e) => e.target.value && set({ buildDate: e.target.value })} /></Field>
+        </Section>
+        <Section title="Documents requested on the order">
+          {ORDER_DOCS.map((d) => {
+            const required = ped.documentation.includes(d);
+            return <Toggle key={d} checked={required || order.extraDocs.includes(d)} onChange={(v) => !required && set({ extraDocs: v ? [...order.extraDocs, d] : order.extraDocs.filter((x) => x !== d) })} label={required ? `${d} (required by ${ped.code})` : d} />;
+          })}
+          <div className="text-2xs text-text-tertiary">The detailed measured values appear when the pedigree or the order asks for a test data package.</div>
+        </Section>
+      </div>
+      <Preview {...pdf} title={`${safeName(project.partNumber)}_Rev${rev.label}_Manufacturing_Report_EXAMPLE.pdf`} />
     </div>
   );
 }

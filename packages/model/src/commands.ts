@@ -4,9 +4,10 @@ import { enablePatches, produceWithPatches, applyPatches, current, isDraft, type
 function snapshot<T>(v: T): T {
   return structuredClone(isDraft(v) ? current(v) : v);
 }
-import type { CatalogIndex } from "./catalog";
+import type { CatalogIndex, ConnectorKind } from "./catalog";
 import { derive } from "./derive";
-import { connectorById, currentHarness, currentRevision, isNoConnectName, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, prune, uid } from "./helpers";
+import { connectorById, currentHarness, currentRevision, endKey, isNoConnectName, isSpliceKey, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, parseLinkKey, prune, spliceKey, uid } from "./helpers";
+import { activePedigree } from "./pedigree";
 import { normalizePn } from "./pn38999";
 import type {
   Accessory,
@@ -30,12 +31,13 @@ import type {
   RuleOverride,
   Ruleset,
   Settings,
+  Splice,
   Termination,
   TitleBlock,
   Waiver,
   WireEnd,
 } from "./schema";
-import { normalize, parallelPairs } from "./sync";
+import { desiredPairs, drawnLinks, normalize, parallelPairs } from "./sync";
 import type { WireColor } from "./colors";
 import type { DrawingTemplate } from "./drawingTemplate";
 
@@ -150,6 +152,7 @@ function mergeNets(h: Harness, keep: Net, drop: Net) {
   drop.members = [];
   for (const l of drop.links ?? []) (keep.links ??= []).push(l);
   drop.links = [];
+  for (const s of h.splices) if (s.netId === drop.id) s.netId = keep.id;
   if (keep.currentA == null && drop.currentA != null) keep.currentA = drop.currentA;
 }
 
@@ -202,7 +205,7 @@ function removeNode(h: Harness, nodeId: string, merge = true) {
   h.splices = h.splices.filter((s) => s.nodeId !== nodeId);
 }
 
-function cloneConnector(h: Harness, src: ConnectorInstance, kind: "plug" | "receptacle", offset: Point, newId: string, withNets: boolean): ConnectorInstance {
+function cloneConnector(h: Harness, src: ConnectorInstance, kind: ConnectorKind, offset: Point, newId: string, withNets: boolean): ConnectorInstance {
   const c: ConnectorInstance = snapshot(src);
   c.id = newId;
   c.refDes = nextRefDes(h, kind);
@@ -214,7 +217,7 @@ function cloneConnector(h: Harness, src: ConnectorInstance, kind: "plug" | "rece
 
 // ─── Connectors ─────────────────────────────────────────────────────────────
 
-export const addConnector = def<{ id: string; pn: string; position: Point; refDes?: string; rotation?: number; kind?: "plug" | "receptacle" }>("addConnector", {
+export const addConnector = def<{ id: string; pn: string; position: Point; refDes?: string; rotation?: number; kind?: ConnectorKind }>("addConnector", {
   label: (p) => `Add connector ${p.pn}`,
   run(proj, p, { cat }) {
     const h = H(proj);
@@ -471,6 +474,7 @@ export const connectPins = def<{ pairs: { a: NetMember; b: NetMember }[] }>("con
       if (memberKey(a) === memberKey(b)) continue;
       connectTwo(h, a, b);
     }
+    applyBranchDefault(proj, h, p.pairs.flatMap(({ a, b }) => [memberKey(a), memberKey(b)]));
   },
 });
 
@@ -649,13 +653,10 @@ export const deleteWires = def<{ ids: string[] }>("deleteWires", {
       if (!w) continue;
       // Forget the drawn connection this wire came from.
       const net = h.nets.find((n) => n.id === w.netId);
-      if (net?.links?.length && w.from.kind === "pin" && w.to.kind === "pin") {
-        const ka = memberKey(w.from);
-        const kb = memberKey(w.to);
-        net.links = net.links.filter(([x, y]) => !((x === ka && y === kb) || (x === kb && y === ka)));
-      }
+      if (net?.links?.length) unlink(net, endKey(w.from), endKey(w.to));
       const end = w.to.kind === "pin" ? w.to : w.from.kind === "pin" ? w.from : null;
-      if (end && end.kind === "pin") setPinNet(h, { connectorId: end.connectorId, cavityId: end.cavityId }, null);
+      // The far pin leaves the net, unless it's still wired some other way (another drawn branch).
+      if (end && end.kind === "pin" && !(net && w.to.kind === "splice" && linksAt(net, memberKey(end)).length)) setPinNet(h, { connectorId: end.connectorId, cavityId: end.cavityId }, null);
     }
   },
 });
@@ -1078,15 +1079,39 @@ export const deleteNodes = def<{ ids: string[] }>("deleteNodes", {
   },
 });
 
-export const setSpliceProps = def<{ id: string; type?: "solderSleeve" | "crimp" | "ultrasonic"; cover?: "heatShrink" | "potting"; pn?: string; nodeId?: string }>("setSpliceProps", {
-  label: () => "Edit splice",
-  run(proj, p) {
-    const s = H(proj).splices.find((x) => x.id === p.id);
+/**
+ * Edit a splice. `pn`: a part number pins it (and sets the barrel count from the catalog part); "" lets the part
+ * follow the wires again. Wires on barrels that no longer exist move to the last barrel.
+ */
+export const setSpliceProps = def<{ id: string; type?: Splice["type"]; cover?: Splice["cover"]; pn?: string; nodeId?: string; barrels?: number; position?: Point; buildUp?: Splice["buildUp"] }>("setSpliceProps", {
+  label: (p) => (p.position ? "Move splice" : p.buildUp ? "Splice CMA build-up" : "Edit splice"),
+  run(proj, p, { cat }) {
+    const h = H(proj);
+    const s = h.splices.find((x) => x.id === p.id);
     if (!s) return;
     if (p.type) s.type = p.type;
     if (p.cover) s.cover = p.cover;
-    if (p.pn) (s.pn = p.pn), (s.pinned = true);
+    if (p.pn === "") s.pinned = false;
+    else if (p.pn) {
+      s.pn = p.pn;
+      s.pinned = true;
+      const part = cat.splice(p.pn);
+      if (part) (s.type = part.type), (p.barrels ??= part.barrels);
+    }
     if (p.nodeId) s.nodeId = p.nodeId;
+    if (p.position) s.position = { ...p.position };
+    if (p.buildUp) s.buildUp = p.buildUp.map((b) => ({ ...b }));
+    if (p.barrels && p.barrels !== s.barrels) {
+      const n = Math.max(1, Math.min(8, Math.round(p.barrels)));
+      const net = h.nets.find((x) => x.id === s.netId);
+      for (const l of net?.links ?? [])
+        for (let i = 0; i < 2; i++) {
+          const e = parseLinkKey(l[i]!);
+          if (e.kind === "splice" && e.spliceId === s.id && e.barrel >= n) l[i] = spliceKey(s.id, n - 1);
+        }
+      s.buildUp = s.buildUp.map((b) => (b.barrel >= n ? { ...b, barrel: n - 1 } : b));
+      s.barrels = n;
+    }
   },
 });
 
@@ -1656,3 +1681,130 @@ export const mergeHarness = def<{ harness: Harness; label?: string }>("mergeHarn
 // Utility re-exports for the UI
 export { derive };
 export type { CustomRule, Accessory };
+
+/** Flying-lead ends: how the bare wire ends are finished, and how much insulation is stripped. */
+export const setLeadEnd = def<{ ids: string[]; finish?: NonNullable<ConnectorInstance["leadEnd"]>["finish"]; stripMm?: number }>("setLeadEnd", {
+  label: (p) => (p.finish ? `Lead ends: ${p.finish}` : "Edit lead ends"),
+  run(proj, p) {
+    for (const id of p.ids) {
+      const c = connectorById(H(proj), id);
+      if (!c) continue;
+      const cur = c.leadEnd ?? { finish: "tinned" as const, stripMm: 6 };
+      c.leadEnd = { finish: p.finish ?? cur.finish, stripMm: p.stripMm ?? cur.stripMm };
+    }
+  },
+});
+
+// ─── Splices (placed by the user in drawn wiring) ───────────────────────────
+
+/**
+ * Make sure the net records its wiring as drawn links (pin → pin, pin → splice barrel), so a splice can be placed in
+ * it. Nets that were wired automatically (daisy chain, parallel, net-level splice) get their current construction.
+ */
+function materializeLinks(h: Harness, net: Net) {
+  if (drawnLinks(net)) return;
+  net.links = desiredPairs(h, net).map(([a, b]) => [endKey(a), endKey(b)] as [string, string]);
+  net.topology = "daisy";
+  net.topologyConfirmed = false;
+}
+
+const linksAt = (net: Net, k: string) => (net.links ?? []).filter(([a, b]) => a === k || b === k).map(([a, b]) => (a === k ? b : a));
+const unlink = (net: Net, k1: string, k2: string) => (net.links = (net.links ?? []).filter(([a, b]) => !((a === k1 && b === k2) || (a === k2 && b === k1))));
+
+/** Splice part defaults when the user doesn't choose: a butt crimp splice (in on one barrel, branches on the other). */
+const DEFAULT_SPLICE = { type: "crimp" as const, barrels: 2 };
+
+function spliceAt(h: Harness, net: Net, at: string, opts: { id: string; others?: string[]; barrels?: number; type?: Splice["type"]; position?: Point }) {
+  materializeLinks(h, net);
+  const others = linksAt(net, at).filter((k) => !opts.others || opts.others.includes(k));
+  if (others.length < 2) throw new CommandRejectedError("A splice joins a pin to two or more wires: pick a pin that carries at least two.");
+  const barrels = opts.barrels ?? DEFAULT_SPLICE.barrels;
+  const out = barrels > 1 ? 1 : 0;
+  for (const o of others) unlink(net, at, o);
+  net.links!.push([at, spliceKey(opts.id, 0)]);
+  for (const o of others) net.links!.push([spliceKey(opts.id, out), o]);
+  // nodeId "" → sync places it on the best bundle node for the net.
+  h.splices.push({ id: opts.id, label: nextLabel(h.splices.map((s) => s.label), "SP"), netId: net.id, nodeId: "", type: opts.type ?? DEFAULT_SPLICE.type, pn: "", cover: "heatShrink", pinned: false, barrels, position: opts.position, buildUp: [] });
+}
+
+/** Turn a branch point (a pin carrying two or more wires) into a splice: the pin gets one wire to the splice, the branches leave the splice. */
+export const makeSplice = def<{ at: NetMember; spliceId: string; others?: string[]; barrels?: number; type?: Splice["type"]; position?: Point }>("makeSplice", {
+  label: () => "Make splice",
+  run(proj, p) {
+    const h = H(proj);
+    const net = netOfPin(h, p.at.connectorId, p.at.cavityId);
+    if (!net) throw new CommandRejectedError("That pin isn't on a net.");
+    spliceAt(h, net, memberKey(p.at), { id: p.spliceId, others: p.others, barrels: p.barrels, type: p.type, position: p.position });
+  },
+});
+
+/** Replace a splice with a double crimp: everything that met at the splice is wired from one pin instead. */
+export const dissolveSplice = def<{ spliceId: string }>("dissolveSplice", {
+  label: () => "Make double crimp",
+  run(proj, p) {
+    const h = H(proj);
+    const s = h.splices.find((x) => x.id === p.spliceId);
+    const net = s && h.nets.find((n) => n.id === s.netId);
+    if (!s || !net) return;
+    materializeLinks(h, net);
+    const ports = Array.from({ length: s.barrels }, (_, i) => spliceKey(s.id, i));
+    const ends = ports.flatMap((k) => linksAt(net, k));
+    const pins = ends.filter((k) => !isSpliceKey(k));
+    if (!pins.length) throw new CommandRejectedError("This splice joins only other splices: dissolve those first.");
+    // The wire on barrel 1 (the "in" side) becomes the pin carrying the others.
+    const hub = linksAt(net, ports[0]!).find((k) => !isSpliceKey(k)) ?? pins[0]!;
+    net.links = (net.links ?? []).filter(([a, b]) => !ports.includes(a) && !ports.includes(b));
+    for (const e of ends) if (e !== hub) net.links.push([hub, e]);
+    h.splices = h.splices.filter((x) => x.id !== s.id);
+  },
+});
+
+/** Wire a pin into a splice barrel (the pin joins the splice's net). */
+export const connectToSplice = def<{ pin: NetMember; spliceId: string; barrel: number }>("connectToSplice", {
+  label: () => "Connect to splice",
+  run(proj, p) {
+    const h = H(proj);
+    const s = h.splices.find((x) => x.id === p.spliceId);
+    const net = s && h.nets.find((n) => n.id === s.netId);
+    if (!s || !net) return;
+    materializeLinks(h, net);
+    setNoConnect(h, p.pin, false);
+    const cur = netOfPin(h, p.pin.connectorId, p.pin.cavityId);
+    if (cur && cur.id !== net.id) mergeNets(h, net, cur);
+    else if (!cur) setPinNet(h, p.pin, net.id);
+    const k = memberKey(p.pin);
+    const sk = spliceKey(s.id, Math.min(p.barrel, s.barrels - 1));
+    if (!linksAt(net, k).includes(sk)) net.links!.push([k, sk]);
+  },
+});
+
+/** Crimp build-up in a contact (filler strands to reach the contact's minimum circular mil area). */
+export const setPinBuildUp = def<{ connectorId: string; cavityId: string; buildUp: { gauge: number; count: number } | null }>("setPinBuildUp", {
+  label: (p) => (p.buildUp ? "Add CMA build-up" : "Remove CMA build-up"),
+  run(proj, p) {
+    const c = connectorById(H(proj), p.connectorId);
+    if (!c) return;
+    const pin = (c.pins[p.cavityId] ??= { netId: null });
+    if (p.buildUp) pin.buildUp = { ...p.buildUp };
+    else delete pin.buildUp;
+  },
+});
+
+/** Under the default construction for the active pedigree, a pin that now carries two wires becomes a splice. */
+function applyBranchDefault(proj: Project, h: Harness, keys: string[]) {
+  if (activePedigree(proj).process.branchJoin !== "splice") return;
+  for (const k of keys) {
+    const net = h.nets.find((n) => n.members.some((m) => memberKey(m) === k));
+    if (!net?.links) continue;
+    const at = linksAt(net, k);
+    if (at.length < 2) continue;
+    // Already wired into a splice: hang the new branches on that splice instead of crimping them in the pin.
+    const sp = at.find(isSpliceKey);
+    if (sp) {
+      const e = parseLinkKey(sp) as Extract<WireEnd, { kind: "splice" }>;
+      const s = h.splices.find((x) => x.id === e.spliceId);
+      const out = spliceKey(e.spliceId, s && s.barrels > 1 ? (e.barrel === 0 ? 1 : 0) : 0);
+      for (const o of at) if (o !== sp) unlink(net, k, o), net.links.push([out, o]);
+    } else spliceAt(h, net, k, { id: uid() });
+  }
+}

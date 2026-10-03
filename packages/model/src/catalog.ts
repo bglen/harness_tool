@@ -5,10 +5,13 @@ import { buildD38999, parseD38999, normalizePn, arrangementId, type D38999Parts 
 export type Lifecycle = "active" | "nrnd" | "obsolete" | "inactive";
 export type DataStatus = "verified" | "unreviewed" | "seed";
 
+/** A 38999 plug or receptacle, or a flying-lead end (bare wire ends, no connector). */
+export type ConnectorKind = "plug" | "receptacle" | "flyingLead";
+
 export interface ConnectorStyle {
   slash: string;
   series: string;
-  kind: "plug" | "receptacle";
+  kind: ConnectorKind;
   mount: string; // "straight" | "wall flange" | "jam nut"
   description: string;
   terminationAllowanceMm: number;
@@ -232,6 +235,11 @@ export interface SplicePart {
   gaugeMax: number;
   maxWires: number;
   massG: number;
+  /** Crimp barrels: 1 = single-ended (closed-end), 2 = butt. */
+  barrels: number;
+  /** Circular mil area each barrel accepts (conductors + build-up). */
+  cmaMin: number;
+  cmaMax: number;
 }
 
 export interface PottingPart {
@@ -301,7 +309,9 @@ export interface ConnectorPart extends D38999Parts {
   key: string;
   manufacturer: string;
   series: string;
-  kind: "plug" | "receptacle";
+  kind: ConnectorKind;
+  /** Flying-lead end: the "cavities" are lead positions with no contacts, insert, shell or backshell. */
+  flyingLead?: boolean;
   mount: string;
   gender: "pin" | "socket";
   style: ConnectorStyle;
@@ -358,6 +368,12 @@ export class CatalogIndex {
   connector(pn: string): ConnectorPart | null {
     const key = normalizePn(pn);
     if (this.connectorCache.has(key)) return this.connectorCache.get(key)!;
+    const leads = parseFlyingLead(key);
+    if (leads) {
+      const fl = flyingLeadPart(leads);
+      this.connectorCache.set(key, fl);
+      return fl;
+    }
     const p = parseD38999(key);
     let part: ConnectorPart | null = null;
     if (p) {
@@ -481,8 +497,19 @@ export class CatalogIndex {
     return this.bundle.labels.find((l) => l.pn === pn);
   }
 
-  spliceFor(type: SplicePart["type"], gauge: number, wires: number): SplicePart | undefined {
-    return this.bundle.splices.find((s) => s.type === type && gauge <= s.gaugeMin && gauge >= s.gaugeMax && wires <= s.maxWires) ?? this.bundle.splices.find((s) => s.type === type);
+  /**
+   * Splice part for the conductors in each barrel (circular mil area per barrel, wire count per barrel): the smallest
+   * part of the type with that many barrels whose CMA window fits every barrel. Undefined when nothing fits.
+   */
+  spliceFor(type: SplicePart["type"], barrelCma: number[], barrelWires: number[] = []): SplicePart | undefined {
+    return this.splicesFitting(type, barrelCma, barrelWires)[0];
+  }
+
+  /** Every splice part of the type and barrel count that fits the barrels, smallest CMA window first. */
+  splicesFitting(type: SplicePart["type"] | null, barrelCma: number[], barrelWires: number[] = []): SplicePart[] {
+    return this.bundle.splices
+      .filter((s) => (!type || s.type === type) && s.barrels === barrelCma.length && barrelCma.every((c) => c >= s.cmaMin && c <= s.cmaMax) && barrelWires.every((n) => n <= s.maxWires))
+      .sort((a, b) => a.cmaMax - b.cmaMax);
   }
 
   splice(pn: string) {
@@ -537,4 +564,60 @@ export class CatalogIndex {
       return pat.endsWith("*") ? key.startsWith(pat.slice(0, -1)) : pat === key;
     });
   }
+}
+
+/** Most leads one flying-lead end can carry. */
+export const FLYING_LEAD_MAX = 64;
+/** Lead-position "size" of a flying-lead end (no contact, any gauge). */
+export const FLYING_LEAD_SIZE = "FL";
+
+/** Part number of a flying-lead end with `leads` lead positions. */
+export function flyingLeadPn(leads: number): string {
+  return `FL-${leads}`;
+}
+
+/** Lead count from a flying-lead PN ("FL-8"), or null for any other part number. */
+export function parseFlyingLead(pn: string): number | null {
+  const m = normalizePn(pn).match(/^FL-?(\d{1,2})$/);
+  const n = m ? Number(m[1]) : 0;
+  return n >= 1 && n <= FLYING_LEAD_MAX ? n : null;
+}
+
+/**
+ * A flying-lead end: wires that leave the harness as bare (stripped / tinned / ferruled) ends instead of entering a
+ * connector. Modelled as a connector whose cavities are lead positions, so it gets a bundle node, pin rows, nets and
+ * routing like any connector; everything connector-specific (insert, contacts, shell, backshell) is absent.
+ */
+export function flyingLeadPart(leads: number): ConnectorPart {
+  const r = Math.max(2, Math.sqrt(leads) * 1.4);
+  const cavities: Cavity[] = Array.from({ length: leads }, (_, i) => {
+    const a = (2 * Math.PI * i) / leads - Math.PI / 2;
+    return { id: String(i + 1), x: leads === 1 ? 0 : +(r * Math.cos(a)).toFixed(2), y: leads === 1 ? 0 : +(-r * Math.sin(a)).toFixed(2), size: FLYING_LEAD_SIZE };
+  });
+  const pn = flyingLeadPn(leads);
+  return {
+    slash: "",
+    finish: "",
+    shellSize: 0,
+    insert: "",
+    contactStyle: "",
+    keying: "N",
+    pn,
+    key: pn,
+    manufacturer: "",
+    series: "Flying lead",
+    kind: "flyingLead",
+    flyingLead: true,
+    mount: "free",
+    gender: "pin",
+    style: { slash: "", series: "Flying lead", kind: "flyingLead", mount: "free", description: "Flying lead", terminationAllowanceMm: 10, machineReady: true, fixturePrefix: "FL", lifecycle: "active", massBySize: {} },
+    finishInfo: { code: "", material: "", finish: "", conductive: false, hermetic: false, tempMaxC: 200, cadmium: false, lifecycle: "active", notes: "" },
+    arrangement: { id: `FL-${leads}`, shellSize: 0, insert: "", contactCount: leads, sizes: { [FLYING_LEAD_SIZE]: leads }, serviceRating: "", status: "verified", inactive: false, source: "Flying-lead end (no connector)", cavities },
+    shell: { code: "", size: 0, accessoryIdMm: 0, shellOdMm: 0, accessoryThread: "" },
+    description: `Flying leads, ${leads} lead${leads === 1 ? "" : "s"} (wire ends, no connector)`,
+    machineReady: true,
+    fixtureId: "",
+    massG: 0,
+    lifecycle: "active",
+  };
 }

@@ -169,7 +169,8 @@ export function derive(h: Harness, cat: CatalogIndex, settings: Pick<Settings, "
       if (end.kind === "pin") {
         const c = h.connectors.find((x) => x.id === end.connectorId);
         const part = c && cat.connector(c.pn);
-        len += part?.style.terminationAllowanceMm ?? opts.defaultTerminationAllowanceMm ?? 25;
+        // Flying leads: the stripped length past the bundle end; connectors: the termination allowance.
+        len += part?.flyingLead ? (c!.leadEnd?.stripMm ?? 6) : part?.style.terminationAllowanceMm ?? opts.defaultTerminationAllowanceMm ?? 25;
       } else len += 15; // splice strip + overlap
     }
     len += settings.serviceLoopMm + w.extraLengthMm;

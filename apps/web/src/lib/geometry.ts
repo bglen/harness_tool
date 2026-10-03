@@ -1,18 +1,52 @@
-import type { CatalogIndex, ConnectorInstance, Derived, Harness, Point } from "@hs/model";
+import { gridCardTop, SCH_GRID, snapToGrid, type CatalogIndex, type ConnectorInstance, type Derived, type Harness, type Label, type Point } from "@hs/model";
+import { bendOf, bendReach, cableExit } from "../canvas/BackshellGlyph";
 
-export const ROW_H = 20;
+/** Pin row pitch: one schematic grid step, so every pin row sits on a grid line. */
+export const ROW_H = SCH_GRID;
 export const HEADER_H = 46;
 export const CARD_W = 236;
 export const CARD_W_DETAIL = 340;
-export const FAN = 72;
-/** Card-to-bundle gap on the bundle layout, where connectors are drawn as compact blocks without pin rows. */
-export const FAN_COMPACT = 26;
+/** Anchor-to-card gap; a whole number of grid steps so the pin attach edge sits on a grid line. */
+export const FAN = 4 * SCH_GRID;
 export const COMPACT_W = 168;
+/** Header space kept clear on the right of a schematic card for the insert face thumbnail (and the UNREVIEWED tag). */
+export const HEADER_RIGHT = 46;
+export const HEADER_RIGHT_UNREVIEWED = 114;
+
+let measureCtx: CanvasRenderingContext2D | null | undefined;
+const widthCache = new Map<string, number>();
+/**
+ * Rendered width of canvas text in the app's UI (or mono) font. Measured with a 2D canvas once fonts are loaded;
+ * before that (or without a DOM) it falls back to an average glyph width.
+ */
+export function textWidth(text: string, size: number, weight = 400, mono = false): number {
+  const key = `${weight}|${size}|${mono ? 1 : 0}|${text}`;
+  const hit = widthCache.get(key);
+  if (hit !== undefined) return hit;
+  const estimate = text.length * size * (mono ? 0.62 : weight >= 600 ? 0.64 : 0.56);
+  if (typeof document === "undefined") return estimate;
+  if (measureCtx === undefined) measureCtx = document.createElement("canvas").getContext("2d");
+  if (!measureCtx) return estimate;
+  const family = getComputedStyle(document.documentElement).getPropertyValue(mono ? "--font-mono" : "--font-ui").trim() || (mono ? "monospace" : "sans-serif");
+  measureCtx.font = `${weight} ${size}px ${family}`;
+  const w = measureCtx.measureText(text).width;
+  // Only cache once web fonts are in, so early measurements against a fallback font don't stick.
+  if (document.fonts?.status === "loaded") widthCache.set(key, w);
+  return w;
+}
 export const COMPACT_H = 44;
 export const GLYPH_W = 70;
 export const GLYPH_H = 40;
 /** Extra glyph length when a backshell is fitted (drawn behind the connector body, toward the card). */
 export const BACKSHELL_W = 14;
+/** Schematic: the glyph drawn inside the pin card, enlarged, in a column on the mating side. */
+export const GLYPH_SCALE = 1.35;
+/** Local-frame extent of the connector body alone, and with a backshell (nut + tail behind the rear face). */
+export const GLYPH_LOCAL_W = 50;
+export const GLYPH_LOCAL_W_BS = 84;
+export const GLYPH_PAD = 12;
+/** Bundle layout: length of the straight lead between a connector's cable exit and the start of its bundle. */
+export const LEAD = 24;
 export const LANE = 2.4;
 export const COLLAPSE_OVER = 26;
 
@@ -36,7 +70,12 @@ export interface ConnLayout {
   facing: 1 | -1;
   anchor: Point;
   card: { x: number; y: number; w: number; h: number };
-  glyph: { x: number; y: number; w: number; h: number };
+  /** The header and pin-list part of the card (the whole card when the glyph is drawn outside it). */
+  body: { x: number; w: number };
+  /** Connector side-view drawing, in canvas units; `s` scales the glyph's local frame (GLYPH_H tall). */
+  glyph: { x: number; y: number; w: number; h: number; s: number };
+  /** Bundle layout: the straight lead from the connector's cable exit to its bundle end (the node). */
+  lead: { from: Point; to: Point } | null;
   attachX: number;
   rows: RowLayout[];
   rowByCavity: Map<string, RowLayout>;
@@ -63,22 +102,77 @@ export function layoutConnector(c: ConnectorInstance, cat: CatalogIndex, level: 
   const visible = compact ? [] : showAll ? cavs : cavs.filter((x) => usedSet.has(x.id) || c.pins[x.id]?.filler);
   const hidden = compact ? 0 : cavs.length - visible.length;
   const rowsH = compact ? 0 : visible.length * ROW_H + (hidden ? ROW_H : 0);
-  const h = level === "overview" ? 34 : compact ? COMPACT_H : HEADER_H + rowsH + 4;
-  const w = level === "overview" ? 120 : compact ? COMPACT_W : level === "detail" ? CARD_W_DETAIL : CARD_W;
-  const fan = compactMode ? FAN_COMPACT : FAN;
-  const anchor = c.position;
-  const cardX = facing === 1 ? anchor.x - fan - w : anchor.x + fan;
-  const cardY = anchor.y - h / 2;
-  const glyphW = c.backshell && cat.backshell(c.backshell.pn) ? GLYPH_W + BACKSHELL_W : GLYPH_W;
-  const glyphX = facing === 1 ? cardX - glyphW - 10 : cardX + w + 10;
+  const bs = c.backshell ? cat.backshell(c.backshell.pn) : undefined;
+  // Cards grow to fit a long reference designator / part number rather than letting the header overflow.
+  const kind = part ? (part.flyingLead ? "flying leads" : part.kind === "plug" ? "plug" : "receptacle") : "unknown part";
+  const pinsText = `${usedSet.size}/${cavs.length} pins`;
+  const pnRow = (pnSize: number) => textWidth(c.pn, pnSize, 400, true) + textWidth(` · ${kind}`, pnSize - 0.5);
+  const unreviewed = !!part && part.arrangement.status !== "verified";
+  const contentW =
+    level === "overview"
+      ? 10 + textWidth(c.refDes, 15, 600) + 12 + textWidth(pinsText, 12) + 10
+      : compact
+        ? Math.max(10 + textWidth(c.refDes, 14, 600) + 12 + textWidth(pinsText, 10.5) + 10, 10 + pnRow(10) + 10)
+        : Math.max(10 + textWidth(c.refDes, 14, 600) + 8 + (unreviewed ? HEADER_RIGHT_UNREVIEWED : HEADER_RIGHT), 10 + pnRow(10.5) + HEADER_RIGHT);
+  const bodyW = Math.ceil(Math.max(level === "overview" ? 120 : compact ? COMPACT_W : level === "detail" ? CARD_W_DETAIL : CARD_W, contentW));
+  const fan = FAN;
+  // Schematic pin cards sit on the grid (anchor, attach edge and every pin row), whatever the stored position.
+  const anchor = compact ? c.position : { x: snapToGrid(c.position.x), y: snapToGrid(c.position.y) };
+  let h: number, w: number, cardX: number, cardY: number, body: ConnLayout["body"], glyph: ConnLayout["glyph"];
+  let lead: ConnLayout["lead"] = null;
+  if (compactMode) {
+    // Bundle layout: the cable leaves the drawing (backshell tail, or the connector's rear face) through a short straight
+    // lead along its exit direction, and the bundle starts at the lead's end, the connector's node, whatever angle it
+    // runs off at. The name block sits on the mating side, away from the cable.
+    h = level === "overview" ? 34 : COMPACT_H;
+    w = bodyW;
+    const gw = bs ? GLYPH_LOCAL_W_BS : GLYPH_LOCAL_W;
+    const exit = cableExit(bs, c.backshell, GLYPH_H);
+    const from = { x: anchor.x - facing * exit.dx * LEAD, y: anchor.y - exit.dy * LEAD };
+    lead = { from, to: anchor };
+    const gx = facing === 1 ? from.x - exit.x : from.x + exit.x - gw;
+    const gy = from.y - exit.y;
+    glyph = { x: gx, y: gy, w: gw, h: GLYPH_H, s: 1 };
+    cardX = facing === 1 ? gx - 10 - w : gx + gw + 10;
+    cardY = gy + GLYPH_H / 2 - h / 2;
+    body = { x: cardX, w };
+  } else if (compact) {
+    // Schematic overview: the glyph sits outside the block, at the connector's end.
+    h = level === "overview" ? 34 : COMPACT_H;
+    w = bodyW;
+    cardX = facing === 1 ? anchor.x - fan - w : anchor.x + fan;
+    cardY = anchor.y - h / 2;
+    body = { x: cardX, w };
+    const gw = bs ? GLYPH_W + BACKSHELL_W : GLYPH_W;
+    glyph = { x: facing === 1 ? cardX - gw - 10 : cardX + w + 10, y: anchor.y - GLYPH_H / 2, w: gw, h: GLYPH_H, s: 1 };
+  } else {
+    // Schematic: the connector (and backshell) drawing sits inside the card, in a column on the mating side of the pin list.
+    const s = GLYPH_SCALE;
+    const gw = (bs ? GLYPH_LOCAL_W_BS : GLYPH_LOCAL_W) * s;
+    const gh = GLYPH_H * s;
+    const bend = bs?.angle && c.backshell ? bendOf(c.backshell.clockingDeg) : null;
+    const reach = bs && (bend === "up" || bend === "down") ? bendReach(bs.angle, GLYPH_H) * s : 0;
+    const labelH = bs ? 16 : 0;
+    const block = gh + reach + labelH;
+    const col = gw + 2 * GLYPH_PAD;
+    h = Math.max(HEADER_H + rowsH + 4, block + 2 * GLYPH_PAD);
+    w = bodyW + col;
+    cardX = facing === 1 ? anchor.x - fan - w : anchor.x + fan;
+    cardY = gridCardTop(anchor.y, h, HEADER_H, ROW_H);
+    body = { x: facing === 1 ? cardX + col : cardX, w: bodyW };
+    const top = cardY + (h - block) / 2 + (bend === "up" ? reach : 0);
+    glyph = { x: facing === 1 ? cardX + GLYPH_PAD : cardX + bodyW + GLYPH_PAD, y: top, w: gw, h: gh, s };
+  }
   const rows: RowLayout[] = visible.map((cv, i) => ({ cavityId: cv.id, top: cardY + HEADER_H + i * ROW_H, y: cardY + HEADER_H + i * ROW_H + ROW_H / 2, netId: c.pins[cv.id]?.netId ?? null, size: cv.size, special: !!(cv as { special?: boolean }).special }));
   return {
     id: c.id,
     facing,
     anchor,
     card: { x: cardX, y: cardY, w, h },
-    glyph: { x: glyphX, y: anchor.y - GLYPH_H / 2, w: glyphW, h: GLYPH_H },
-    attachX: facing === 1 ? cardX + w : cardX,
+    body,
+    glyph,
+    lead,
+    attachX: compactMode ? anchor.x : facing === 1 ? cardX + w : cardX,
     rows,
     rowByCavity: new Map(rows.map((r) => [r.cavityId, r])),
     compact,
@@ -215,4 +309,43 @@ export function bounds(h: Harness, cat: CatalogIndex, level: ZoomLevel, compact 
   for (const n of h.notes) add(n.position.x, n.position.y), add(n.position.x + 160, n.position.y + 40);
   if (!Number.isFinite(x0)) return null;
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+}
+
+/** Where a card draws the connector's reference designator (canvas units): double-clicking it edits the name in place. */
+export function refDesBox(L: ConnLayout, level: ZoomLevel, refDes: string): { x: number; y: number; w: number; h: number; fontSize: number } {
+  const overview = L.compact && level === "overview";
+  const x = (L.compact ? L.card.x : L.body.x) + 10;
+  const baseline = L.card.y + (overview ? 21 : L.compact ? 18 : 19);
+  const fontSize = overview ? 15 : 14;
+  return { x: x - 4, y: baseline - fontSize - 1, w: Math.max(40, textWidth(refDes, fontSize, 600)) + 8, h: fontSize + 6, fontSize };
+}
+
+/**
+ * The bundle stretch a label sits on (bundle layout): from `a` (the end its distance is measured from) toward `b`,
+ * the real length of that bundle, and how far along it (as a fraction) the label may sit. Null if it isn't drawn.
+ */
+export function labelTrack(h: Harness, l: Label): { a: Point; b: Point; lengthMm: number; maxFrac: number } | null {
+  const t = l.attachedTo;
+  if (t.kind === "connector") {
+    const c = h.connectors.find((x) => x.id === t.id);
+    const node = h.nodes.find((n) => n.connectorId === t.id);
+    const seg = node && h.segments.find((s) => s.a === node.id || s.b === node.id);
+    if (!c || !seg) return null;
+    return { a: c.position, b: nodePos(h, seg.a === node!.id ? seg.b : seg.a), lengthMm: seg.lengthMm, maxFrac: 0.45 };
+  }
+  if (t.kind === "segment") {
+    const seg = h.segments.find((s) => s.id === t.id);
+    if (!seg) return null;
+    const fromA = !t.nodeId || t.nodeId === seg.a;
+    return { a: nodePos(h, fromA ? seg.a : seg.b), b: nodePos(h, fromA ? seg.b : seg.a), lengthMm: seg.lengthMm, maxFrac: 0.9 };
+  }
+  return null;
+}
+
+/** Where a label is drawn on its bundle. */
+export function labelPoint(h: Harness, l: Label): Point | null {
+  const k = labelTrack(h, l);
+  if (!k) return null;
+  const f = Math.min(k.maxFrac, l.distanceMm / k.lengthMm);
+  return { x: k.a.x + (k.b.x - k.a.x) * f, y: k.a.y + (k.b.y - k.a.y) * f };
 }

@@ -29,6 +29,11 @@ export function emptyHarness(): Harness {
   return HarnessSchema.parse({});
 }
 
+/** The pedigree a new design using this scheme starts on: its marked default, else the first pedigree. */
+export function defaultPedigreeOf(scheme: PedigreeScheme): string {
+  return scheme.pedigrees.some((p) => p.id === scheme.defaultPedigreeId) ? scheme.defaultPedigreeId! : scheme.pedigrees[0]!.id;
+}
+
 export function newProject(opts: { name?: string; units?: "mm" | "in"; scheme?: PedigreeScheme; now?: string } = {}): Project {
   const now = opts.now ?? new Date().toISOString();
   const revId = uid();
@@ -40,7 +45,7 @@ export function newProject(opts: { name?: string; units?: "mm" | "in"; scheme?: 
     partNumber: "HS-0001",
     units: opts.units ?? "in",
     pedigreeScheme: scheme,
-    revisions: [{ id: revId, label: "A", notes: "", frozen: false, activePedigreeId: scheme.pedigrees[0]!.id, harness: emptyHarness() }],
+    revisions: [{ id: revId, label: "A", notes: "", frozen: false, activePedigreeId: defaultPedigreeOf(scheme), harness: emptyHarness() }],
     currentRevisionId: revId,
     created: now,
     updated: now,

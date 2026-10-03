@@ -16,6 +16,7 @@ import {
   uid,
   WIRE_COLORS,
   type FinishingPreset,
+  defaultPedigreeOf,
 } from "@hs/model";
 import { computeBom, deriveOperations } from "@hs/ops";
 import { makeQuoteSummary } from "../lib/summary";
@@ -23,6 +24,7 @@ import { releaseOutputHashes, TOOL_VERSION } from "../lib/docs";
 import { runDfm } from "@hs/dfm";
 import { resolvePedigree } from "@hs/model";
 import { dispatch, getProject, useProject } from "../store/project";
+import { getOrgScheme } from "../lib/orgScheme";
 import { useUi } from "../store/ui";
 import { useActiveQuote, useAnalysis } from "../store/analysis";
 import { ACTIONS, actionCtx } from "../lib/actions";
@@ -117,13 +119,14 @@ export function OpenDialog() {
     void svc().store.list().then(setList);
   }, []);
   const lib = svc().library;
+  const org = getOrgScheme();
   const close = () => ui.closeDialog("open");
   return (
     <Dialog open onClose={close} title="Projects & examples" width={640} description="Designs are stored only in this browser. Save .harness.json files to keep or share them.">
       <div className="flex flex-col gap-4">
         <Section title="New project">
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => (createNewProject(), close())}>Blank (Standard pedigree)</Button>
+            <Button onClick={() => (createNewProject(), close())}>{org ? `Blank (${org.name}, ${org.pedigrees.find((p) => p.id === defaultPedigreeOf(org))?.code})` : "Blank (Standard pedigree)"}</Button>
             {lib.rulesets
               .filter((r) => r.pedigreeScheme && r.pedigreeScheme.pedigrees.length > 1)
               .map((r) => (

@@ -1,8 +1,11 @@
-# schema=1; splices (seed; verify PN/range)
-pn,type,description,gauge_min,gauge_max,max_wires,mass_g
-M81824/1-1,crimp,"Crimp splice, environment resistant, 26-20 AWG",26,20,4,0.6
-M81824/1-2,crimp,"Crimp splice, environment resistant, 20-16 AWG",20,16,4,0.9
-M81824/1-3,crimp,"Crimp splice, environment resistant, 16-12 AWG",16,12,4,1.4
-HSS-SS-1,solderSleeve,"Solder sleeve splice, 26-20 AWG",26,20,3,0.4
-HSS-SS-2,solderSleeve,"Solder sleeve splice, 20-16 AWG",20,16,3,0.6
-HSS-US-1,ultrasonic,Ultrasonic weld splice (with heat-shrink cover),26,10,8,0.5
+# schema=1; splices (seed; verify PN/range). barrels: crimp entries (1 = single-ended / closed-end, 2 = butt). cma_min/cma_max: circular mil area each barrel accepts (sum of conductors + build-up)
+pn,type,description,gauge_min,gauge_max,max_wires,mass_g,barrels,cma_min,cma_max
+M81824/1-1,crimp,"Crimp splice, environment resistant, 26-20 AWG",26,20,4,0.6,2,300,2600
+M81824/1-2,crimp,"Crimp splice, environment resistant, 20-16 AWG",20,16,4,0.9,2,1200,5300
+M81824/1-3,crimp,"Crimp splice, environment resistant, 16-12 AWG",16,12,4,1.4,2,2400,13000
+HSC-CE-1,crimp,"Closed-end crimp splice (single-ended), 26-20 AWG",26,20,4,0.5,1,300,2600
+HSC-CE-2,crimp,"Closed-end crimp splice (single-ended), 20-16 AWG",20,16,4,0.8,1,1200,5300
+HSC-CE-3,crimp,"Closed-end crimp splice (single-ended), 16-12 AWG",16,12,4,1.2,1,2400,13000
+HSS-SS-1,solderSleeve,"Solder sleeve splice, 26-20 AWG",26,20,3,0.4,1,300,2600
+HSS-SS-2,solderSleeve,"Solder sleeve splice, 20-16 AWG",20,16,3,0.6,1,1200,5300
+HSS-US-1,ultrasonic,Ultrasonic weld splice (with heat-shrink cover),26,10,8,0.5,1,300,21000

@@ -1,4 +1,5 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
+import { BUILD_UP_STRAND_MM, buildUps } from "@hs/model";
 import type { DocData } from "./data";
 import { C, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, pdfSafe, s, Swatch, Table } from "./common";
 import { HarnessDiagram } from "./diagram";
@@ -39,6 +40,10 @@ export function drawingNotes(data: DocData): string[] {
       if (cp) tools.set(cp.pn, `${cp.pn}: crimp ${cp.crimpTool} / ${cp.positioner}, insert ${cp.insertionTool}, remove ${cp.removalTool}`);
     }
   if (tools.size) notes.push(`Crimp tooling (verify before use): ${[...tools.values()].join("; ")}.`);
+  const bu = buildUps(rev.harness);
+  if (bu.length) notes.push(`CMA build-up (filler strands crimped in with the conductors, ${BUILD_UP_STRAND_MM} mm each, cut from the BOM filler wire): ${bu.map((b) => `${b.where}: ${b.count}× ${b.gauge} AWG`).join("; ")}.`);
+  const sp = rev.harness.splices;
+  if (sp.length) notes.push(`Splices: ${sp.map((s) => `${s.label} ${s.pn || "(part to be selected)"}, ${s.barrels === 1 ? "single-ended" : `${s.barrels} barrels`}, ${s.cover === "potting" ? "potted" : "heat-shrink covered"}`).join("; ")}.`);
   const rs = project.rulesets.map((r) => `${r.name} v${r.version}${r.enforced ? " (enforced)" : ""}`);
   notes.push(`Checked against machine profile ${data.profile.version}${rs.length ? ` and design rulesets: ${rs.join(", ")}` : ""}${project.projectRules.length ? ` + ${project.projectRules.length} project rules` : ""}. DFM: ${dfm.manufacturability.errors} errors, ${dfm.manufacturability.warnings} warnings.`);
   for (const w of project.waivers) notes.push(`WAIVER ${w.ruleId}${w.message ? ` (${w.message.replace(/\.$/, "")})` : ""}: ${w.note}${w.author ? ` (${w.author}, ${w.date})` : ` (${w.date})`}.`);

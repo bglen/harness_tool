@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { extentCoverage, formatDiameter, formatLength, resolveLabelTemplate, type CatalogIndex, type Derived, type Harness, type LengthUnit, type Point, type Severity } from "@hs/model";
 import { semantic } from "@hs/ui-tokens";
-import { bundleWidth, nodePos, type ZoomLevel } from "../lib/geometry";
+import { bundleWidth, labelPoint, nodePos, type ZoomLevel } from "../lib/geometry";
 import { splicePoint } from "@hs/model";
 
 interface Props {
@@ -201,32 +201,14 @@ export const BundleLayer = memo(function BundleLayer({ h, d, cat, level, theme, 
       {level !== "overview" &&
         h.labels.map((l) => {
           const t = l.attachedTo;
-          let p: Point | null = null;
-          if (t.kind === "connector") {
-            const c = h.connectors.find((x) => x.id === t.id);
-            const node = h.nodes.find((n) => n.connectorId === t.id);
-            const seg = node && h.segments.find((s) => s.a === node.id || s.b === node.id);
-            if (c && seg) {
-              const a = c.position;
-              const b = nodePos(h, seg.a === node!.id ? seg.b : seg.a);
-              p = lerp(a, b, Math.min(0.45, l.distanceMm / seg.lengthMm));
-            }
-          } else if (t.kind === "segment") {
-            const seg = h.segments.find((s) => s.id === t.id);
-            if (seg) {
-              const fromA = !t.nodeId || t.nodeId === seg.a;
-              const a = nodePos(h, fromA ? seg.a : seg.b);
-              const b = nodePos(h, fromA ? seg.b : seg.a);
-              p = lerp(a, b, Math.min(0.9, l.distanceMm / seg.lengthMm));
-            }
-          }
+          const p = labelPoint(h, l);
           if (!p) return null;
           const c = t.kind === "connector" ? h.connectors.find((x) => x.id === t.id) : undefined;
           const text = resolveLabelTemplate(l.template, { refDes: c?.refDes, harnessPN, rev });
           const sel = selectedLabels.has(l.id);
           return (
             <g key={l.id} data-hit="label" data-id={l.id} transform={`translate(${p.x},${p.y - 16})`} style={{ cursor: "pointer" }}>
-              <title>{`Label "${text}" ${l.pn}${l.auto ? " (auto)" : ""}`}</title>
+              <title>{`Label "${text}" ${l.pn}${l.auto ? " (auto)" : ""}. Click to edit; drag along the bundle to move it.`}</title>
               <path d="M-6,-5 h9 l4,5 l-4,5 h-9z" fill={sel ? accent : semantic("bg.surface-2", theme)} stroke={sev[l.id] ? "var(--status-warning)" : ts} strokeWidth={1} />
               {level === "detail" && (
                 <text className="mono" x={8} y={3.5} fontSize={labelFont} fill={ts}>
@@ -270,7 +252,7 @@ export const SpliceMarks = memo(function SpliceMarks({ h, level, theme, selected
 });
 
 /**
- * Length (and at detail zoom, OD) chips for every bundle, drawn above wires and connectors so they're always
+ * Length chips for every bundle (plus the OD chip on selected bundles), drawn above wires and connectors so they're always
  * visible and clickable. Each chip sits beside the bundle, offset along the bundle's normal (whatever its angle)
  * far enough to clear the bundle and the chip's own size. The wire count shows only on selected bundles.
  */
@@ -304,7 +286,7 @@ export const BundleChips = memo(function BundleChips({ h, d, level, theme, units
         return (
           <g key={s.id}>
             <Chip x={p.x} y={p.y} text={text} sub={sub} hit="chip-length" id={s.id} theme={theme} sev={sev[s.id]?.severity} />
-            {od > 0 && level === "detail" && <Chip x={q.x} y={q.y} text={odText} hit="chip-od" id={s.id} theme={theme} />}
+            {od > 0 && selected && level !== "overview" && <Chip x={q.x} y={q.y} text={odText} hit="chip-od" id={s.id} theme={theme} />}
           </g>
         );
       })}

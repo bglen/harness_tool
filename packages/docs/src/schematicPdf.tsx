@@ -1,13 +1,13 @@
 import { G, Path, Polygon, Rect, Svg, Text as SText } from "@react-pdf/renderer";
-import { roundedPath, schematicRoutes, splicePoint, type ConnectorInstance, type Point, type SchematicCard } from "@hs/model";
+import { gridCardTop, roundedPath, SCH_GRID, schematicRoutes, snapToGrid, spliceGeometry, type ConnectorInstance, type Point, type SchematicCard } from "@hs/model";
 import type { DocData } from "./data";
 import { C } from "./common";
 
-// Same card proportions as the canvas pin cards, so the drawing reads like the schematic on screen.
+// Same card proportions and grid as the canvas pin cards, so the drawing reads like the schematic on screen.
 const W = 236;
 const HEADER = 46;
-const ROW = 20;
-const FAN = 72;
+const ROW = SCH_GRID;
+const FAN = 4 * SCH_GRID;
 
 interface Card extends SchematicCard {
   c: ConnectorInstance;
@@ -37,8 +37,9 @@ export function SchematicDiagram({ data, width, height }: { data: DocData; width
     const wired = new Set(h.wires.flatMap((w) => [w.from, w.to]).filter((e) => e.kind === "pin" && e.connectorId === c.id).map((e) => (e.kind === "pin" ? e.cavityId : "")));
     const cavs = (part?.arrangement.cavities.map((x) => x.id) ?? Object.keys(c.pins)).filter((id) => c.pins[id]?.netId || wired.has(id));
     const hh = HEADER + Math.max(1, cavs.length) * ROW + 6;
-    const x = facing === 1 ? c.position.x - FAN - W : c.position.x + FAN;
-    const top = c.position.y - hh / 2;
+    const ax = snapToGrid(c.position.x);
+    const x = facing === 1 ? ax - FAN - W : ax + FAN;
+    const top = gridCardTop(snapToGrid(c.position.y), hh, HEADER, ROW);
     const rows = cavs.map((id, i) => ({ cavityId: id, y: top + HEADER + i * ROW + ROW / 2, signal: h.nets.find((n) => n.id === c.pins[id]?.netId)?.name ?? "" }));
     cards.set(c.id, { c, x, w: W, facing, attachX: facing === 1 ? x + W : x, card: { y: top, h: hh }, rows, rowByCavity: new Map(rows.map((r) => [r.cavityId, r])) });
   }
@@ -69,13 +70,19 @@ export function SchematicDiagram({ data, width, height }: { data: DocData; width
         );
       })}
       {h.splices.map((sp) => {
-        const p = splicePoint(h, sp.id);
-        if (!p) return null;
+        // Same symbol as the canvas: a body with one port per crimp barrel.
+        const g = spliceGeometry(h, sp, cards);
         return (
           <G key={sp.id}>
-            <Polygon points={`${p.x},${p.y - 7} ${p.x + 7},${p.y} ${p.x},${p.y + 7} ${p.x - 7},${p.y}`} fill="#FFFFFF" stroke={C.text} strokeWidth={1.2} />
-            <SText x={p.x + 10} y={p.y + 3} style={{ fontSize: 8 }} fill={C.text2}>
+            {g.ports.map((pt) => (
+              <Path key={pt.barrel} d={`M${pt.p.x - pt.dir * 8},${pt.p.y} L${pt.p.x},${pt.p.y}`} stroke={C.text} strokeWidth={1.2} />
+            ))}
+            <Rect x={g.box.x} y={g.box.y} width={g.box.w} height={g.box.h} rx={3} fill="#FFFFFF" stroke={C.text} strokeWidth={1.2} />
+            <SText x={g.center.x - 7} y={g.box.y - 4} style={{ fontSize: 8 }} fill={C.text}>
               {sp.label}
+            </SText>
+            <SText x={g.box.x} y={g.box.y + g.box.h + 9} style={{ fontSize: 6.5 }} fill={C.text2}>
+              {sp.pn}
             </SText>
           </G>
         );

@@ -15,6 +15,7 @@ import {
   type Project,
   type ResolvedPedigree,
   type Revision,
+  wireEndLabel,
 } from "@hs/model";
 import { computeBom, deriveOperations, type Bom, type OperationsList } from "@hs/ops";
 import { runDfm, type DfmSummary } from "@hs/dfm";
@@ -98,12 +99,12 @@ export function buildDocData(opts: {
             gauge: w ? String(w.gauge) : "",
             color: w ? formatWireColor(w.color) : "",
             colorCode: w ? [w.color.base, ...w.color.stripes] : [],
-            contact: net ? contactPnFor(h, cat, c.id, cav.id, w?.gauge) ?? "" : cav.special ? "(shielded, Phase 2)" : `${cat.sealingPlug(cav.size)?.pn ?? ""} (plug)`,
+            contact: part?.flyingLead ? (w ? `lead end, ${c.leadEnd?.finish ?? "tinned"}` : "") : net ? contactPnFor(h, cat, c.id, cav.id, w?.gauge) ?? "" : cav.special ? "(shielded, Phase 2)" : `${cat.sealingPlug(cav.size)?.pn ?? ""} (plug)`,
           };
         }),
       };
     });
-  const endLabel = (e: (typeof h.wires)[number]["from"]) => (e.kind === "pin" ? `${h.connectors.find((c) => c.id === e.connectorId)?.refDes}-${e.cavityId}` : h.splices.find((s) => s.id === e.spliceId)?.label ?? "SPLICE");
+  const endLabel = (e: (typeof h.wires)[number]["from"]) => wireEndLabel(h, e);
   const wireRows = [...h.wires]
     .sort((a, b) => a.label.localeCompare(b.label, "en", { numeric: true }))
     .map((w) => ({

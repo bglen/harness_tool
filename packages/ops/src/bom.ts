@@ -1,4 +1,6 @@
 import {
+  BUILD_UP_STRAND_MM,
+  buildUps,
   cavityStates,
   contactPnFor,
   derive,
@@ -148,6 +150,7 @@ export function computeBom(project: Project, rev: Revision, cat: CatalogIndex, d
   // Connectors, contacts, sealing plugs, backshells, accessories
   for (const c of h.connectors) {
     const part = cat.connector(c.pn);
+    if (part?.flyingLead) continue; // bare wire ends: the wire itself is the only material
     add(part?.pn ?? c.pn, { description: part?.description ?? "Unknown connector", category: "Connectors", qty: 1, uom: "ea", ref: c.refDes, massG: part?.massG ?? 0, machineReady: !!part?.machineReady, known: !!part, objectId: c.id, status: part ? part.arrangement.status : "unknown", fields: "insert geometry" });
     if (part) {
       // Contacts vs plugs come from the shared cavity model: drains get contacts, not plugs (FIX-05).
@@ -194,6 +197,13 @@ export function computeBom(project: Project, rev: Revision, cat: CatalogIndex, d
       status: statusOf(ws),
       fields: "OD/mass/resistance",
     });
+  }
+  // CMA build-up filler strands (cut from the project's default wire, white)
+  for (const b of buildUps(h)) {
+    const spec = project.settings.defaultWireSpec;
+    const ws = cat.wire(spec, b.gauge);
+    const mm = b.count * BUILD_UP_STRAND_MM;
+    add(wirePn(spec, b.gauge, { base: 9, stripes: [] }), { description: ws ? `Wire, ${spec}, ${b.gauge} AWG, ${ws.insulation}` : `Wire ${spec} ${b.gauge} AWG (not in catalog)`, category: "Wire", qty: mm / 1000, uom: "m", ref: `CMA build-up ${b.where}`, massG: ((ws?.massGPerM ?? 5) * mm) / 1000, machineReady: false, known: !!ws, objectId: b.objectId, status: statusOf(ws), fields: "OD/mass/resistance" });
   }
   // Drain / pigtail conductors (FIX-05)
   for (const t of h.terminations) {

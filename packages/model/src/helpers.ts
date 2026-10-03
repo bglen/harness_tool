@@ -1,4 +1,4 @@
-import type { CatalogIndex } from "./catalog";
+import type { CatalogIndex, ConnectorKind } from "./catalog";
 import type { ConnectorInstance, Harness, Net, NetMember, Project, Revision, Settings, WireEnd } from "./schema";
 
 /**
@@ -73,7 +73,7 @@ export function memberKey(m: NetMember): string {
 }
 
 export function endKey(e: WireEnd): string {
-  return e.kind === "pin" ? `${e.connectorId}:${e.cavityId}` : `splice:${e.spliceId}`;
+  return e.kind === "pin" ? `${e.connectorId}:${e.cavityId}` : spliceKey(e.spliceId, e.barrel ?? 0);
 }
 
 export function pairKey(a: WireEnd, b: WireEnd): string {
@@ -83,8 +83,8 @@ export function pairKey(a: WireEnd, b: WireEnd): string {
 }
 
 /** RefDes prefix: P for plugs, J for receptacles (common aerospace convention). */
-export function nextRefDes(h: Harness, kind: "plug" | "receptacle"): string {
-  const prefix = kind === "plug" ? "P" : "J";
+export function nextRefDes(h: Harness, kind: ConnectorKind): string {
+  const prefix = kind === "plug" ? "P" : kind === "flyingLead" ? "FL" : "J";
   const used = new Set(h.connectors.map((c) => c.refDes));
   for (let i = 1; ; i++) if (!used.has(`${prefix}${i}`)) return `${prefix}${i}`;
 }
@@ -164,4 +164,38 @@ export function contactPnFor(h: Harness, cat: CatalogIndex, connectorId: string,
   const cav = part?.arrangement.cavities.find((x) => x.id === cavityId);
   if (!part || !cav) return undefined;
   return cat.contactFor(cav.size, part.gender, gauge)?.pn;
+}
+
+/** Key of a splice barrel in a net's drawn links (pins use `memberKey`). */
+export function spliceKey(spliceId: string, barrel = 0): string {
+  return `@sp:${spliceId}:${barrel}`;
+}
+
+/** Parse a drawn-link key: a pin, or a splice barrel. */
+export function parseLinkKey(k: string): WireEnd {
+  if (k.startsWith("@sp:")) {
+    const i = k.lastIndexOf(":");
+    return { kind: "splice", spliceId: k.slice(4, i), barrel: Number(k.slice(i + 1)) || 0 };
+  }
+  const i = k.indexOf(":");
+  return { kind: "pin", connectorId: k.slice(0, i), cavityId: k.slice(i + 1) };
+}
+
+export const isSpliceKey = (k: string) => k.startsWith("@sp:");
+
+/**
+ * Nominal circular mil area of a stranded conductor by AWG (MIL-W-22759 / M27500 strandings: 19 strands up to
+ * 14 AWG, 37 above). Seed values: verify against the wire spec sheet. Unknown gauges fall back to the solid-wire formula.
+ */
+const CMA_BY_AWG: Record<number, number> = { 30: 112, 28: 175, 26: 304, 24: 475, 22: 754, 20: 1216, 18: 1900, 16: 2426, 14: 3831, 12: 5874, 10: 9354, 8: 16983 };
+export function circularMils(awg: number): number {
+  return CMA_BY_AWG[awg] ?? Math.round((5 * 92 ** ((36 - awg) / 39)) ** 2);
+}
+
+/** Printed name of a wire end: "P1-3" for a pin, "SP1" / "SP1.2" (barrel 2) for a splice. */
+export function wireEndLabel(h: Harness, e: WireEnd): string {
+  if (e.kind === "pin") return `${h.connectors.find((c) => c.id === e.connectorId)?.refDes ?? "?"}-${e.cavityId}`;
+  const s = h.splices.find((x) => x.id === e.spliceId);
+  if (!s) return "SPLICE";
+  return s.barrels > 1 ? `${s.label}.${(e.barrel ?? 0) + 1}` : s.label;
 }

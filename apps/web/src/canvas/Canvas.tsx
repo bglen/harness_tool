@@ -13,8 +13,15 @@ import {
   setConnectorProps,
   setPinSignals,
   setSegmentProps,
+  SCH_GRID,
+  snapToGrid,
+  connectToSplice,
+  setSpliceProps,
+  spliceGeometry,
   uid,
+  updateLabel,
   type Command,
+  type ConnectorInstance,
   type Harness,
   type Point,
   type Wire,
@@ -24,7 +31,7 @@ import { dispatch, useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { activePedigreeOf, useActiveAnalysis, useDerived } from "../store/analysis";
 import { svc } from "../lib/services";
-import { bundleWidth, layoutConnector, nodePos, projectOnSegment, zoomLevel, type ConnLayout, type ZoomLevel } from "../lib/geometry";
+import { bundleWidth, labelTrack, layoutConnector, nodePos, projectOnSegment, refDesBox, zoomLevel, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 import { ConnectorView, type RowState } from "./ConnectorView";
 import { BundleChips, BundleLayer, SegmentHandles, SpliceMarks } from "./BundleLayer";
 import { WireLayer } from "./WireLayer";
@@ -33,6 +40,7 @@ import { EmptyState } from "./EmptyState";
 import { FloatingToolbar } from "./FloatingToolbar";
 import { ContextBar } from "./ContextBar";
 import { NotesLayer } from "./NotesLayer";
+import { SpliceSymbols } from "./SpliceSymbols";
 import { openFile } from "../lib/files";
 import { Kbd } from "../ui/primitives";
 
@@ -43,7 +51,9 @@ type Drag =
   | { kind: "branch"; segmentId: string; t: number; start: Point; cur: Point; moved: boolean }
   | { kind: "reattach"; segmentId: string; end: "a" | "b"; start: Point; cur: Point; moved: boolean }
   | { kind: "marquee"; start: Point; cur: Point; additive: boolean }
-  | { kind: "note"; id: string; start: Point; cur: Point; moved: boolean };
+  | { kind: "note"; id: string; start: Point; cur: Point; moved: boolean }
+  | { kind: "label"; id: string; start: Point; cur: Point; moved: boolean; screen: Point }
+  | { kind: "splice"; id: string; start: Point; cur: Point; moved: boolean };
 
 function hitAt(e: { target: EventTarget | null }): { hit: string; id: string } | null {
   const el = (e.target as Element | null)?.closest?.("[data-hit]");
@@ -98,6 +108,7 @@ export function Canvas() {
   dragRef.current = drag;
   const spaceDown = useRef(false);
   const [lengthEdit, setLengthEdit] = useState<{ segId: string; screen: Point; value: string } | null>(null);
+  const [refEdit, setRefEdit] = useState<string | null>(null);
   const [hint, setHint] = useState<{ x: number; y: number; text: string } | null>(null);
   const level = zoomLevel(vp.k);
   // Schematic: pin cards and every wire pin-to-pin. Bundle layout: compact connectors, bundles, branching and coverings.
@@ -155,6 +166,15 @@ export function Canvas() {
 
   // View harness: apply live drag offsets without dispatching every frame
   const h: Harness = useMemo(() => {
+    if (drag?.kind === "splice" && drag.moved) {
+      const sp = h0.splices.find((x) => x.id === drag.id);
+      const base = sp && spliceGeometry(h0, sp).center;
+      return base ? { ...h0, splices: h0.splices.map((x) => (x.id === drag.id ? { ...x, position: { x: snapToGrid(base.x + drag.cur.x - drag.start.x), y: snapToGrid(base.y + drag.cur.y - drag.start.y) } } : x)) } : h0;
+    }
+    if (drag?.kind === "label" && drag.moved) {
+      const mm = labelDistanceAt(h0, drag.id, drag.cur);
+      return mm === null ? h0 : { ...h0, labels: h0.labels.map((l) => (l.id === drag.id ? { ...l, distanceMm: mm } : l)) };
+    }
     if (!drag || drag.kind !== "move" || !drag.moved) return h0;
     const dx = drag.cur.x - drag.start.x;
     const dy = drag.cur.y - drag.start.y;
@@ -323,8 +343,17 @@ export function Canvas() {
       setDrag({ kind: "note", id: hit.id, start: p, cur: p, moved: false });
       return;
     }
+    if (hit.hit === "splice" && !bundles) {
+      setDrag({ kind: "splice", id: hit.id, start: p, cur: p, moved: false });
+      return;
+    }
+    if (hit.hit === "label") {
+      // Click: edit the label. Drag: slide it along its bundle.
+      setDrag({ kind: "label", id: hit.id, start: p, cur: p, moved: false, screen: { x: e.clientX, y: e.clientY } });
+      return;
+    }
     // simple click targets
-    const map: Record<string, Parameters<typeof ui.select>[0]> = { wire: "wire", label: "label", splice: "splice", clamp: "clamp", boot: "boot", hardware: "hardware", shield: "shield" };
+    const map: Record<string, Parameters<typeof ui.select>[0]> = { wire: "wire", splice: "splice", clamp: "clamp", boot: "boot", hardware: "hardware", shield: "shield" };
     if (map[hit.hit]) {
       if (hit.hit === "wire" && !(e.shiftKey || e.ctrlKey || e.metaKey) && e.altKey) {
         const w = h.wires.find((x) => x.id === hit.id);
@@ -368,10 +397,10 @@ export function Canvas() {
     const p = toCanvas(e.clientX, e.clientY);
     const moved = Math.hypot(p.x - dr.start.x, p.y - dr.start.y) * vp.k > 4;
     if (dr.kind === "move" && !e.altKey && moved) {
-      // snap-to-grid (hold Alt to disable)
-      const g = 10;
-      p.x = dr.start.x + Math.round((p.x - dr.start.x) / g) * g;
-      p.y = dr.start.y + Math.round((p.y - dr.start.y) / g) * g;
+      // snap-to-grid (hold Alt to disable): the grabbed connector/breakout lands on a grid point; the rest of the selection moves with it
+      const base = (dr.hitKind === "connector" ? h0.connectors.find((c) => c.id === dr.hitId)?.position : h0.nodes.find((n) => n.id === dr.hitId)?.position) ?? dr.start;
+      p.x = dr.start.x + snapToGrid(base.x + p.x - dr.start.x) - base.x;
+      p.y = dr.start.y + snapToGrid(base.y + p.y - dr.start.y) - base.y;
     }
     setDrag({ ...dr, cur: p, moved: ("moved" in dr ? dr.moved : false) || moved } as Drag);
   };
@@ -416,9 +445,10 @@ export function Canvas() {
       const dx = dr.cur.x - dr.start.x;
       const dy = dr.cur.y - dr.start.y;
       // Dropped a connector onto another connector → mate popover (§5.4)
-      if (dr.hitKind === "connector" && dr.ids.length === 1) {
+      if (dr.hitKind === "connector" && dr.ids.length === 1 && !cat.connector(h0.connectors.find((x) => x.id === dr.hitId)?.pn ?? "")?.flyingLead) {
         const target = h.connectors.find((c) => {
           if (c.id === dr.hitId) return false;
+          if (cat.connector(c.pn)?.flyingLead) return false; // flying leads don't mate
           const L = layoutConnector(h0.connectors.find((x) => x.id === c.id)!, cat, level, bundles);
           return dr.cur.x >= L.card.x && dr.cur.x <= L.card.x + L.card.w && dr.cur.y >= L.card.y && dr.cur.y <= L.card.y + L.card.h;
         });
@@ -456,10 +486,12 @@ export function Canvas() {
           }
         }
       }
+      // On the schematic every moved connector lands on the grid (Alt keeps the free position).
+      const onGrid = !bundles && !e.altKey ? snapToGrid : (v: number) => v;
       const moves = [
         ...dr.ids.map((id) => {
           const c = h0.connectors.find((x) => x.id === id)!;
-          return { id: h0.nodes.find((n) => n.connectorId === id)!.id, position: { x: c.position.x + dx, y: c.position.y + dy } };
+          return { id: h0.nodes.find((n) => n.connectorId === id)!.id, position: { x: onGrid(c.position.x + dx), y: onGrid(c.position.y + dy) } };
         }),
         ...dr.nodeIds.map((id) => {
           const n = h0.nodes.find((x) => x.id === id)!;
@@ -490,6 +522,11 @@ export function Canvas() {
           })
           .filter(Boolean) as { a: { connectorId: string; cavityId: string }; b: { connectorId: string; cavityId: string } }[];
         if (dispatch(connectPins({ pairs }))) ui.markHint("dragPin");
+        return;
+      }
+      if (over?.hit === "splice-port") {
+        const i = over.id.lastIndexOf(":");
+        dispatch(dr.from.map((f) => connectToSplice({ pin: f, spliceId: over.id.slice(0, i), barrel: Number(over.id.slice(i + 1)) })), "Wire into splice");
         return;
       }
       if (!over) {
@@ -544,6 +581,24 @@ export function Canvas() {
       if (dispatch(cmds, "Re-attach bundle")) ui.select("segment", [s.id]);
       return;
     }
+    if (dr.kind === "splice") {
+      if (!dr.moved) ui.select("splice", [dr.id], add);
+      else {
+        const moved = h.splices.find((x) => x.id === dr.id);
+        if (moved?.position) dispatch(setSpliceProps({ id: dr.id, position: moved.position }), "Move splice");
+      }
+      return;
+    }
+    if (dr.kind === "label") {
+      if (!dr.moved) {
+        ui.select("label", [dr.id]);
+        ui.openPopover({ kind: "label", screen: { x: dr.screen.x, y: dr.screen.y + 12 }, data: { labelId: dr.id } });
+      } else {
+        const mm = labelDistanceAt(h0, dr.id, dr.cur);
+        if (mm !== null) dispatch(updateLabel({ id: dr.id, distanceMm: mm }), "Move label");
+      }
+      return;
+    }
     if (dr.kind === "note") {
       if (!dr.moved) ui.select("note", [dr.id], add);
       else {
@@ -569,9 +624,18 @@ export function Canvas() {
       const w = h.wires.find((x) => x.id === hit.id);
       if (w) ui.select("net", [w.netId]);
     }
-    if (hit.hit === "label") ui.openPopover({ kind: "labelEdit", screen: { x: e.clientX, y: e.clientY }, data: { id: hit.id } });
     if (hit.hit === "note") ui.openPopover({ kind: "noteEdit", screen: { x: e.clientX, y: e.clientY }, data: { id: hit.id } });
-    if (hit.hit === "connector") ui.select("connector", [hit.id]);
+    if (hit.hit === "connector") {
+      ui.select("connector", [hit.id]);
+      // Double-clicking the reference designator renames the connector in place.
+      const c = h.connectors.find((x) => x.id === hit.id);
+      const L = layouts.get(hit.id);
+      if (c && L) {
+        const b = refDesBox(L, level, c.refDes);
+        const p = toCanvas(e.clientX, e.clientY);
+        if (p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h) setRefEdit(c.id);
+      }
+    }
   };
 
   const onContextMenu = (e: React.MouseEvent) => {
@@ -630,6 +694,17 @@ export function Canvas() {
     return s;
   }, [bundles, sel, selSet, focusNet, h.wires, d]);
   const selectedSegs = sel.kind === "segment" ? selSet : routeSegs;
+  // Bundle layout: each connector's straight lead is drawn as wide as the bundle leaving it (none without a bundle).
+  const leadWidths = useMemo(() => {
+    const m = new Map<string, number>();
+    if (!bundles) return m;
+    for (const n of h.nodes) {
+      if (n.kind !== "connector" || !n.connectorId) continue;
+      const segs = h.segments.filter((s) => s.a === n.id || s.b === n.id);
+      if (segs.length) m.set(n.connectorId, bundleWidth(Math.max(...segs.map((s) => d.segWires.get(s.id)?.length ?? 0)), level));
+    }
+    return m;
+  }, [bundles, h.nodes, h.segments, d, level]);
   const potted = useMemo(() => new Set(h.potting.filter((p) => p.targetKind === "connector").map((p) => p.targetId)), [h.potting]);
   const dimAll = ui.shieldView;
   const bg = semantic("bg.canvas", theme);
@@ -713,7 +788,8 @@ export function Canvas() {
         onPointerLeave={() => ui.setHover(null)}
       >
         <defs>
-          <pattern id="dots" width={20 * vp.k} height={20 * vp.k} patternUnits="userSpaceOnUse" x={vp.x % (20 * vp.k)} y={vp.y % (20 * vp.k)}>
+          {/* dot centres sit exactly on the schematic grid (the pattern origin is shifted back by the dot's 1px inset) */}
+          <pattern id="dots" width={SCH_GRID * vp.k} height={SCH_GRID * vp.k} patternUnits="userSpaceOnUse" x={(vp.x % (SCH_GRID * vp.k)) - 1} y={(vp.y % (SCH_GRID * vp.k)) - 1}>
             <circle cx={1} cy={1} r={vp.k > 0.5 ? 1 : 0.6} fill={grid} />
           </pattern>
           {ui.cvd && (
@@ -745,7 +821,7 @@ export function Canvas() {
             />
           )}
           <WireLayer h={h} d={d} layouts={layouts} level={level} theme={theme} selected={sel.kind === "wire" ? selSet : EMPTY} hoverId={ui.hover?.id ?? null} sev={sev} focusNetId={focusNet} shieldView={ui.shieldView} colorLabels={ui.wireColorLabels} k={kq} flash={flashSet} mode={mode} />
-          <SpliceMarks h={h} level={level} theme={theme} selected={sel.kind === "splice" ? selSet : EMPTY} />
+          {bundles ? <SpliceMarks h={h} level={level} theme={theme} selected={sel.kind === "splice" ? selSet : EMPTY} /> : <SpliceSymbols h={h} layouts={layouts} level={level} theme={theme} selected={sel.kind === "splice" ? selSet : EMPTY} sev={sev} />}
           {h.connectors.map((c) => (
             <ConnectorView
               key={c.id}
@@ -765,6 +841,7 @@ export function Canvas() {
               potted={potted.has(c.id)}
               flash={flashSet.has(c.id)}
               ncLabel={project.settings.noConnectLabel}
+              leadWidth={bundles ? leadWidths.get(c.id) ?? 0 : 0}
             />
           ))}
           <NotesLayer notes={h.notes} theme={theme} selected={sel.kind === "note" ? selSet : EMPTY} offset={drag?.kind === "note" && drag.moved ? { id: drag.id, dx: drag.cur.x - drag.start.x, dy: drag.cur.y - drag.start.y } : null} />
@@ -781,12 +858,13 @@ export function Canvas() {
           connectorId={editing.connectorId}
           cavityId={editing.cavityId}
           layout={editL}
-          screen={{ x: (editL.card.x + 38) * vp.k + vp.x, y: editRow.top * vp.k + vp.y }}
-          width={(editL.card.w - 90) * vp.k}
+          screen={{ x: (editL.body.x + 38) * vp.k + vp.x, y: editRow.top * vp.k + vp.y }}
+          width={(editL.body.w - 90) * vp.k}
           height={20 * vp.k}
           fontSize={Math.max(10, 11.5 * vp.k)}
         />
       )}
+      {refEdit && <RefDesEditor key={refEdit} c={h.connectors.find((x) => x.id === refEdit)} L={layouts.get(refEdit)} level={level} vp={vp} others={h.connectors.filter((x) => x.id !== refEdit).map((x) => x.refDes)} onDone={() => setRefEdit(null)} />}
       {lengthEdit && (
         <input
           autoFocus
@@ -943,4 +1021,51 @@ function PinEditor({ h, connectorId, cavityId, layout, screen, width, height, fo
       </datalist>
     </>
   );
+}
+
+/** In-place rename of a connector's reference designator: Enter or clicking away saves, Escape cancels. */
+function RefDesEditor({ c, L, level, vp, others, onDone }: { c: ConnectorInstance | undefined; L: ConnLayout | undefined; level: ZoomLevel; vp: { x: number; y: number; k: number }; others: string[]; onDone: () => void }) {
+  const done = useRef(false);
+  if (!c || !L) return null;
+  const b = refDesBox(L, level, c.refDes);
+  const commit = (raw: string) => {
+    if (done.current) return;
+    done.current = true;
+    const v = raw.trim();
+    if (v && v !== c.refDes) {
+      if (others.includes(v)) useUi.getState().toast({ kind: "error", text: `${v} is already used by another connector` });
+      else dispatch(setConnectorProps({ id: c.id, refDes: v }));
+    }
+    onDone();
+  };
+  return (
+    <input
+      autoFocus
+      aria-label={`Reference designator for ${c.refDes}`}
+      className="absolute z-20 rounded-control border border-accent bg-bg-surface-2 px-1 font-semibold text-text-primary outline-none"
+      style={{ left: b.x * vp.k + vp.x, top: b.y * vp.k + vp.y, width: Math.max(b.w + 40, 80) * vp.k, height: b.h * vp.k, fontSize: b.fontSize * vp.k }}
+      defaultValue={c.refDes}
+      spellCheck={false}
+      onFocus={(e) => e.currentTarget.select()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === "Enter") commit(e.currentTarget.value);
+        if (e.key === "Escape") {
+          done.current = true;
+          onDone();
+        }
+      }}
+      onBlur={(e) => commit(e.currentTarget.value)}
+    />
+  );
+}
+
+/** Distance from its measuring end (mm) a label dragged to `p` lands at, projected onto its bundle; null if it has none. */
+function labelDistanceAt(h: Harness, labelId: string, p: Point): number | null {
+  const l = h.labels.find((x) => x.id === labelId);
+  const k = l && labelTrack(h, l);
+  if (!k) return null;
+  const f = Math.min(k.maxFrac, projectOnSegment(k.a, k.b, p));
+  return Math.round(f * k.lengthMm);
 }

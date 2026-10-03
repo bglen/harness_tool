@@ -1,6 +1,6 @@
 import { useUi } from "../store/ui";
-import { AccessoriesPopover, BackshellPopover, FacePopover } from "./ConnectorPopovers";
-import { BootPopover, CablePopover, LabelEditPopover, LabelPopover, MatePopover, NetPopover, NoteEditPopover, PropertySheet, ShieldPopover, SplicePopover, TerminationsPopover } from "./MiscPopovers";
+import { AccessoriesPopover, BackshellPopover, FacePopover, LeadEndPopover, PinBuildUpPopover } from "./ConnectorPopovers";
+import { BootPopover, CablePopover, LabelPopover, MatePopover, NetPopover, NoteEditPopover, PropertySheet, ShieldPopover, SplicePopover, TerminationsPopover } from "./MiscPopovers";
 import { CoveringPopover, SegmentLengthPopover, TieDownsPopover } from "./SegmentPopovers";
 import { WirePropsPopover } from "./WireProps";
 import { PartPicker } from "./PartPicker";
@@ -18,6 +18,12 @@ export function Popovers() {
     switch (pop.kind) {
       case "wireProps":
         el = <WirePropsPopover x={x} y={y} ids={ids} />;
+        break;
+      case "pinBuildUp":
+        el = <PinBuildUpPopover x={x} y={y} pinKey={ids[0]!} />;
+        break;
+      case "leadEnd":
+        el = <LeadEndPopover x={x} y={y} ids={ids} />;
         break;
       case "backshell":
         el = <BackshellPopover x={x} y={y} connectorId={ids[0]!} />;
@@ -38,10 +44,10 @@ export function Popovers() {
         el = <TieDownsPopover x={x} y={y} segmentId={ids[0]!} />;
         break;
       case "label":
-        el = <LabelPopover x={x} y={y} kind={d.kind} ids={ids} />;
+        el = <LabelPopover x={x} y={y} kind={d.kind} ids={ids} labelId={d.labelId} />;
         break;
       case "labelEdit":
-        el = <LabelEditPopover x={x} y={y} id={d.id} />;
+        el = <LabelPopover x={x} y={y} labelId={d.id} />;
         break;
       case "noteEdit":
         el = <NoteEditPopover x={x} y={y} id={d.id} />;

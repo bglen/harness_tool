@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { addConnector, arrangementId, buildD38999, connectPins, currentHarness, formatMoney, KEYINGS, parseD38999, setConnectorPart, uid } from "@hs/model";
+import { addConnector, arrangementId, buildD38999, connectPins, currentHarness, FLYING_LEAD_MAX, flyingLeadPn, formatMoney, KEYINGS, parseD38999, parseFlyingLead, setConnectorPart, snapToGrid, uid } from "@hs/model";
 import type { ConnectorSearchHit, FacetFilter, SearchResult } from "@hs/providers";
 import { Check, Search } from "lucide-react";
 import { dispatch, getProject } from "../store/project";
@@ -7,7 +7,7 @@ import { useUi } from "../store/ui";
 import { svc } from "../lib/services";
 import { Chip, cx, DemoTag, Floating, Kbd } from "../ui/primitives";
 import { FaceView } from "../canvas/FaceView";
-import { CARD_W, FAN } from "../lib/geometry";
+import { CARD_W, FAN, GLYPH_LOCAL_W, GLYPH_PAD, GLYPH_SCALE } from "../lib/geometry";
 
 const SLASH_LABEL: Record<string, string> = { "26": "/26 plug", "20": "/20 wall-mount rcpt", "24": "/24 jam-nut rcpt" };
 const FINISHES = ["W", "Z", "F", "G", "M", "J", "T", "K", "S", "C"];
@@ -24,6 +24,8 @@ export function PartPicker() {
   );
   const [res, setRes] = useState<SearchResult | null>(null);
   const [active, setActive] = useState(0);
+  // Flying leads: as many lead positions as pins being dragged out, else what's being replaced, else 4.
+  const [leads, setLeads] = useState(() => picker.fromPins?.length || (replacing && parseFlyingLead(replacing.pn)) || 4);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // A connector dragged out from a pin gets the mating gender by default
@@ -31,7 +33,7 @@ export function PartPicker() {
     if (picker.mode === "fromPin" && picker.fromPins?.[0]) {
       const src = currentHarness(getProject()).connectors.find((c) => c.id === picker.fromPins![0]!.connectorId);
       const part = src && cat.connector(src.pn);
-      if (part) setF((x) => ({ ...x, gender: part.gender === "pin" ? "socket" : "pin", shellSize: part.shellSize, arrangement: part.arrangement.id, slash: part.kind === "plug" ? "20" : "26" }));
+      if (part && !part.flyingLead) setF((x) => ({ ...x, gender: part.gender === "pin" ? "socket" : "pin", shellSize: part.shellSize, arrangement: part.arrangement.id, slash: part.kind === "plug" ? "20" : "26" }));
     }
     inputRef.current?.focus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,8 +59,8 @@ export function PartPicker() {
   // Each hit is a complete PN variant (contacts/key/finish are never silently defaulted).
   const pnFor = (hit: ConnectorSearchHit) => hit.pn;
 
-  const place = (hit: ConnectorSearchHit) => {
-    const pn = pnFor(hit);
+  const place = (hit: ConnectorSearchHit) => placePn(pnFor(hit));
+  const placePn = (pn: string) => {
     const part = cat.connector(pn);
     if (!part) return;
     const h = currentHarness(getProject());
@@ -70,9 +72,9 @@ export function PartPicker() {
     const id = uid();
     const rotation = h.connectors.length && picker.canvas.x > Math.max(...h.connectors.map((c) => c.position.x)) ? 180 : 0;
     // Centre the pin card on the click point: the anchor is the bundle attach point beside the card.
-    const offset = FAN + CARD_W / 2;
+    const offset = FAN + (CARD_W + GLYPH_LOCAL_W * GLYPH_SCALE + 2 * GLYPH_PAD) / 2;
     const ax = picker.canvas.x + (rotation === 0 ? offset : -offset);
-    const cmds = [addConnector({ id, pn, position: { x: Math.round(ax / 10) * 10, y: Math.round(picker.canvas.y / 10) * 10 }, rotation })];
+    const cmds = [addConnector({ id, pn, position: { x: snapToGrid(ax), y: snapToGrid(picker.canvas.y) }, rotation })];
     if (picker.mode === "fromPin" && picker.fromPins?.length) {
       const cavs = part.arrangement.cavities.filter((c) => !c.special);
       const used = new Set<string>();
@@ -125,6 +127,15 @@ export function PartPicker() {
         <span className="text-2xs text-text-tertiary">
           <Kbd>↑↓</Kbd> <Kbd>Enter</Kbd> {picker.mode === "replace" ? "replace" : "place"}
         </span>
+      </div>
+      <div className="flex items-center gap-2 border-b border-border-subtle bg-bg-surface-1 px-3 py-2 text-xs">
+        <span className="font-medium text-text-primary">Flying leads</span>
+        <span className="text-text-tertiary">bare wire ends instead of a connector, routed in a bundle like any end</span>
+        <input type="number" min={1} max={FLYING_LEAD_MAX} aria-label="Number of leads" className="mono ml-auto h-7 w-14 rounded-control border border-border-control bg-bg-surface-2 px-1.5 text-text-primary" value={leads} onChange={(e) => setLeads(Math.max(1, Math.min(FLYING_LEAD_MAX, Number(e.target.value) || 1)))} onKeyDown={(e) => e.key === "Enter" && placePn(flyingLeadPn(leads))} />
+        <span className="text-text-secondary">leads</span>
+        <button className="h-7 rounded-control border border-border-control px-2 text-text-primary hover:bg-bg-hover" onClick={() => placePn(flyingLeadPn(leads))}>
+          {picker.mode === "replace" ? "Use flying leads" : picker.mode === "fromPin" ? "Connect to flying leads" : "Add flying leads"}
+        </button>
       </div>
       {/* facet chips: Series → Shell → Insert → Gender → Keying → Finish (§5.4) */}
       <div className="flex flex-col gap-1.5 border-b border-border-subtle px-3 py-2 text-xs">

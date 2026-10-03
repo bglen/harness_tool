@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import { affectedParts, contactPnFor, currentRevision, derive, formatWireColor, type CatalogIndex, type Derived, type Harness, type Project, type Revision } from "@hs/model";
+import { affectedParts, contactPnFor, currentRevision, derive, formatWireColor, wireEndLabel, type CatalogIndex, type Derived, type Harness, type Project, type Revision, type WireEnd } from "@hs/model";
 import { computeBom, type Bom } from "@hs/ops";
 import type { DfmSummary } from "@hs/dfm";
 
@@ -7,10 +7,8 @@ export type Table = { name: string; header: string[]; rows: (string | number)[][
 
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
 
-function ends(rev: Revision, e: { kind: "pin"; connectorId: string; cavityId: string } | { kind: "splice"; spliceId: string }) {
-  const h = rev.harness;
-  if (e.kind === "pin") return `${h.connectors.find((c) => c.id === e.connectorId)?.refDes ?? "?"}-${e.cavityId}`;
-  return h.splices.find((s) => s.id === e.spliceId)?.label ?? "SPLICE";
+function ends(rev: Revision, e: WireEnd) {
+  return wireEndLabel(rev.harness, e);
 }
 
 export function wireListTable(project: Project, cat: CatalogIndex, rev: Revision = currentRevision(project), d?: Derived): Table {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { currentRevision, formatMoney, monotonicityWarnings, resolvePedigree, type InspectionReq, type Pedigree, type PedigreeScheme } from "@hs/model";
+import { currentRevision, defaultPedigreeOf, formatMoney, monotonicityWarnings, resolvePedigree, type InspectionReq, type Pedigree, type PedigreeScheme } from "@hs/model";
 import { tokens } from "@hs/ui-tokens";
 import { Copy, Plus, Trash2 } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
@@ -8,6 +8,7 @@ import { useAnalysis } from "../store/analysis";
 import { svc } from "../lib/services";
 import { Button, cx, DemoTag, Dialog, Field, IconButton, inputCls, Select, SeverityIcon, Toggle } from "../ui/primitives";
 import { PedigreePill } from "../chrome/TopBar";
+import { getOrgScheme, setOrgScheme } from "../lib/orgScheme";
 
 const TABS = ["General", "Inspections", "Parts policy", "Process", "Documentation", "Marking"] as const;
 const DOCS = ["Certificate of Conformance (CoC)", "AS9102 First Article Inspection", "Material certifications", "Lot traceability", "Serial traceability", "Test data package", "Customer source-inspection hold point"];
@@ -26,6 +27,9 @@ export function PedigreeEditor() {
   const inspections = svc().inspections;
   const own = (k: keyof Pedigree) => p[k] !== undefined;
   const bump = (v: string) => v.replace(/(\d+)$/, (m) => String(Number(m) + 1));
+  const [org, setOrg] = useState(() => getOrgScheme());
+  const defaultId = defaultPedigreeOf(scheme);
+  const saveToDesign = () => dispatch({ type: "setPedigreeScheme", payload: { scheme: { ...scheme, version: bump(scheme.version) } } }, "Edit pedigrees");
   return (
     <Dialog
       open
@@ -36,18 +40,30 @@ export function PedigreeEditor() {
       footer={
         <>
           <select className={cx(inputCls, "mr-auto")} value="" onChange={(e) => {
+            if (e.target.value === "__org") {
+              if (org && confirm(`Replace the pedigree scheme with the organization scheme “${org.name}”?`)) (setScheme(structuredClone(org)), setSelId(defaultPedigreeOf(org)));
+              return;
+            }
             const rs = svc().library.rulesets.find((r) => r.id === e.target.value);
             if (!rs?.pedigreeScheme) return;
             if (!confirm(`Replace the pedigree scheme with the “${rs.pedigreeScheme.name}” template?`)) return;
             setScheme(structuredClone(rs.pedigreeScheme));
-            setSelId(rs.pedigreeScheme.pedigrees[0]!.id);
+            setSelId(defaultPedigreeOf(rs.pedigreeScheme));
             if (rs.rules.length && !project.rulesets.some((x) => x.id === rs.id)) dispatch({ type: "upsertRuleset", payload: { ruleset: rs } });
           }}>
             <option value="">Load template…</option>
+            {org && <option value="__org">Organization scheme: {org.name}</option>}
             {svc().library.rulesets.filter((r) => r.pedigreeScheme).map((r) => <option key={r.id} value={r.id}>{r.pedigreeScheme!.name}</option>)}
           </select>
           <Button variant="ghost" onClick={close}>Cancel</Button>
-          <Button variant="primary" onClick={() => (dispatch({ type: "setPedigreeScheme", payload: { scheme: { ...scheme, version: bump(scheme.version) } } }, "Edit pedigrees"), close())}>Save scheme</Button>
+          <Button variant="secondary" title="Save to this design and make it the scheme (and default pedigree) new designs start with, in this browser" onClick={() => {
+            setOrgScheme(scheme);
+            setOrg(scheme);
+            saveToDesign();
+            ui.toast({ kind: "success", text: `New designs will use “${scheme.name}” starting on ${scheme.pedigrees.find((x) => x.id === defaultId)?.code}` });
+            close();
+          }}>Save as organization scheme</Button>
+          <Button variant="primary" onClick={() => (saveToDesign(), close())}>Save to this design</Button>
         </>
       }
     >
@@ -62,6 +78,7 @@ export function PedigreeEditor() {
               <span className="h-2.5 w-2.5 rotate-45" style={{ background: `var(--pedigree-${x.color})` }} />
               <span className="mono text-xs font-semibold">{x.code}</span>
               <span className="truncate text-sm">{x.name}</span>
+              {x.id === defaultId && <span className="rounded-chip border border-accent px-1 text-2xs text-accent" title="New designs start on this pedigree">default</span>}
               {x.extends && <span className="ml-auto text-2xs text-text-tertiary">extends {scheme.pedigrees.find((y) => y.id === x.extends)?.code}</span>}
             </button>
           ))}
@@ -85,6 +102,14 @@ export function PedigreeEditor() {
               setSelId(rest[0]!.id);
             }}><Trash2 size={14} /></IconButton>
           </div>
+          <div className="mt-2 rounded-control border border-border-subtle p-2 text-2xs text-text-secondary">
+            {org ? <>Organization scheme (this browser): <span className="text-text-primary">{org.name}</span>, new designs start on <span className="mono text-text-primary">{org.pedigrees.find((x) => x.id === defaultPedigreeOf(org))?.code}</span>.</> : <>No organization scheme yet: new designs use the built-in Standard scheme. Use “Save as organization scheme” to set one.</>}
+            {org && (
+              <button className="ml-1 text-accent hover:underline" onClick={() => (setOrgScheme(null), setOrg(null))}>
+                clear
+              </button>
+            )}
+          </div>
           {warnings.length > 0 && (
             <div className="mt-2 flex flex-col gap-1 rounded-control border border-status-warning p-2">
               {warnings.map((w) => <div key={w} className="flex gap-1 text-2xs text-status-warning"><SeverityIcon severity="warning" size={11} /> {w}</div>)}
@@ -103,6 +128,9 @@ export function PedigreeEditor() {
           <div className="scroll-thin min-h-0 flex-1 overflow-auto pr-1">
             {tab === "General" && (
               <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <Toggle checked={p.id === defaultId} onChange={(v) => setScheme({ ...scheme, defaultPedigreeId: v ? p.id : undefined })} label="Default pedigree for new designs (and the pedigree a design starts on when it takes this scheme)" />
+                </div>
                 <Field label="Name"><input className={inputCls} value={p.name} onChange={(e) => upd({ name: e.target.value })} /></Field>
                 <Field label="Code (shown with the color everywhere)"><input className={cx(inputCls, "mono")} value={p.code} onChange={(e) => upd({ code: e.target.value.toUpperCase().slice(0, 6) })} /></Field>
                 <Field label="Rank (higher = more stringent)"><input type="number" className={cx(inputCls, "mono")} value={p.rank} onChange={(e) => upd({ rank: Number(e.target.value) })} /></Field>
@@ -176,6 +204,9 @@ export function PedigreeEditor() {
                 <Toggle checked={!!resolved.process.requireBoots} onChange={(v) => upd({ process: { ...p.process, requireBoots: v } })} label="Boots required at every backshell" />
                 <Field label="Min bend radius (× OD)"><input className={cx(inputCls, "mono w-24")} value={resolved.process.bendRadiusMultiple ?? ""} onChange={(e) => upd({ process: { ...p.process, bendRadiusMultiple: e.target.value ? Number(e.target.value) : undefined } })} /></Field>
                 <Field label="Min braid coverage (%)"><input className={cx(inputCls, "mono w-24")} value={resolved.process.minBraidCoverage ?? ""} onChange={(e) => upd({ process: { ...p.process, minBraidCoverage: e.target.value ? Number(e.target.value) : undefined } })} /></Field>
+                <Field label="Wire branching off a pin is built as" hint="Applies when you draw a second wire from a pin. Change any branch later with Make splice / Make double crimp. Add the “Too many wires crimped in one contact” rule to forbid double crimps.">
+                  <Select value={resolved.process.branchJoin ?? "doubleCrimp"} onChange={(v) => upd({ process: { ...p.process, branchJoin: v as "doubleCrimp" | "splice" } })} options={[{ value: "doubleCrimp", label: "Double crimp (two wires in the contact)" }, { value: "splice", label: "Splice" }]} />
+                </Field>
                 <Field label="Required finishing preset">
                   <Select value={resolved.process.requiredPresetId ?? ""} onChange={(v) => upd({ process: { ...p.process, requiredPresetId: v || undefined } })} options={[{ value: "", label: "(none)" }, ...svc().library.presets.map((x) => ({ value: x.id, label: x.name }))]} />
                 </Field>

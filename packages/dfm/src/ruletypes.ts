@@ -23,6 +23,13 @@ import {
   terminationDiameter,
   updateLayer,
   uid,
+  buildUpFor,
+  contactCmaRange,
+  contactFill,
+  makeSplice,
+  setPinBuildUp,
+  setSpliceProps,
+  spliceFills,
   type Cavity,
   type Harness,
   type Net,
@@ -201,13 +208,21 @@ export const RULE_TYPES: RuleType[] = [
           const pn = contactPnFor(ctx.h, ctx.cat, c.id, e.cavityId, w.gauge);
           const cp = pn ? ctx.cat.contactsByPn.get(pn) : undefined;
           if (!cp) continue;
+          if (c.pins[e.cavityId]?.buildUp) continue; // built up: the CMA check decides
           if (w.gauge > cp.gaugeMin || w.gauge < cp.gaugeMax) {
             const target = w.gauge > cp.gaugeMin ? cp.gaugeMin : cp.gaugeMax;
+            const thin = w.gauge > cp.gaugeMin;
+            const bu = thin ? buildUpFor(contactFill(ctx.h, c.id, e.cavityId), contactCmaRange(ctx.cat, cp.pn)!.min) : null;
             out.push({
               objectIds: [w.id, c.id],
               objectKind: "wire",
               message: `${wireDesc(ctx, w)}: ${w.gauge} AWG doesn't fit the size ${cav.size} contact at ${pinLabel(ctx, c.id, e.cavityId)} (${cp.gaugeMax}–${cp.gaugeMin} AWG).`,
-              fix: ctx.cat.wire(w.spec, target) ? { label: `Change to ${target} AWG`, commands: [setWireProps({ ids: [w.id], gauge: target })] } : undefined,
+              // Too thin: build the barrel up (keeps the wire); too thick: a lighter gauge.
+              fix: bu
+                ? { label: `Add ${bu.count}× ${bu.gauge} AWG build-up`, commands: [setPinBuildUp({ connectorId: c.id, cavityId: e.cavityId, buildUp: bu })] }
+                : ctx.cat.wire(w.spec, target)
+                  ? { label: `Change to ${target} AWG`, commands: [setWireProps({ ids: [w.id], gauge: target })] }
+                  : undefined,
             });
           }
         }
@@ -286,6 +301,7 @@ export const RULE_TYPES: RuleType[] = [
         for (const [cid, cavIds] of byConn) {
           if (cavIds.length < 2) continue;
           const c = ctx.h.connectors.find((x) => x.id === cid)!;
+          if (ctx.cat.connector(c.pn)?.flyingLead) continue; // loose leads: no cavity spacing
           const cavs = ctx.cat.connector(c.pn)?.arrangement.cavities ?? [];
           const pos = cavIds.map((id) => cavs.find((x) => x.id === id)).filter(Boolean) as Cavity[];
           let maxD = 0;
@@ -476,7 +492,7 @@ export const RULE_TYPES: RuleType[] = [
       const out: Violation[] = [];
       for (const c of ctx.h.connectors) {
         const part = ctx.cat.connector(c.pn);
-        if (!part) continue;
+        if (!part || part.flyingLead) continue; // flying-lead ends have no insert, contacts or shell
         const reasons: string[] = [];
         if (!slashes.includes(part.slash)) reasons.push(`/${part.slash} not fixtured`);
         if (part.arrangement.inactive) reasons.push(`insert ${part.arrangement.id} inactive for new design`);
@@ -503,6 +519,7 @@ export const RULE_TYPES: RuleType[] = [
       const sizes: string[] = p.sizes ?? ctx.profile.capabilities.contactSizes;
       const out: Violation[] = [];
       for (const c of ctx.h.connectors) {
+        if (ctx.cat.connector(c.pn)?.flyingLead) continue; // lead ends take no contacts
         const bad: string[] = [];
         for (const w of ctx.h.wires)
           for (const e of pinEnds(w)) {
@@ -673,7 +690,7 @@ export const RULE_TYPES: RuleType[] = [
     depends: ["connector"],
     evaluate(ctx) {
       return ctx.h.connectors
-        .filter((c) => !c.backshell && ctx.h.segments.some((s) => [s.a, s.b].includes(ctx.h.nodes.find((n) => n.connectorId === c.id)?.id ?? "")))
+        .filter((c) => !c.backshell && !ctx.cat.connector(c.pn)?.flyingLead && ctx.h.segments.some((s) => [s.a, s.b].includes(ctx.h.nodes.find((n) => n.connectorId === c.id)?.id ?? "")))
         .map((c) => {
           const part = ctx.cat.connector(c.pn);
           const bs = part && ctx.cat.backshellsFor(part.shellSize).find((b) => b.style === "strainRelief" && b.angle === 0);
@@ -736,7 +753,7 @@ export const RULE_TYPES: RuleType[] = [
       for (const t of ctx.h.terminations) if (t.method === "drainToPin" && t.drainPin) wired.set(`${t.drainPin.connectorId}:${t.drainPin.cavityId}`, t.drain?.gauge ?? 22);
       for (const c of ctx.h.connectors) {
         const part = ctx.cat.connector(c.pn);
-        if (!part) continue;
+        if (!part || part.flyingLead) continue; // flying-lead ends have no insert, contacts or shell
         const cavs = new Set([...Object.keys(c.pins).filter((k) => c.pins[k]!.contactPn || c.pins[k]!.filler), ...[...wired.keys()].filter((k) => k.startsWith(`${c.id}:`)).map((k) => k.slice(c.id.length + 1))]);
         for (const cavId of cavs) {
           const cav = ctx.cat.cavity(c.pn, cavId);
@@ -800,7 +817,7 @@ export const RULE_TYPES: RuleType[] = [
       const out: Violation[] = [];
       for (const c of ctx.h.connectors) {
         const part = ctx.cat.connector(c.pn);
-        if (!part) continue;
+        if (!part || part.flyingLead) continue; // flying-lead ends have no insert, contacts or shell
         const open = part.arrangement.cavities.filter((cav) => {
           const pin = c.pins[cav.id];
           return !pin?.netId && !pin?.noConnect && !pin?.filler;
@@ -1185,7 +1202,7 @@ export const RULE_TYPES: RuleType[] = [
       const out: Violation[] = [];
       for (const c of ctx.h.connectors) {
         const part = ctx.cat.connector(c.pn);
-        if (!part) continue;
+        if (!part || part.flyingLead) continue; // flying-lead ends have no insert, contacts or shell
         const known = new Set(part.arrangement.cavities.map((x) => x.id));
         const unknown = Object.keys(c.pins).filter((k) => !known.has(k));
         if (unknown.length) out.push({ objectIds: [c.id], objectKind: "connector", message: `${c.refDes}: cavities ${unknown.join(", ")} aren't on insert ${part.arrangement.id}; sealing can't be checked.` });
@@ -1296,7 +1313,8 @@ export const RULE_TYPES: RuleType[] = [
     evaluate(ctx, p) {
       const out: Violation[] = [];
       for (const c of ctx.h.connectors) {
-        const cavs = ctx.cat.connector(c.pn)?.arrangement.cavities;
+        const part = ctx.cat.connector(c.pn);
+        const cavs = part && !part.flyingLead ? part.arrangement.cavities : undefined;
         if (!cavs) continue;
         const cls = new Map<string, Net>();
         for (const [cav, pin] of Object.entries(c.pins)) if (pin.netId) cls.set(cav, netOf(ctx.h, pin.netId)!);
@@ -1348,11 +1366,83 @@ export const RULE_TYPES: RuleType[] = [
       const out: Violation[] = [];
       for (const c of ctx.h.connectors) {
         const part = ctx.cat.connector(c.pn);
-        if (!part) continue;
+        if (!part || part.flyingLead) continue; // flying-lead ends have no insert, contacts or shell
         const total = part.arrangement.contactCount;
         const used = Object.values(c.pins).filter((x) => x.netId).length;
         const pct = ((total - used) / total) * 100;
         if (pct + 1e-9 < Number(p.minPct)) out.push({ objectIds: [c.id], objectKind: "connector", message: `${c.refDes}: ${total - used} of ${total} cavities spare (${pct.toFixed(0)} %), minimum ${p.minPct} %.` });
+      }
+      return out;
+    },
+  },
+  {
+    id: "cma_range",
+    name: "Circular mil area outside the crimp barrel's range",
+    description: "The conductors in each crimp barrel (contact or splice), plus any CMA build-up, must fall within the barrel's circular mil area window: too little and the crimp won't hold, too much and it can't close.",
+    example: "Two 20 AWG wires (2,432 CMA) in a contact rated 22–28 AWG (175–754 CMA).",
+    category: "Components",
+    params: [],
+    depends: ["wire", "pin", "connector", "splice"],
+    evaluate(ctx) {
+      const out: Violation[] = [];
+      const fmt = (n: number) => n.toLocaleString("en-US");
+      // Contacts: single wires are covered by the gauge check; this takes over once a barrel holds several conductors or build-up.
+      for (const c of ctx.h.connectors) {
+        if (ctx.cat.connector(c.pn)?.flyingLead) continue;
+        for (const cav of Object.keys(c.pins)) {
+          const f = contactFill(ctx.h, c.id, cav);
+          if (f.wires.length + f.drains.length + (f.buildUp ? 1 : 0) < 2) continue;
+          const range = contactCmaRange(ctx.cat, contactPnFor(ctx.h, ctx.cat, c.id, cav, Math.max(...f.wires.map((w) => w.gauge), 22)));
+          if (!range) continue;
+          const where = pinLabel(ctx, c.id, cav);
+          if (f.cma > range.max)
+            out.push({ objectIds: [c.id, ...f.wires.map((w) => w.id)], objectKind: "pin", subject: cav, message: `${where}: ${fmt(f.cma)} CMA in the contact (max ${fmt(range.max)})${f.buildUp ? `, including ${f.buildUp.count}× ${f.buildUp.gauge} AWG build-up` : ""}. Too much copper to crimp: use a splice or fewer / thinner wires.`, fix: f.wires.length >= 2 && !f.buildUp ? { label: "Make splice", commands: [makeSplice({ at: { connectorId: c.id, cavityId: cav }, spliceId: uid() })] } : undefined });
+          else if (f.cma < range.min) {
+            const bu = buildUpFor(f, range.min);
+            out.push({ objectIds: [c.id, ...f.wires.map((w) => w.id)], objectKind: "pin", subject: cav, message: `${where}: ${fmt(f.cma)} CMA in the contact (min ${fmt(range.min)}). The crimp won't grip: add CMA build-up.`, fix: bu ? { label: `Add ${bu.count}× ${bu.gauge} AWG build-up`, commands: [setPinBuildUp({ connectorId: c.id, cavityId: cav, buildUp: bu })] } : undefined });
+          }
+        }
+      }
+      for (const s of ctx.h.splices) {
+        const part = ctx.cat.splice(s.pn);
+        if (!part) {
+          out.push({ objectIds: [s.id], objectKind: "splice", message: `${s.label}: no catalog splice fits (${s.type}, ${s.barrels} barrel${s.barrels === 1 ? "" : "s"}, ${spliceFills(ctx.h, s).map((f) => fmt(f.cma)).join(" / ")} CMA). Pick a part or change the barrels.` });
+          continue;
+        }
+        const fills = spliceFills(ctx.h, s);
+        fills.forEach((f, i) => {
+          if (!f.wires.length) return;
+          const where = `${s.label}${s.barrels > 1 ? ` barrel ${i + 1}` : ""}`;
+          if (f.cma > part.cmaMax) {
+            const bigger = ctx.cat.splicesFitting(s.type, fills.map((x) => x.cma), fills.map((x) => x.wires.length))[0];
+            out.push({ objectIds: [s.id, ...f.wires.map((w) => w.id)], objectKind: "splice", subject: String(i), message: `${where}: ${fmt(f.cma)} CMA, more than ${part.pn} takes (max ${fmt(part.cmaMax)}).`, fix: bigger ? { label: `Use ${bigger.pn}`, commands: [setSpliceProps({ id: s.id, pn: bigger.pn })] } : undefined });
+          } else if (f.cma < part.cmaMin) {
+            const bu = buildUpFor(f, part.cmaMin);
+            out.push({ objectIds: [s.id, ...f.wires.map((w) => w.id)], objectKind: "splice", subject: String(i), message: `${where}: ${fmt(f.cma)} CMA, less than ${part.pn} needs (min ${fmt(part.cmaMin)}): add CMA build-up.`, fix: bu ? { label: `Add ${bu.count}× ${bu.gauge} AWG build-up`, commands: [setSpliceProps({ id: s.id, buildUp: [...s.buildUp.filter((b) => b.barrel !== i), { barrel: i, ...bu }] })] } : undefined });
+          }
+        });
+      }
+      return out;
+    },
+  },
+  {
+    id: "multi_wire_crimp",
+    name: "Too many wires crimped in one contact",
+    description: "Limits how many conductors one contact may hold (double crimps). Branches beyond the limit must use a splice.",
+    example: "No double crimps at Flight: max 1 wire per contact.",
+    category: "Design",
+    params: [{ key: "maxWires", label: "Max wires per contact", type: "number", stricter: "lower", default: 1 }],
+    depends: ["wire", "pin", "connector"],
+    evaluate(ctx, p) {
+      const out: Violation[] = [];
+      const max = Number(p.maxWires ?? 1);
+      for (const c of ctx.h.connectors) {
+        if (ctx.cat.connector(c.pn)?.flyingLead) continue;
+        for (const cav of Object.keys(c.pins)) {
+          const f = contactFill(ctx.h, c.id, cav);
+          const n = f.wires.length + f.drains.length;
+          if (n > max) out.push({ objectIds: [c.id, ...f.wires.map((w) => w.id)], objectKind: "pin", subject: cav, message: `${pinLabel(ctx, c.id, cav)} carries ${n} wires (max ${max} per contact).`, fix: f.wires.length >= 2 ? { label: "Make splice", commands: [makeSplice({ at: { connectorId: c.id, cavityId: cav }, spliceId: uid() })] } : undefined });
+        }
       }
       return out;
     },
@@ -1504,7 +1594,7 @@ export const RULE_TYPES: RuleType[] = [
       const by = new Map<string, string[]>();
       for (const c of ctx.h.connectors) {
         const part = ctx.cat.connector(c.pn);
-        if (!part) continue;
+        if (!part || part.flyingLead) continue; // flying-lead ends have no insert, contacts or shell
         const k = `${part.kind}|${part.gender}|${part.arrangement.id}|${part.keying}`;
         (by.get(k) ?? by.set(k, []).get(k)!).push(c.id);
       }

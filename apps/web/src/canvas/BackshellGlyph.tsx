@@ -165,3 +165,24 @@ export function BackshellShape({ bs, fit: r, h, theme }: { bs: BackshellPart; fi
     </g>
   );
 }
+
+/**
+ * Where the cable leaves the connector in the glyph's local frame (`h` tall): the end of the backshell tail (carried
+ * round the elbow on an up/down angled body), or the connector's rear face when no backshell is fitted, with the
+ * direction the cable leaves in. The bundle layout runs a short straight lead from here to the bundle end.
+ */
+export function cableExit(bs: BackshellPart | undefined, fit: BackshellRef | null | undefined, h: number): { x: number; y: number; dx: number; dy: number } {
+  const cy = h / 2;
+  if (!bs || !fit) return { x: REAR, y: cy, dx: 1, dy: 0 };
+  const x0 = REAR + 8;
+  const bend = bs.angle ? bendOf(fit.clockingDeg) : null;
+  if (bend !== "up" && bend !== "down") return { x: x0 + TAIL, y: cy, dx: 1, dy: 0 };
+  const s = bend === "up" ? -1 : 1;
+  const px = x0 + 3;
+  const c = { x: px, y: cy + s * BEND_R };
+  const r = (s * bs.angle * Math.PI) / 180;
+  const dx = TAIL;
+  const dy = cy - c.y;
+  // (dx, dy): unit direction the cable leaves in, along the tail.
+  return { x: c.x + dx * Math.cos(r) - dy * Math.sin(r), y: c.y + dx * Math.sin(r) + dy * Math.cos(r), dx: Math.cos(r), dy: Math.sin(r) };
+}

@@ -1,4 +1,5 @@
 import { newProject, parseProject, type PedigreeScheme } from "@hs/model";
+import { getOrgScheme } from "./orgScheme";
 import { useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { svc } from "./services";
@@ -15,8 +16,9 @@ export async function openExample(id: string) {
   setTimeout(zoomToFit, 60);
 }
 
+/** New design: on the given scheme, else the organization's (this browser), else the built-in Standard; starts on the scheme's default pedigree. */
 export function createNewProject(scheme?: PedigreeScheme) {
-  const p = newProject({ units: "in", scheme });
+  const p = newProject({ units: "in", scheme: scheme ?? getOrgScheme() ?? undefined });
   p.catalogVersion = svc().cat.version.hash;
   useProject.getState().init(p);
   useUi.getState().clearSelection();

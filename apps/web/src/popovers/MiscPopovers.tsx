@@ -23,6 +23,8 @@ import {
   setSegmentProps,
   setShieldProps,
   setSpliceProps,
+  buildUpFor,
+  spliceFills,
   setTermination,
   setWireProps,
   shieldWires,
@@ -42,25 +44,45 @@ import { Button, cx, Field, Floating, IconButton, inputCls, Section, Select, Tog
 
 const close = () => useUi.getState().openPopover(null);
 
-export function LabelPopover({ x, y, kind, ids }: { x: number; y: number; kind: string; ids: string[] }) {
+const LABEL_FIELDS = ["{refDes}", "{wireId}", "{harnessPN}", "{rev}", "{serial}", "{net}", "{pedigreeMarking}"];
+
+/**
+ * Add a label to the selected connectors / wires / bundles, or (with `labelId`) edit an existing one: template,
+ * type and position (distance from the end it's measured from), plus the project's one-click labeling rules.
+ */
+export function LabelPopover({ x, y, kind, ids, labelId }: { x: number; y: number; kind?: string; ids?: string[]; labelId?: string }) {
   const project = useProject((s) => s.project)!;
   const h = currentHarness(project);
-  const target = kind === "wire" ? "wire" : kind === "segment" ? "segment" : "connector";
-  const [tpl, setTpl] = useState(target === "wire" ? "{wireId}" : target === "connector" ? "{refDes}" : "{harnessPN}-{rev}");
-  const [type, setType] = useState<Label["type"]>("sleeve");
-  const [dist, setDist] = useState(formatLength(project.settings.defaultLabelDistanceMm, project.units).replace(" ", ""));
+  const existing = labelId ? h.labels.find((l) => l.id === labelId) : undefined;
+  const target = existing ? existing.attachedTo.kind : kind === "wire" ? "wire" : kind === "segment" ? "segment" : "connector";
+  const targetId = existing ? existing.attachedTo.id : ids?.[0];
+  const [tpl, setTpl] = useState(existing?.template ?? (target === "wire" ? "{wireId}" : target === "connector" ? "{refDes}" : "{harnessPN}-{rev}"));
+  const [type, setType] = useState<Label["type"]>(existing?.type ?? "sleeve");
+  const [dist, setDist] = useState(formatLength(existing?.distanceMm ?? project.settings.defaultLabelDistanceMm, project.units).replace(" ", ""));
+  if (labelId && !existing) return null;
   const rules = h.labelRules;
   const rev = project.revisions.find((r) => r.id === project.currentRevisionId)!;
-  const preview = resolveLabelTemplate(tpl, { refDes: h.connectors.find((c) => c.id === ids[0])?.refDes, wireId: h.wires.find((w) => w.id === ids[0])?.label, harnessPN: project.partNumber, rev: rev.label });
-  const fields = ["{refDes}", "{wireId}", "{harnessPN}", "{rev}", "{serial}", "{net}", "{pedigreeMarking}"];
+  const preview = resolveLabelTemplate(tpl, { refDes: h.connectors.find((c) => c.id === targetId)?.refDes, wireId: h.wires.find((w) => w.id === targetId)?.label, harnessPN: project.partNumber, rev: rev.label });
+  const lp = existing?.pn ? svc().cat.label(existing.pn) : undefined;
+  const onName = target === "connector" ? h.connectors.find((c) => c.id === targetId)?.refDes : target === "wire" ? h.wires.find((w) => w.id === targetId)?.label : "bundle";
+  const save = () => {
+    const mm = parseLength(dist, project.units);
+    if (mm === null || mm < 0) return useUi.getState().toast({ kind: "error", text: "Enter a distance like 2in or 50mm" });
+    if (existing) dispatch(updateLabel({ id: existing.id, template: tpl, type, distanceMm: mm }));
+    else dispatch((ids ?? []).map((id) => addLabel({ id: uid(), attachedTo: { kind: target, id }, template: tpl, type, distanceMm: mm })));
+    close();
+  };
   return (
     <Floating x={x} y={y} onClose={close} width={400} className="flex flex-col gap-3 p-3">
-      <div className="text-sm font-semibold">Add label to {ids.length > 1 ? `${ids.length} ${target}s` : target}</div>
+      <div className="text-sm font-semibold">
+        {existing ? `Label on ${onName ?? target}` : `Add label to ${(ids?.length ?? 0) > 1 ? `${ids!.length} ${target}s` : target}`}
+        {existing?.auto && <span className="ml-1 text-xs font-normal text-text-tertiary">(auto: editing pins it)</span>}
+      </div>
       <Field label="Template">
-        <input className={cx(inputCls, "mono")} value={tpl} onChange={(e) => setTpl(e.target.value)} />
+        <input autoFocus={!!existing} className={cx(inputCls, "mono")} value={tpl} onChange={(e) => setTpl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
       </Field>
       <div className="flex flex-wrap gap-1">
-        {fields.map((f) => (
+        {LABEL_FIELDS.map((f) => (
           <button key={f} className="mono rounded-chip border border-border-subtle px-1 text-2xs text-text-secondary hover:border-border-control" onClick={() => setTpl((t) => t + f)}>
             {f}
           </button>
@@ -74,51 +96,32 @@ export function LabelPopover({ x, y, kind, ids }: { x: number; y: number; kind: 
           <Select<Label["type"]> value={type} onChange={setType} options={[{ value: "sleeve", label: "Heat-shrink sleeve" }, { value: "flag", label: "Flag" }, { value: "wrap", label: "Wrap-around" }, { value: "direct", label: "Direct marking" }]} />
         </Field>
         <Field label="Distance from end">
-          <input className={cx(inputCls, "mono w-24")} value={dist} onChange={(e) => setDist(e.target.value)} />
+          <input className={cx(inputCls, "mono w-24")} value={dist} onChange={(e) => setDist(e.target.value)} onKeyDown={(e) => e.key === "Enter" && save()} />
         </Field>
       </div>
-      <Button
-        variant="primary"
-        size="sm"
-        onClick={() => {
-          const mm = parseLength(dist, project.units) ?? 50;
-          dispatch(ids.map((id) => addLabel({ id: uid(), attachedTo: { kind: target, id }, template: tpl, type, distanceMm: mm })));
-          close();
-        }}
-      >
-        Add label
-      </Button>
+      {existing && (
+        <div className="mono -mt-1 text-2xs text-text-tertiary">
+          {existing.pn || "part number assigned automatically"} {lp ? `· prints ${formatLength(lp.printableLengthMm, project.units)}` : ""} · or drag the label along the bundle
+        </div>
+      )}
+      <div className="flex justify-between">
+        {existing ? (
+          <Button size="sm" variant="danger" onClick={() => (dispatch(removeLabels({ ids: [existing.id] })), close())}>
+            Delete
+          </Button>
+        ) : (
+          <span />
+        )}
+        <Button variant="primary" size="sm" onClick={save}>
+          {existing ? "Save" : "Add label"}
+        </Button>
+      </div>
       <Section title="Labeling rules (one click)">
         <Toggle checked={rules.connectorRefDes} onChange={(v) => dispatch(setLabelRules({ connectorRefDes: v }))} label="Every connector end labeled with its refDes" />
         <Toggle checked={rules.wireIds} onChange={(v) => dispatch(setLabelRules({ wireIds: v }))} label="Every wire labeled with its ID at both ends" />
         <Toggle checked={rules.harnessId} onChange={(v) => dispatch(setLabelRules({ harnessId: v }))} label="Harness ID label near P1" />
         <Toggle checked={rules.pedigreeMarkings} onChange={(v) => dispatch(setLabelRules({ pedigreeMarkings: v }))} label="Pedigree markings (e.g. NOT FOR FLIGHT)" />
       </Section>
-    </Floating>
-  );
-}
-
-export function LabelEditPopover({ x, y, id }: { x: number; y: number; id: string }) {
-  const project = useProject((s) => s.project)!;
-  const l = currentHarness(project).labels.find((q) => q.id === id);
-  const [tpl, setTpl] = useState(l?.template ?? "");
-  if (!l) return null;
-  const lp = svc().cat.label(l.pn);
-  return (
-    <Floating x={x} y={y} onClose={close} width={340} className="flex flex-col gap-2 p-3">
-      <div className="text-sm font-semibold">Label {l.auto && <span className="text-xs font-normal text-text-tertiary">(auto: editing pins it)</span>}</div>
-      <input autoFocus className={cx(inputCls, "mono")} value={tpl} onChange={(e) => setTpl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (dispatch(updateLabel({ id, template: tpl })), close())} />
-      <div className="mono text-2xs text-text-tertiary">
-        {l.pn} {lp ? `· prints ${formatLength(lp.printableLengthMm, project.units)}` : ""}
-      </div>
-      <div className="flex justify-between">
-        <Button size="sm" variant="danger" onClick={() => (dispatch(removeLabels({ ids: [id] })), close())}>
-          Delete
-        </Button>
-        <Button size="sm" variant="primary" onClick={() => (dispatch(updateLabel({ id, template: tpl })), close())}>
-          Save
-        </Button>
-      </div>
     </Floating>
   );
 }
@@ -391,21 +394,88 @@ export function CablePopover({ x, y, ids }: { x: number; y: number; ids: string[
   );
 }
 
+/**
+ * Splice editor: part (auto-selected from the wires' circular mil area, or chosen), barrels, type and cover, and the
+ * CMA in each barrel against the part's window, with build-up to bring a light barrel up to the minimum.
+ */
 export function SplicePopover({ x, y, id }: { x: number; y: number; id: string }) {
   const project = useProject((s) => s.project)!;
-  const s = currentHarness(project).splices.find((q) => q.id === id);
+  const h = currentHarness(project);
+  const s = h.splices.find((q) => q.id === id);
   if (!s) return null;
+  const cat = svc().cat;
+  const part = cat.splice(s.pn);
+  const fills = spliceFills(h, s);
+  const fitting = cat.splicesFitting(null, fills.map((f) => f.cma), fills.map((f) => f.wires.length));
+  const options = [...new Map([...fitting, ...cat.bundle.splices].map((p) => [p.pn, p])).values()];
+  const fmt = (n: number) => n.toLocaleString("en-US");
+  const setBuildUp = (barrel: number, b: { gauge: number; count: number } | null) => dispatch(setSpliceProps({ id, buildUp: [...s.buildUp.filter((x) => x.barrel !== barrel), ...(b ? [{ barrel, ...b }] : [])] }));
   return (
-    <Floating x={x} y={y} onClose={close} width={300} className="flex flex-col gap-2 p-3">
-      <div className="text-sm font-semibold">Splice {s.label}</div>
-      <Field label="Type">
-        <Select value={s.type} onChange={(v) => dispatch(setSpliceProps({ id, type: v }))} options={[{ value: "crimp", label: "Crimp splice" }, { value: "solderSleeve", label: "Solder sleeve" }, { value: "ultrasonic", label: "Ultrasonic weld" }]} />
+    <Floating x={x} y={y} onClose={close} width={380} className="flex flex-col gap-2 p-3">
+      <div className="text-sm font-semibold">
+        Splice {s.label} <span className="text-xs font-normal text-text-secondary">{s.barrels === 1 ? "single-ended" : `${s.barrels} barrels`}</span>
+      </div>
+      <Field label="Part" hint={s.pinned ? "Chosen by you." : "Picked automatically: the smallest part of this type whose CMA window fits every barrel."}>
+        <Select
+          value={s.pinned ? s.pn : ""}
+          onChange={(v) => dispatch(setSpliceProps({ id, pn: v }))}
+          options={[{ value: "", label: `Automatic${!s.pinned && s.pn ? ` (${s.pn})` : ""}` }, ...options.map((p) => ({ value: p.pn, label: `${p.pn}: ${p.barrels === 1 ? "single-ended" : `${p.barrels} barrels`}, ${fmt(p.cmaMin)}–${fmt(p.cmaMax)} CMA${fitting.includes(p) ? "" : " (doesn't fit)"}` }))]}
+        />
       </Field>
-      <Field label="Environmental cover">
-        <Select value={s.cover} onChange={(v) => dispatch(setSpliceProps({ id, cover: v }))} options={[{ value: "heatShrink", label: "Heat shrink" }, { value: "potting", label: "Potting" }]} />
-      </Field>
-      <div className="mono text-2xs text-text-tertiary">{s.pn}</div>
-      <div className="text-2xs text-status-warning">Splices are manual operations on this machine profile.</div>
+      <div className="grid grid-cols-3 gap-2">
+        <Field label="Barrels">
+          <Select value={String(s.barrels)} onChange={(v) => dispatch(setSpliceProps({ id, barrels: Number(v), pn: s.pinned ? "" : undefined }))} options={[1, 2, 3, 4].map((n) => ({ value: String(n), label: n === 1 ? "1 (single-ended)" : n === 2 ? "2 (butt)" : String(n) }))} />
+        </Field>
+        <Field label="Type">
+          <Select value={s.type} onChange={(v) => dispatch(setSpliceProps({ id, type: v, pn: s.pinned ? "" : undefined }))} options={[{ value: "crimp", label: "Crimp" }, { value: "solderSleeve", label: "Solder sleeve" }, { value: "ultrasonic", label: "Ultrasonic" }]} />
+        </Field>
+        <Field label="Cover">
+          <Select value={s.cover} onChange={(v) => dispatch(setSpliceProps({ id, cover: v }))} options={[{ value: "heatShrink", label: "Heat shrink" }, { value: "potting", label: "Potting" }]} />
+        </Field>
+      </div>
+      <Section title="Circular mil area by barrel">
+        {fills.map((f, i) => {
+          const lo = part && f.cma < part.cmaMin;
+          const hi = part && f.cma > part.cmaMax;
+          const bu = s.buildUp.find((b) => b.barrel === i);
+          const need = part ? buildUpFor(f, part.cmaMin) : null;
+          return (
+            <div key={i} className="flex flex-col gap-1 border-b border-border-subtle pb-1.5 text-xs last:border-0">
+              <div className="flex items-center gap-2">
+                <span className="w-16 font-medium">{s.barrels === 1 ? "Barrel" : `Barrel ${i + 1}`}</span>
+                <span className="mono flex-1 text-text-secondary">{f.wires.map((w) => `${w.label} (${w.gauge})`).join(", ") || "no wires"}</span>
+                <span className={cx("mono tnum", lo || hi ? "text-status-error" : "text-text-primary")}>{fmt(f.cma)}</span>
+              </div>
+              {part && (
+                <div className={cx("text-2xs", lo || hi ? "text-status-error" : "text-text-tertiary")}>
+                  {lo ? `Below the ${fmt(part.cmaMin)} CMA minimum` : hi ? `Above the ${fmt(part.cmaMax)} CMA maximum: use a larger part` : `Within ${fmt(part.cmaMin)}–${fmt(part.cmaMax)} CMA`}
+                  {bu ? ` · includes ${bu.count}× ${bu.gauge} AWG build-up` : ""}
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-2xs">
+                {bu ? (
+                  <>
+                    <span className="text-text-secondary">Build-up</span>
+                    <input type="number" min={1} max={9} aria-label="Build-up strands" className={cx(inputCls, "mono h-6 w-12 text-2xs")} value={bu.count} onChange={(e) => setBuildUp(i, { gauge: bu.gauge, count: Math.max(1, Number(e.target.value) || 1) })} />
+                    <span>×</span>
+                    <Select value={String(bu.gauge)} onChange={(v) => setBuildUp(i, { gauge: Number(v), count: bu.count })} options={[16, 18, 20, 22, 24, 26, 28].map((g) => ({ value: String(g), label: `${g} AWG` }))} />
+                    <button className="text-accent hover:underline" onClick={() => setBuildUp(i, null)}>
+                      remove
+                    </button>
+                  </>
+                ) : (
+                  f.wires.length > 0 && (
+                    <button className="text-accent hover:underline" onClick={() => setBuildUp(i, need ?? { gauge: Math.max(...f.wires.map((w) => w.gauge)), count: 1 })}>
+                      {need ? `Add build-up (${need.count}× ${need.gauge} AWG)` : "Add CMA build-up"}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </Section>
+      <div className="text-2xs text-text-tertiary">Build-up is listed on the drawing, the BOM (filler wire) and the operations. Splices are manual operations on this machine profile.</div>
     </Floating>
   );
 }

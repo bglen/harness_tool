@@ -23,12 +23,28 @@ function nodePos(h: Harness, nodeId: string): Point {
  * doesn't cross itself; blocks are nudged sideways until they don't overlap other blocks that span the same heights.
  */
 
-/** Spacing between parallel vertical runs. */
-export const SCH_LANE = 6;
+/** Schematic grid pitch (the canvas dot grid and the pin-row pitch). Connector anchors, pin attach points, splice points and every wire run sit on it. */
+export const SCH_GRID = 20;
+/** Spacing between parallel vertical runs (one grid step). */
+export const SCH_LANE = SCH_GRID;
 /** Minimum horizontal run out of a pin before the first turn. */
-export const SCH_STUB = 16;
+export const SCH_STUB = SCH_GRID;
 /** Splice diamond offset from its host node (matches the bundle layout's splice marker). */
 export const SPLICE_OFFSET = 16;
+
+/** Nearest schematic grid line. */
+export const snapToGrid = (v: number) => Math.round(v / SCH_GRID) * SCH_GRID;
+const gridCeil = (v: number) => Math.ceil(v / SCH_GRID - 1e-9) * SCH_GRID;
+const gridFloor = (v: number) => Math.floor(v / SCH_GRID + 1e-9) * SCH_GRID;
+
+/**
+ * Top edge of a pin card of height `h` centred (as near as the grid allows) on `anchorY`, placed so every pin row
+ * centre (`top + headerH + i * rowH + rowH / 2`) lands on a grid line. `rowH` must be a multiple of the grid.
+ */
+export function gridCardTop(anchorY: number, h: number, headerH: number, rowH: number): number {
+  const first = headerH + rowH / 2;
+  return snapToGrid(anchorY - h / 2 + first) - first;
+}
 
 interface End {
   p: Point;
@@ -67,7 +83,52 @@ export function splicePoint(h: Harness, spliceId: string): Point | null {
   const s = h.splices.find((x) => x.id === spliceId);
   if (!s) return null;
   const p = nodePos(h, s.nodeId);
-  return { x: p.x + SPLICE_OFFSET, y: p.y + SPLICE_OFFSET };
+  return { x: snapToGrid(p.x + SPLICE_OFFSET), y: snapToGrid(p.y + SPLICE_OFFSET) };
+}
+
+/** Port spacing and half-width of the schematic splice symbol (ports sit on grid points either side of the body). */
+export const SPLICE_PORT_DX = SCH_GRID;
+
+export interface SpliceGeometry {
+  center: Point;
+  /** Body box (between the port columns). */
+  box: { x: number; y: number; w: number; h: number };
+  /** One port per crimp barrel: where its wires attach and which way they leave. */
+  ports: { barrel: number; p: Point; dir: 1 | -1 }[];
+}
+
+/**
+ * Schematic splice symbol: a small body with one port per crimp barrel. Barrel 1 (index 0) faces the end it's wired
+ * to; the other barrels sit on the opposite side, stacked. A single-ended splice has its one port toward its wires.
+ */
+export function spliceGeometry(h: Harness, s: Harness["splices"][number], layouts?: Map<string, SchematicCard>): SpliceGeometry {
+  const base = s.position ?? splicePoint(h, s.id) ?? { x: 0, y: 0 };
+  const center = { x: snapToGrid(base.x), y: snapToGrid(base.y) };
+  // Mean x of the far ends wired to a barrel (pins: their card attach edge; splices: their position).
+  const farX = (barrel: number | null): number | null => {
+    const xs: number[] = [];
+    for (const w of h.wires)
+      for (const [e, o] of [[w.from, w.to], [w.to, w.from]] as const) {
+        if (e.kind !== "splice" || e.spliceId !== s.id || (barrel !== null && (e.barrel ?? 0) !== barrel)) continue;
+        if (o.kind === "pin") xs.push(layouts?.get(o.connectorId)?.attachX ?? h.connectors.find((c) => c.id === o.connectorId)?.position.x ?? center.x);
+        else {
+          const os = h.splices.find((x) => x.id === o.spliceId);
+          if (os) xs.push(os.position?.x ?? center.x);
+        }
+      }
+    return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
+  };
+  const side = (x: number | null, fallback: 1 | -1): 1 | -1 => (x === null || Math.abs(x - center.x) < 1 ? fallback : x > center.x ? 1 : -1);
+  const barrels = Math.max(1, s.barrels ?? 1);
+  const first = side(farX(barrels === 1 ? null : 0), -1);
+  const ports: SpliceGeometry["ports"] = [];
+  let rowsOther = 0;
+  for (let b = 0; b < barrels; b++) {
+    if (b === 0) ports.push({ barrel: 0, p: { x: center.x + first * SPLICE_PORT_DX, y: center.y }, dir: first });
+    else ports.push({ barrel: b, p: { x: center.x - first * SPLICE_PORT_DX, y: center.y + SCH_GRID * rowsOther++ }, dir: (-first) as 1 | -1 });
+  }
+  const rows = Math.max(1, rowsOther);
+  return { center, box: { x: center.x - SPLICE_PORT_DX / 2 - 2, y: center.y - SCH_GRID / 2 + 3, w: SPLICE_PORT_DX + 4, h: rows * SCH_GRID - 6 }, ports };
 }
 
 type RawEnd = Omit<End, "dir"> & { dir: 1 | -1 | 0 };
@@ -82,9 +143,12 @@ function pinEnd(e: WireEnd, layouts: Map<string, SchematicCard>): RawEnd | null 
 
 function endOf(h: Harness, e: WireEnd, layouts: Map<string, SchematicCard>): RawEnd | null {
   if (e.kind === "pin") return pinEnd(e, layouts);
-  const p = splicePoint(h, e.spliceId);
-  // A splice has no side: it faces whichever way the other end is (resolved by the caller).
-  return p ? { p, dir: 0, box: null, key: `s:${e.spliceId}`, stub: 0 } : null;
+  const s = h.splices.find((x) => x.id === e.spliceId);
+  if (!s) return null;
+  // Each barrel is a port on the splice symbol with its own side.
+  const g = spliceGeometry(h, s, layouts);
+  const port = g.ports.find((x) => x.barrel === Math.min(e.barrel ?? 0, s.barrels - 1)) ?? g.ports[0]!;
+  return { p: port.p, dir: port.dir, box: { y: g.box.y, h: g.box.h }, key: `s:${s.id}:${port.barrel}`, stub: SCH_STUB };
 }
 
 /** Left-to-right order of lanes in a block so the wires don't cross each other where they can avoid it. */
@@ -170,18 +234,18 @@ export function schematicRoutes(h: Harness, layouts: Map<string, SchematicCard>)
     const n = rs.length;
     const width = (n - 1) * SCH_LANE;
     if (kind === "facing") {
-      const lo = Math.max(...rs.map((r) => r.a.p.x + r.a.stub));
-      const hi = Math.min(...rs.map((r) => r.b.p.x - r.b.stub));
+      const lo = gridCeil(Math.max(...rs.map((r) => r.a.p.x + r.a.stub)));
+      const hi = gridFloor(Math.min(...rs.map((r) => r.b.p.x - r.b.stub)));
       const ordered = orderLanes(rs, "facing", 1);
-      // Snap the block centre to the lane grid so neighbouring blocks line up.
-      const start = Math.round(((lo + hi) / 2 - width / 2) / SCH_LANE) * SCH_LANE;
+      // Snap the block centre to the grid so neighbouring blocks line up.
+      const start = snapToGrid((lo + hi) / 2 - width / 2);
       const block: Block = { ids: ordered.map((r) => r.w.id), y0, y1, start, lo, hi: Math.max(hi, lo + width), grow: 0, x: 0 };
       blocks.push(block);
       blockOf.push({ block, reqs: ordered });
     } else if (kind === "same") {
       const d = a0.dir;
       const ordered = orderLanes(rs, "same", d);
-      const edge = d === 1 ? Math.max(...rs.flatMap((r) => [r.a.p.x + r.a.stub, r.b.p.x + r.b.stub])) : Math.min(...rs.flatMap((r) => [r.a.p.x - r.a.stub, r.b.p.x - r.b.stub]));
+      const edge = d === 1 ? gridCeil(Math.max(...rs.flatMap((r) => [r.a.p.x + r.a.stub, r.b.p.x + r.b.stub]))) : gridFloor(Math.min(...rs.flatMap((r) => [r.a.p.x - r.a.stub, r.b.p.x - r.b.stub])));
       const start = d === 1 ? edge : edge - width;
       const block: Block = { ids: ordered.map((r) => r.w.id), y0, y1, start, lo: d === 1 ? edge : -Infinity, hi: d === 1 ? Infinity : edge, grow: d, x: 0 };
       blocks.push(block);
@@ -191,10 +255,11 @@ export function schematicRoutes(h: Harness, layouts: Map<string, SchematicCard>)
       const ordered = [...rs].sort((r1, r2) => r1.a.p.y - r2.a.p.y);
       const bottom = Math.max(...rs.flatMap((r) => [r.a.box ? r.a.box.y + r.a.box.h : r.a.p.y, r.b.box ? r.b.box.y + r.b.box.h : r.b.p.y]));
       // The top wire wraps outermost (right-most on a's side, lowest run, left-most on b's side) so the bus doesn't cross itself.
-      ordered.forEach((r, i) => awayY.set(r.w.id, bottom + 14 + (n - 1 - i) * SCH_LANE));
-      const ax = Math.max(...rs.map((r) => r.a.p.x + r.a.stub));
-      const bx = Math.min(...rs.map((r) => r.b.p.x - r.b.stub));
-      const yBot = bottom + 14 + width;
+      const yTop = gridCeil(bottom + SCH_GRID / 2);
+      ordered.forEach((r, i) => awayY.set(r.w.id, yTop + (n - 1 - i) * SCH_LANE));
+      const ax = gridCeil(Math.max(...rs.map((r) => r.a.p.x + r.a.stub)));
+      const bx = gridFloor(Math.min(...rs.map((r) => r.b.p.x - r.b.stub)));
+      const yBot = yTop + width;
       const ba: Block = { ids: [...ordered].reverse().map((r) => r.w.id), y0: Math.min(...rs.map((r) => r.a.p.y)), y1: yBot, start: ax, lo: ax, hi: Infinity, grow: 1, x: 0 };
       const bb: Block = { ids: ordered.map((r) => r.w.id), y0: Math.min(...rs.map((r) => r.b.p.y)), y1: yBot, start: bx - width, lo: -Infinity, hi: bx, grow: -1, x: 0 };
       blocks.push(ba, bb);

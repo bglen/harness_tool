@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useProject } from "../store/project";
 import { useUi } from "../store/ui";
-import { runAction } from "./actions";
+import { actionAvailable, runAction } from "./actions";
 
 /** Global keyboard shortcuts (§5.4). Single-letter shortcuts are ignored while typing. */
 export function useKeyboard() {
@@ -52,6 +52,8 @@ export function useKeyboard() {
       const id = map[k] ?? map[e.key];
       if (id) {
         e.preventDefault();
+        // T toggles: twists a loose selection, untwists one that is already twisted together.
+        if (id === "wTwist" && !actionAvailable("wTwist")) return runAction("wUntwist");
         runAction(id);
       }
     };

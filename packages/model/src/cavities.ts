@@ -25,7 +25,7 @@ export interface CavityState {
 export function cavityStates(h: Harness, cat: CatalogIndex, connectorId: string): CavityState[] {
   const c = h.connectors.find((x) => x.id === connectorId);
   const part = c && cat.connector(c.pn);
-  if (!c || !part) return [];
+  if (!c || !part || part.flyingLead) return []; // flying-lead ends: no contacts or plugs
   const gauges = new Map<string, number[]>();
   const add = (cav: string, g: number) => (gauges.get(cav) ?? gauges.set(cav, []).get(cav)!).push(g);
   for (const w of h.wires) for (const e of [w.from, w.to]) if (e.kind === "pin" && e.connectorId === c.id) add(e.cavityId, w.gauge);

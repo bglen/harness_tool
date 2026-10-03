@@ -22,6 +22,8 @@ export const PinAssignmentSchema = z.object({
   filler: z.boolean().optional(),
   /** Deliberately left unconnected ("NC"): never on a net, never wired, sealed with a plug. */
   noConnect: z.boolean().optional(),
+  /** CMA build-up: filler strands crimped in with the wire(s) to bring the barrel's circular mil area up to the contact's minimum. */
+  buildUp: z.object({ gauge: z.number(), count: z.number().int().min(1) }).optional(),
 });
 export type PinAssignment = z.infer<typeof PinAssignmentSchema>;
 
@@ -53,6 +55,8 @@ export const ConnectorSchema = z.object({
   pins: z.record(z.string(), PinAssignmentSchema).default({}),
   showUnused: z.boolean().default(false),
   description: z.string().default(""),
+  /** Flying-lead ends only: how the bare wire ends are finished. */
+  leadEnd: z.object({ finish: z.enum(["stripped", "tinned", "ferrule", "unterminated"]).default("tinned"), stripMm: z.number().nonnegative().default(6) }).optional(),
 });
 export type ConnectorInstance = z.infer<typeof ConnectorSchema>;
 
@@ -85,7 +89,8 @@ export type Net = z.infer<typeof NetSchema>;
 
 export const WireEndSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("pin"), connectorId: Id, cavityId: z.string() }),
-  z.object({ kind: z.literal("splice"), spliceId: Id }),
+  /** `barrel`: which crimp barrel (0-based) of the splice the wire enters. */
+  z.object({ kind: z.literal("splice"), spliceId: Id, barrel: z.number().int().nonnegative().default(0) }),
 ]);
 export type WireEnd = z.infer<typeof WireEndSchema>;
 
@@ -136,7 +141,14 @@ export const SpliceSchema = z.object({
   type: z.enum(["solderSleeve", "crimp", "ultrasonic"]).default("crimp"),
   pn: z.string().default(""),
   cover: z.enum(["heatShrink", "potting"]).default("heatShrink"),
+  /** The part number was chosen by the user (otherwise it follows the wires' CMA). */
   pinned: z.boolean().default(false),
+  /** Crimp barrels (wire entries): 1 = single-ended (closed-end), 2 = butt splice, more for multi-barrel parts. */
+  barrels: z.number().int().min(1).max(8).default(1),
+  /** Where the splice sits on the schematic (bundle layout: at its node). */
+  position: Point.optional(),
+  /** CMA build-up filler strands per barrel. */
+  buildUp: z.array(z.object({ barrel: z.number().int().nonnegative(), gauge: z.number(), count: z.number().int().min(1) })).default([]),
 });
 export type Splice = z.infer<typeof SpliceSchema>;
 
@@ -382,6 +394,8 @@ export const PedigreeSchema = z.object({
   process: z
     .object({
       noSplices: z.boolean().optional(),
+      /** How a wire branching off a pin is built by default: two wires in the contact, or a splice. */
+      branchJoin: z.enum(["doubleCrimp", "splice"]).optional(),
       noManualRework: z.boolean().optional(),
       noPotting: z.boolean().optional(),
       serializedLabels: z.boolean().optional(),
@@ -403,6 +417,8 @@ export const PedigreeSchemeSchema = z.object({
   name: z.string(),
   version: z.string().default("1.0.0"),
   pedigrees: z.array(PedigreeSchema).min(1),
+  /** Pedigree new designs start on (falls back to the first one). */
+  defaultPedigreeId: z.string().optional(),
 });
 export type PedigreeScheme = z.infer<typeof PedigreeSchemeSchema>;
 

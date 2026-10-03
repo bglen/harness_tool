@@ -1,10 +1,11 @@
-import { currentHarness, type Point } from "@hs/model";
+import { currentHarness, describeWireColor, formatWireColor, spliceGeometry, type Cable, type Point, type Wire } from "@hs/model";
+import { cablePn, wirePn } from "@hs/ops";
 import { useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { ACTIONS, type ActionCtx } from "../lib/actions";
 import { nodePos, type ConnLayout } from "../lib/geometry";
 import { Icon } from "../ui/icons";
-import { Floating, Kbd, MenuItem, SeverityIcon, Tip } from "../ui/primitives";
+import { Floating, Kbd, MenuItem, SeverityIcon, Tip, WireSwatch } from "../ui/primitives";
 import { useActiveAnalysis } from "../store/analysis";
 import { ShieldCheck } from "lucide-react";
 
@@ -49,8 +50,14 @@ export function ContextBar({ layouts }: { layouts: Map<string, ConnLayout> }) {
     } else if (sel.kind === "splice") {
       const s = h.splices.find((x) => x.id === id);
       if (s) {
-        const p = nodePos(h, s.nodeId);
-        pts.push({ x: p.x + 16, y: p.y });
+        // Schematic: above the splice symbol; bundle layout: beside its marker on the bundle node.
+        if (ui.canvasMode === "schematic") {
+          const g = spliceGeometry(h, s, layouts);
+          pts.push({ x: g.center.x, y: g.box.y - 16 });
+        } else {
+          const p = nodePos(h, s.nodeId);
+          pts.push({ x: p.x + 16, y: p.y });
+        }
       }
     } else if (sel.kind === "pin") {
       const [cid, cav] = id.split(":");
@@ -68,18 +75,28 @@ export function ContextBar({ layouts }: { layouts: Map<string, ConnLayout> }) {
   const anchor = { x: (r?.left ?? 0) + sx, y: (r?.top ?? 0) + sy + 44 };
   const ctx: ActionCtx = { kind: sel.kind, ids: sel.ids, h, anchor };
   let actions = ACTIONS.filter((a) => a.bar?.includes(sel.kind!) && (!a.when || a.when(ctx)));
-  if (sel.kind === "pin") actions = [];
+  // Pins: only pin actions such as Make splice (naming and connecting happen on the card itself).
+  if (sel.kind === "pin") actions = actions.filter((a) => a.bar?.includes("pin"));
+  // Wires: the part button below stands in for "Gauge"; "More…" always sits at the far right.
+  const wires = sel.kind === "wire" ? h.wires.filter((w) => sel.ids.includes(w.id)) : [];
+  if (wires.length) actions = actions.filter((a) => a.id !== "wGauge");
+  actions = [...actions.filter((a) => a.id !== "cMore"), ...actions.filter((a) => a.id === "cMore")];
   const title =
     sel.kind === "connector" && sel.ids.length === 1
       ? h.connectors.find((c) => c.id === sel.ids[0])?.refDes
       : sel.kind === "net" && sel.ids.length === 1
         ? h.nets.find((n) => n.id === sel.ids[0])?.name
-        : `${sel.ids.length} ${sel.kind}${sel.ids.length > 1 ? "s" : ""}`;
+        : sel.kind === "wire" && wires.length === 1
+          ? `${wires[0]!.label} · ${h.nets.find((n) => n.id === wires[0]!.netId)?.name ?? ""}`
+          : sel.kind === "splice" && sel.ids.length === 1
+            ? h.splices.find((s) => s.id === sel.ids[0])?.label
+          : `${sel.ids.length} ${sel.kind}${sel.ids.length > 1 ? "s" : ""}`;
   if (sy < 4 || sx < 0 || !r || sx > r.width) return null;
   return (
     <div className="pop-in absolute z-20 flex -translate-x-1/2 items-center gap-0.5 rounded-card border border-border-subtle bg-bg-surface-2 p-1 shadow-lg" style={{ left: sx, top: Math.max(6, sy) }} role="toolbar" aria-label="Selection actions" onPointerDown={(e) => e.stopPropagation()}>
-      <span className="mono max-w-[140px] truncate px-2 text-xs text-text-secondary">{title}</span>
+      <span className="mono max-w-[180px] truncate px-2 text-xs text-text-secondary">{title}</span>
       <FindingsChip ids={sel.ids} />
+      {wires.length > 0 && <WirePartButton wires={wires} cables={h.cables} onClick={(e) => ACTIONS.find((a) => a.id === "wGauge")!.run({ ...ctx, anchor: { x: e.clientX, y: e.clientY + 16 } })} />}
       {sel.kind === "pin" && <span className="px-1 text-xs text-text-tertiary">Drag pins onto another connector to connect in order · double-click to name</span>}
       {sel.kind === "segment" && sel.ids.length === 1 && <span className="hidden whitespace-nowrap px-1 text-2xs text-text-tertiary 2xl:inline">Drag ○ ends to re-attach</span>}
       {sel.kind === "node" && sel.ids.length === 1 && <span className="hidden whitespace-nowrap px-1 text-2xs text-text-tertiary 2xl:inline">Drop on a connector/breakout to join</span>}
@@ -92,6 +109,35 @@ export function ContextBar({ layouts }: { layouts: Map<string, ConnLayout> }) {
         </Tip>
       ))}
     </div>
+  );
+}
+
+/** What the selected wire(s) are made of: part number and insulation color (cable PN for a cable conductor). Opens spec, gauge and color. */
+function WirePartButton({ wires, cables, onClick }: { wires: Wire[]; cables: Cable[]; onClick: (e: React.MouseEvent) => void }) {
+  const partOf = (w: Wire) => {
+    const c = w.cableId ? cables.find((x) => x.id === w.cableId) : undefined;
+    return c ? { pn: cablePn(c), what: `Cable ${c.label}, ${c.count} × ${c.gauge} AWG` } : { pn: wirePn(w.spec, w.gauge, w.color), what: `${w.gauge} AWG ${w.spec}` };
+  };
+  const parts = wires.map(partOf);
+  const samePn = parts.every((p) => p.pn === parts[0]!.pn);
+  const color = wires[0]!.color;
+  const sameColor = wires.every((w) => formatWireColor(w.color) === formatWireColor(color));
+  const label = samePn ? parts[0]!.pn : `${new Set(parts.map((p) => p.pn)).size} part numbers`;
+  const tip = wires.length === 1 ? `${parts[0]!.what}, ${describeWireColor(color)} (${formatWireColor(color)}). Change spec, gauge or color` : "Change spec, gauge or color";
+  return (
+    <Tip label={tip}>
+      <button className="flex h-7 items-center gap-1.5 whitespace-nowrap rounded-control px-2 text-xs text-text-primary hover:bg-bg-hover" onClick={onClick} aria-label={`Wire part ${label}. ${tip}`}>
+        <span className="mono">{label}</span>
+        {sameColor ? (
+          <>
+            <WireSwatch color={color} showCode={false} />
+            <span className="text-text-secondary">{describeWireColor(color)}</span>
+          </>
+        ) : (
+          <span className="text-text-secondary">mixed colors</span>
+        )}
+      </button>
+    </Tip>
   );
 }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { currentRevision, effectiveTopology, formatLength, formatWireColor, parseWireColor, renameNet, setNetProps, setWireProps, type Harness, type Wire } from "@hs/model";
+import { currentRevision, effectiveTopology, formatLength, formatWireColor, parseWireColor, renameNet, setNetProps, setWireProps, wireEndLabel, type Harness, type Wire } from "@hs/model";
 import { ChevronDown, ChevronUp, Columns3, GripHorizontal, Search } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
 import { storage, useUi } from "../store/ui";
@@ -11,7 +11,7 @@ import { cx, inputCls, WireSwatch } from "../ui/primitives";
 
 type Col = { key: string; label: string; w: number; get: (w: Wire, h: Harness) => string | number; edit?: "net" | "gauge" | "spec" | "color" };
 
-const endLabel = (h: Harness, e: Wire["from"]) => (e.kind === "pin" ? `${h.connectors.find((c) => c.id === e.connectorId)?.refDes ?? "?"}-${e.cavityId}` : h.splices.find((s) => s.id === e.spliceId)?.label ?? "splice");
+const endLabel = (h: Harness, e: Wire["from"]) => wireEndLabel(h, e);
 
 export function WireListDrawer() {
   const ui = useUi();

@@ -36,6 +36,12 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
   // Opened from a selected part: show only findings (open and waived) that involve it, until cleared.
   const [objectId, setObjectId] = useState<string | undefined>(init.objectId);
   const [openRule, setOpenRule] = useState<string | null>(() => (init.objectId && a ? a.dfm.results.find((r) => involves(r, init.objectId!))?.eff.rule.id ?? null : null));
+  // The finding (by key) picked in the list; the detail pane highlights it.
+  const [openKey, setOpenKey] = useState<string | null>(() => {
+    const v = init.objectId && a ? a.dfm.results.find((r) => involves(r, init.objectId!))?.violations.find((x) => x.objectIds.includes(init.objectId!)) : undefined;
+    return v ? findingKey(v) : null;
+  });
+  const pick = (ruleId: string, key: string | null) => (setOpenRule(ruleId), setOpenKey(key));
   const [showPassed, setShowPassed] = useState(false);
   const [showWaived, setShowWaived] = useState(true);
   const close = () => ui.closeDialog("dfm");
@@ -88,9 +94,13 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
                 <div className="label-caps sticky top-0 bg-bg-surface-2 px-3 py-1">{c}</div>
                 {failing
                   .filter((r) => (r.status === "fail" ? r.eff.rule.category : "Couldn't run") === c)
-                  .map((r) => (
-                    <RuleRow key={r.eff.rule.id} r={r} objectId={objectId} active={openRule === r.eff.rule.id} onClick={() => setOpenRule(r.eff.rule.id)} />
-                  ))}
+                  .flatMap((r) =>
+                    r.status === "fail"
+                      ? r.violations
+                          .filter((v) => !objectId || v.objectIds.includes(objectId))
+                          .map((v, i) => <FindingRow key={`${r.eff.rule.id}|${findingKey(v)}|${i}`} r={r} v={v} active={openRule === r.eff.rule.id && openKey === findingKey(v)} onClick={() => pick(r.eff.rule.id, findingKey(v))} />)
+                      : [<RuleRow key={r.eff.rule.id} r={r} objectId={objectId} active={openRule === r.eff.rule.id} onClick={() => pick(r.eff.rule.id, null)} />],
+                  )}
               </div>
             ))}
             {waivedRules.length > 0 && (
@@ -100,9 +110,11 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
                   <ShieldCheck size={12} /> {waivedCount} waived finding{waivedCount === 1 ? "" : "s"}
                 </button>
                 {showWaived &&
-                  waivedRules.map((r) => (
-                    <RuleRow key={`w-${r.eff.rule.id}`} r={r} objectId={objectId} waivedView active={openRule === r.eff.rule.id} onClick={() => setOpenRule(r.eff.rule.id)} />
-                  ))}
+                  waivedRules.flatMap((r) =>
+                    r.waived
+                      .filter((w) => !objectId || w.objectIds.includes(objectId))
+                      .map((w) => <FindingRow key={`w-${w.waiverId}`} r={r} v={w} waived active={openRule === r.eff.rule.id && openKey === `w:${w.waiverId}`} onClick={() => pick(r.eff.rule.id, `w:${w.waiverId}`)} />),
+                  )}
               </>
             )}
             {unmatched.length > 0 && !objectId && (
@@ -130,29 +142,48 @@ export function DfmDialog({ data }: { data: { source?: SourceFilter; objectId?: 
             )}
             {showPassed &&
               [...passed, ...off].map((r) => (
-                <RuleRow key={`p-${r.eff.rule.id}`} r={r} active={openRule === r.eff.rule.id} onClick={() => setOpenRule(r.eff.rule.id)} />
+                <RuleRow key={`p-${r.eff.rule.id}`} r={r} active={openRule === r.eff.rule.id} onClick={() => pick(r.eff.rule.id, null)} />
               ))}
           </div>
         </div>
         <div className="scroll-thin min-h-0 min-w-0 overflow-y-auto overflow-x-hidden break-words rounded-card border border-border-subtle p-3">
-          {detail ? <RuleDetail r={detail} objectId={objectId} /> : <div className="text-sm text-text-tertiary">Select a check to see what it looks for, why it matters, its threshold and source, the affected objects and any waivers.</div>}
+          {detail ? <RuleDetail key={detail.eff.rule.id} r={detail} objectId={objectId} focusKey={openKey} /> : <div className="text-sm text-text-tertiary">Select a check to see what it looks for, why it matters, its threshold and source, the affected objects and any waivers.</div>}
         </div>
       </div>
     </Dialog>
   );
 }
 
-function RuleRow({ r, active, onClick, objectId, waivedView }: { r: RuleResult; active: boolean; onClick: () => void; objectId?: string; waivedView?: boolean }) {
+/** Identity of one finding in the list (the same finding keeps it across re-evaluation). */
+const findingKey = (v: Violation) => `${v.key ?? violationKey(v)}|${v.message}`;
+
+/**
+ * One finding: a rule broken once, on the parts it names. A rule broken several times gets one row per finding, so
+ * several problems never read as one.
+ */
+function FindingRow({ r, v, active, onClick, waived }: { r: RuleResult; v: Violation; active: boolean; onClick: () => void; waived?: boolean }) {
+  return (
+    <button onClick={onClick} title={r.eff.rule.title} className={cx("flex w-full items-center gap-2 border-b border-border-subtle px-3 py-1.5 text-left text-sm hover:bg-bg-hover", active && "bg-bg-hover")}>
+      {waived ? <ShieldCheck size={14} className="text-text-tertiary" /> : <SeverityIcon severity={r.eff.severity} />}
+      <span className="mono w-28 shrink-0 text-2xs text-text-secondary">{r.eff.rule.id}</span>
+      {v.objectIds.length > 0 && <PartsTag ids={v.objectIds} max={3} />}
+      <span className={cx("min-w-0 flex-1 truncate", waived && "text-text-secondary")}>{v.message || r.eff.rule.title}</span>
+      <Chip>{r.eff.source.layer === "manufacturer" ? "Manufacturer" : r.eff.source.layer === "project" ? "Project" : r.eff.source.name}</Chip>
+      {waived && <span className="w-14 text-right text-xs text-text-secondary">waived</span>}
+    </button>
+  );
+}
+
+function RuleRow({ r, active, onClick, objectId }: { r: RuleResult; active: boolean; onClick: () => void; objectId?: string }) {
   const project = useProject((s) => s.project)!;
   const across = severityAcross(r.eff, project);
   const openV = r.violations.filter((v) => !objectId || v.objectIds.includes(objectId));
   const waivedV = r.waived.filter((v) => !objectId || v.objectIds.includes(objectId));
   const open = openV.length;
   const waived = waivedV.length;
-  const partIds = (waivedView ? waivedV : openV).flatMap((v) => v.objectIds);
-  const status = waivedView
-    ? `${waived} waived`
-    : r.status === "fail"
+  const partIds = openV.flatMap((v) => v.objectIds);
+  const status =
+    r.status === "fail"
       ? `${open} affected${waived ? ` · ${waived} waived` : ""}`
       : r.status === "waived"
         ? "all waived"
@@ -169,9 +200,9 @@ function RuleRow({ r, active, onClick, objectId, waivedView }: { r: RuleResult; 
                   : r.status;
   return (
     <button onClick={onClick} className={cx("flex w-full items-center gap-2 border-b border-border-subtle px-3 py-1.5 text-left text-sm hover:bg-bg-hover", active && "bg-bg-hover")}>
-      {waivedView ? <ShieldCheck size={14} className="text-text-tertiary" /> : <SeverityIcon severity={r.status === "pass" || r.status === "waived" || r.status === "notApplicable" ? "pass" : r.status === "off" ? "off" : r.status === "fail" ? r.eff.severity : "error"} />}
+      <SeverityIcon severity={r.status === "pass" || r.status === "waived" || r.status === "notApplicable" ? "pass" : r.status === "off" ? "off" : r.status === "fail" ? r.eff.severity : "error"} />
       <span className="mono w-28 shrink-0 text-2xs text-text-secondary">{r.eff.rule.id}</span>
-      <span className={cx("min-w-0 flex-1 truncate", waivedView && "text-text-secondary")}>{r.eff.rule.title}</span>
+      <span className="min-w-0 flex-1 truncate">{r.eff.rule.title}</span>
       {partIds.length > 0 && <PartsTag ids={partIds} max={3} />}
       {across && <span className="hidden text-2xs text-text-tertiary xl:inline">{across}</span>}
       <Chip>{r.eff.source.layer === "manufacturer" ? "Manufacturer" : r.eff.source.layer === "project" ? "Project" : r.eff.source.name}</Chip>
@@ -233,7 +264,7 @@ function WaiveForm({ r, targets, onDone, label, objectId }: { r: RuleResult; tar
   );
 }
 
-function RuleDetail({ r, objectId }: { r: RuleResult; objectId?: string }) {
+function RuleDetail({ r, objectId, focusKey }: { r: RuleResult; objectId?: string; focusKey?: string | null }) {
   const ui = useUi();
   const project = useProject((s) => s.project)!;
   // Which finding (index) or "all" is being waived.
@@ -299,7 +330,7 @@ function RuleDetail({ r, objectId }: { r: RuleResult; objectId?: string }) {
           {waiving === "all" && <WaiveForm r={r} targets={open} objectId={objectId} label={`Waive all ${open.length}`} onDone={() => setWaiving(null)} />}
           <ul className="flex flex-col gap-1.5">
             {open.map((v, i) => (
-              <li key={violationKey(v) + i} className="text-xs">
+              <li key={violationKey(v) + i} className={cx("text-xs", focusKey === findingKey(v) && "-mx-1 rounded-control bg-bg-hover px-1 py-0.5")}>
                 <div className="flex items-start gap-2">
                   <PartsTag ids={v.objectIds} />
                   <button className="flex-1 text-left hover:text-accent" onClick={() => (ui.closeDialog("dfm"), ui.setView("design"), zoomToObjects(v.objectIds))}>
@@ -329,7 +360,7 @@ function RuleDetail({ r, objectId }: { r: RuleResult; objectId?: string }) {
           <div className="mb-1 text-2xs text-text-tertiary">A waiver records acceptance of one finding. Manual operations, cost and lead-time consequences still apply.</div>
           <ul className="flex flex-col gap-1.5">
             {waived.map((w) => (
-              <li key={w.waiverId} className="rounded-control border border-border-subtle p-2 text-xs">
+              <li key={w.waiverId} className={cx("rounded-control border p-2 text-xs", focusKey === `w:${w.waiverId}` ? "border-accent" : "border-border-subtle")}>
                 <div className="flex items-start gap-2">
                   <ShieldCheck size={13} className="mt-[1px] shrink-0 text-text-tertiary" />
                   <PartsTag ids={w.objectIds} />

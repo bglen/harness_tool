@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Harness, Point, Wire } from "./schema";
-import { roundedPath, schematicRoutes, SCH_LANE, type SchematicCard } from "./schematic";
+import { gridCardTop, roundedPath, SCH_GRID, SCH_LANE, schematicRoutes, splicePoint, type SchematicCard } from "./schematic";
 
 /** A pin card whose rows sit at the given heights, attaching wires at `attachX` on the `facing` side. */
 function card(_id: string, attachX: number, facing: 1 | -1, rows: Record<string, number>): SchematicCard {
@@ -151,6 +151,45 @@ describe("schematic wire routing", () => {
     const x1 = r.get(w1.id)![1]!.x;
     const x2 = r.get(w2.id)![1]!.x;
     expect(Math.abs(x1 - x2)).toBeGreaterThanOrEqual(SCH_LANE);
+  });
+
+
+  it("puts every corner and lane on the grid when the pin cards sit on it", () => {
+    const L = new Map([
+      ["A", card("A", 0, 1, { "1": 100, "2": 120, "3": 140, "4": 160 })],
+      ["B", card("B", 400, -1, { "1": 300, "2": 320, "3": 340 })],
+      ["C", card("C", 60, 1, { "1": 500, "2": 520 })],
+      ["D", card("D", -300, -1, { "1": 100 })],
+    ]);
+    const ws = [
+      ...["1", "2", "3"].map((c) => wire(["A", c], ["B", c])),
+      wire(["A", "4"], ["C", "1"]),
+      wire(["C", "2"], ["D", "1"]),
+      wire(["B", "1"], ["A", "4"]),
+    ];
+    const splices = [{ id: "s1", nodeId: "n1", barrels: 1, buildUp: [] }];
+    const nodes = [{ id: "n1", kind: "breakout", position: { x: 187, y: 233 } }];
+    const sw = { ...wire(["A", "1"], ["B", "1"]), to: { kind: "splice", spliceId: "s1" } } as unknown as Wire;
+    const h = { wires: [...ws, sw], splices, nodes, connectors: [] } as unknown as Harness;
+    const r = schematicRoutes(h, L);
+    expect(r.size).toBe(ws.length + 1);
+    for (const pts of r.values()) {
+      expectOrthogonal(pts);
+      for (const p of pts) {
+        expect(p.x % SCH_GRID).toBeCloseTo(0);
+        expect(p.y % SCH_GRID).toBeCloseTo(0);
+      }
+    }
+    expect(splicePoint(h, "s1")).toEqual({ x: 200, y: 240 });
+  });
+
+  it("places a pin card so its rows land on grid lines", () => {
+    for (const h of [70, 90, 130, 250])
+      for (const y of [0, 20, 240]) {
+        const top = gridCardTop(y, h, 46, 20);
+        expect((top + 46 + 10) % SCH_GRID).toBeCloseTo(0);
+        expect(Math.abs(top + h / 2 - y)).toBeLessThanOrEqual(SCH_GRID / 2);
+      }
   });
 
   it("rounds corners without leaving the polyline's bounding box", () => {

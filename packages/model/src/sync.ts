@@ -2,9 +2,10 @@ import { current, isDraft } from "immer";
 import type { CatalogIndex } from "./catalog";
 import { sameColor } from "./colors";
 import { derive, diameterUnderLayer, shortestPath, buildAdjacency, type Derived } from "./derive";
-import { currentRevision, defaultColorFor, defaultGaugeForEnds, isNoConnectName, memberKey, nextLabel, pairKey, prune, uid } from "./helpers";
+import { currentRevision, defaultColorFor, defaultGaugeForEnds, isNoConnectName, isSpliceKey, memberKey, nextLabel, pairKey, parseLinkKey, prune, uid } from "./helpers";
 import { resolvePedigree } from "./pedigree";
 import type { Harness, Label, Net, Project, Settings, Termination, Wire, WireEnd } from "./schema";
+import { spliceFills } from "./cma";
 
 export interface SyncContext {
   cat: CatalogIndex;
@@ -38,7 +39,8 @@ export function drawnLinks(net: Net): [string, string][] | null {
   const seen = new Set<string>();
   const links = (net.links ?? []).filter(([a, b]) => {
     const k = a < b ? `${a}|${b}` : `${b}|${a}`;
-    if (a === b || !keys.has(a) || !keys.has(b) || seen.has(k)) return false;
+    // Splice barrels are junctions the user placed; links to them are kept (sync drops links to deleted splices).
+    if (a === b || !(keys.has(a) || isSpliceKey(a)) || !(keys.has(b) || isSpliceKey(b)) || seen.has(k)) return false;
     seen.add(k);
     return true;
   });
@@ -46,11 +48,14 @@ export function drawnLinks(net: Net): [string, string][] | null {
   // Every member reachable from the first through drawn links?
   const adj = new Map<string, string[]>();
   for (const [a, b] of links) (adj.get(a) ?? adj.set(a, []).get(a)!).push(b), (adj.get(b) ?? adj.set(b, []).get(b)!).push(a);
+  // The barrels of one splice are joined inside it.
+  const ports = [...adj.keys()].filter(isSpliceKey);
+  for (const p of ports) for (const q of ports) if (p !== q && p.slice(0, p.lastIndexOf(":")) === q.slice(0, q.lastIndexOf(":"))) adj.get(p)!.push(q);
   const start = keys.values().next().value!;
   const reach = new Set([start]);
   const q = [start];
   while (q.length) for (const n of adj.get(q.pop()!) ?? []) if (!reach.has(n)) reach.add(n), q.push(n);
-  return reach.size === keys.size ? links : null;
+  return [...keys].every((k) => reach.has(k)) ? links : null;
 }
 
 /**
@@ -77,8 +82,10 @@ export function joinKind(net: Net): "splice" | "doubleCrimp" | null {
   if (t === "parallel") return null;
   if (t === "wired") {
     const count = new Map<string, number>();
-    for (const [a, b] of drawnLinks(net)!) count.set(a, (count.get(a) ?? 0) + 1), count.set(b, (count.get(b) ?? 0) + 1);
-    return [...count.values()].some((n) => n > 1) ? "doubleCrimp" : null;
+    const links = drawnLinks(net)!;
+    for (const [a, b] of links) for (const k of [a, b]) if (!isSpliceKey(k)) count.set(k, (count.get(k) ?? 0) + 1);
+    if ([...count.values()].some((n) => n > 1)) return "doubleCrimp";
+    return links.some(([a, b]) => isSpliceKey(a) || isSpliceKey(b)) ? "splice" : null;
   }
   return net.members.length >= 3 ? "doubleCrimp" : null;
 }
@@ -90,17 +97,15 @@ export function desiredPairs(h: Harness, net: Net): [WireEnd, WireEnd][] {
   const topo = effectiveTopology(net);
   if (topo === "splice") {
     const sp = h.splices.find((s) => s.netId === net.id);
-    if (sp) return members.map((m) => [{ kind: "pin", connectorId: m.connectorId, cavityId: m.cavityId }, { kind: "splice", spliceId: sp.id }]);
+    if (sp) return members.map((m) => [{ kind: "pin", connectorId: m.connectorId, cavityId: m.cavityId }, { kind: "splice", spliceId: sp.id, barrel: 0 }]);
   }
   if (topo === "wired") {
     const idx = new Map(h.connectors.map((c, i) => [c.id, i]));
-    const toEnd = (k: string): WireEnd => {
-      const i = k.indexOf(":");
-      return { kind: "pin", connectorId: k.slice(0, i), cavityId: k.slice(i + 1) };
-    };
+    // Pins before splice barrels; pins in connector order.
+    const rank = (e: WireEnd) => (e.kind === "pin" ? idx.get(e.connectorId) ?? 0 : 1e9);
     return drawnLinks(net)!.map(([x, y]) => {
-      const [a, b] = [toEnd(x), toEnd(y)] as [Extract<WireEnd, { kind: "pin" }>, Extract<WireEnd, { kind: "pin" }>];
-      return (idx.get(a.connectorId) ?? 0) <= (idx.get(b.connectorId) ?? 0) ? [a, b] : [b, a];
+      const [a, b] = [parseLinkKey(x), parseLinkKey(y)];
+      return rank(a) <= rank(b) ? [a, b] : [b, a];
     });
   }
   if (topo === "parallel") {
@@ -201,7 +206,12 @@ function cleanNets(h: Harness, cat: CatalogIndex, repairs?: string[]) {
   for (const n of h.nets) {
     if (!n.links?.length) continue;
     const keys = new Set(n.members.map((m) => memberKey(m)));
-    prune(n, "links", ([a, b]) => keys.has(a) && keys.has(b));
+    const port = (k: string) => {
+      const e = parseLinkKey(k);
+      const sp = e.kind === "splice" ? snap.splices.find((s) => s.id === e.spliceId) : undefined;
+      return !!sp && sp.netId === n.id && e.kind === "splice" && e.barrel < sp.barrels;
+    };
+    prune(n, "links", ([a, b]) => (keys.has(a) || port(a)) && (keys.has(b) || port(b)));
   }
   // 2. Pins mirror net membership: compute desired netId per pin, write only differences.
   const want = new Map<string, string>();
@@ -252,13 +262,21 @@ function bestSpliceNode(h: Harness, net: Net): string | undefined {
 function syncSplices(h: Harness, cat: CatalogIndex) {
   const spliceNets = new Set(h.nets.filter((n) => effectiveTopology(n) === "splice").map((n) => n.id));
   const nodeSet = new Set(plain(h).nodes.map((n) => n.id));
-  prune(h, "splices", (s) => spliceNets.has(s.netId) && nodeSet.has(s.nodeId));
+  const linked = new Set(plain(h).nets.flatMap((n) => (n.links ?? []).flat().filter(isSpliceKey).map((k) => (parseLinkKey(k) as { spliceId: string }).spliceId)));
+  prune(h, "splices", (s) => (spliceNets.has(s.netId) || linked.has(s.id)) && h.nets.some((n) => n.id === s.netId));
+  // A splice whose bundle node went away moves to the best node for its net.
+  for (const s of h.splices)
+    if (!nodeSet.has(s.nodeId)) {
+      const net = h.nets.find((n) => n.id === s.netId);
+      const nodeId = net && bestSpliceNode(h, net);
+      if (nodeId) s.nodeId = nodeId;
+    }
   for (const n of h.nets) {
     if (!spliceNets.has(n.id)) continue;
     if (!h.splices.some((s) => s.netId === n.id)) {
       const nodeId = bestSpliceNode(h, n);
       if (!nodeId) continue;
-      h.splices.push({ id: uid(), label: nextLabel(h.splices.map((s) => s.label), "SP"), netId: n.id, nodeId, type: "crimp", pn: "", cover: "heatShrink", pinned: false });
+      h.splices.push({ id: uid(), label: nextLabel(h.splices.map((s) => s.label), "SP"), netId: n.id, nodeId, type: "crimp", pn: "", cover: "heatShrink", pinned: false, barrels: 1, buildUp: [] });
     }
   }
 }
@@ -552,9 +570,12 @@ function autoSizeParts(h: Harness, d: Derived, cat: CatalogIndex) {
   // Splices
   for (const s of h.splices) {
     if (s.pinned) continue;
-    const wires = h.wires.filter((w) => (w.from.kind === "splice" && w.from.spliceId === s.id) || (w.to.kind === "splice" && w.to.spliceId === s.id));
-    const gauge = Math.min(...wires.map((w) => w.gauge), 22);
-    s.pn = cat.spliceFor(s.type, gauge, wires.length)?.pn ?? "";
+    // Fit each barrel's circular mil area; nothing fits → the nearest part of the type (the CMA check flags it).
+    const fills = spliceFills(h, s);
+    const cma = fills.map((f) => f.cma);
+    const fit = cat.spliceFor(s.type, cma, fills.map((f) => f.wires.length));
+    const near = cat.bundle.splices.filter((p) => p.type === s.type && p.barrels === s.barrels).sort((a, b) => Math.abs(a.cmaMax - Math.max(...cma)) - Math.abs(b.cmaMax - Math.max(...cma)))[0];
+    s.pn = (fit ?? near)?.pn ?? "";
   }
   // Boots
   for (const b of h.boots) {

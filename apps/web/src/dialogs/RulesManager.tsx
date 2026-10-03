@@ -3,6 +3,7 @@ import { type CustomCond, type CustomRule, type RuleInstance, type Ruleset, type
 import { CUSTOM_FIELDS, describeCustom, diffRuleset, parseRulesetFile, RULE_TYPES, RULE_TYPE_BY_ID, runDfm, validateCustom, validateRule, type ParamDef, type RulesetDiff } from "@hs/dfm";
 import { Copy, Download, Lock, Plus, Trash2, Upload } from "lucide-react";
 import { dispatch, getProject, useProject } from "../store/project";
+import { setOrgScheme } from "../lib/orgScheme";
 import { useUi } from "../store/ui";
 import { useActiveAnalysis } from "../store/analysis";
 import { svc } from "../lib/services";
@@ -523,6 +524,8 @@ function ImportPreview({ state, onDone }: { state: { ruleset: Ruleset; diff: Rul
           const clean = { ...rs, rules: rs.rules.filter((r) => !bad.has(r.id)) };
           const cmds = [{ type: "upsertRuleset", payload: { ruleset: clean } }];
           if (hasScheme && confirm(`Also use its pedigree scheme “${rs.pedigreeScheme!.name}” for this project?`)) cmds.push({ type: "setPedigreeScheme", payload: { scheme: rs.pedigreeScheme } } as never);
+          // A rules template can carry the organization's pedigrees (and which one is the default) for every new design.
+          if (hasScheme && confirm(`Make “${rs.pedigreeScheme!.name}” the organization pedigree scheme, so new designs start with it (this browser)?`)) setOrgScheme(rs.pedigreeScheme!);
           dispatch(cmds, `Import ruleset ${rs.name}`);
           onDone();
         }}>Apply</Button>

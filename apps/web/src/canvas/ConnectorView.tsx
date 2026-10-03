@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { formatWireColor, type CatalogIndex, type ConnectorInstance, type Severity, type Wire } from "@hs/model";
 import { needsCasing, semantic, wireColor } from "@hs/ui-tokens";
-import { ROW_H, HEADER_H, type ConnLayout, type ZoomLevel } from "../lib/geometry";
+import { GLYPH_H, ROW_H, HEADER_H, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 import { BackshellShape, backshellLabel, bendOf, bendReach, REAR } from "./BackshellGlyph";
 
 export interface RowState {
@@ -28,19 +28,23 @@ interface Props {
   flash: boolean;
   /** Label shown on no-connect pins (project setting). */
   ncLabel: string;
+  /** Bundle layout: stroke width of the straight lead into the connector (0: no bundle, no lead). */
+  leadWidth?: number;
 }
 
 function Glyph({ c, L, cat, theme, potted }: { c: ConnectorInstance; L: ConnLayout; cat: CatalogIndex; theme: "dark" | "light"; potted: boolean }) {
   const part = cat.connector(c.pn);
-  const { x, y, w, h } = L.glyph;
+  const { x, y, w, s } = L.glyph;
+  const h = GLYPH_H; // local frame height (the glyph is scaled by `s`)
   const f = L.facing; // 1: bundle to the right → mating face on the left
   const fill = semantic("glyph.fill", theme);
   const stroke = semantic("glyph.stroke", theme);
   const bs = c.backshell ? cat.backshell(c.backshell.pn) : undefined;
   // Build in a local frame where the mating face is at x=0 and the rear at x=w, then mirror if needed.
-  const tf = f === 1 ? `translate(${x},${y})` : `translate(${x + w},${y}) scale(-1,1)`;
+  const tf = f === 1 ? `translate(${x},${y}) scale(${s})` : `translate(${x + w},${y}) scale(${-s},${s})`;
   const kind = part?.kind ?? "plug";
   const mount = part?.mount ?? "straight";
+  if (part?.flyingLead) return <FlyingLeadGlyph tf={tf} n={part.arrangement.cavities.length} finish={c.leadEnd?.finish ?? "tinned"} theme={theme} />;
   return (
     <g transform={tf} aria-hidden>
       {kind === "plug" ? (
@@ -70,25 +74,51 @@ function Glyph({ c, L, cat, theme, potted }: { c: ConnectorInstance; L: ConnLayo
 }
 
 /**
+ * Flying-lead end in the glyph's local frame: the cable enters at the rear (x = REAR), passes a heat-shrink
+ * transition and fans out into separate wires ending in their finish (bare strands, tinned, or ferrules) at x = 0.
+ */
+function FlyingLeadGlyph({ tf, n, finish, theme }: { tf: string; n: number; finish: "stripped" | "tinned" | "ferrule" | "unterminated"; theme: "dark" | "light" }) {
+  const h = GLYPH_H;
+  const stroke = semantic("glyph.stroke", theme);
+  const fill = semantic("glyph.fill", theme);
+  const k = Math.min(n, 5);
+  const ys = Array.from({ length: k }, (_, i) => (k === 1 ? h / 2 : 4 + (i * (h - 8)) / (k - 1)));
+  const tip = finish === "tinned" ? "#B8BEC6" : finish === "ferrule" ? stroke : "#C98A4B";
+  return (
+    <g transform={tf} aria-hidden>
+      {ys.map((y, i) => (
+        <g key={i}>
+          <path d={`M${REAR - 8},${h / 2} C${REAR - 22},${h / 2} 26,${y} 10,${y}`} stroke={stroke} strokeWidth={2.6} fill="none" strokeLinecap="round" />
+          {finish === "unterminated" ? null : finish === "ferrule" ? <rect x={1} y={y - 2.2} width={9} height={4.4} rx={0.8} fill={fill} stroke={stroke} strokeWidth={0.7} /> : <line x1={3} y1={y} x2={10} y2={y} stroke={tip} strokeWidth={1.8} strokeLinecap="round" />}
+        </g>
+      ))}
+      {/* heat-shrink transition where the cable breaks out */}
+      <rect x={REAR - 10} y={h / 2 - 5} width={12} height={10} rx={2} fill={fill} stroke={stroke} strokeWidth={0.8} />
+    </g>
+  );
+}
+
+/**
  * Click target over a fitted backshell (drawn after the card's hit area so it wins) with its name underneath.
  * Clicking opens the backshell picker.
  */
 function BackshellTag({ c, L, cat, theme, level }: { c: ConnectorInstance; L: ConnLayout; cat: CatalogIndex; theme: "dark" | "light"; level: ZoomLevel }) {
   const bs = c.backshell ? cat.backshell(c.backshell.pn) : undefined;
   if (!bs || !c.backshell) return null;
-  const { x, y, w, h } = L.glyph;
+  const { x, y, w, h, s } = L.glyph;
   // Backshell span in canvas coordinates (the glyph is mirrored for left-facing connectors).
-  const x0 = L.facing === 1 ? x + REAR : x;
-  const x1 = L.facing === 1 ? x + w : x + w - REAR;
+  const x0 = L.facing === 1 ? x + REAR * s : x;
+  const x1 = L.facing === 1 ? x + w : x + w - REAR * s;
   const bend = bs.angle ? bendOf(c.backshell.clockingDeg) : null;
-  const extra = bend === "up" || bend === "down" ? bendReach(bs.angle, h) : 0;
+  const extra = bend === "up" || bend === "down" ? bendReach(bs.angle, GLYPH_H) * s : 0;
   const clocking = bs.angle ? `, clocked ${c.backshell.clockingDeg}° (${bend === "toward" ? "toward the viewer" : bend === "away" ? "away from the viewer" : bend})` : "";
   return (
     <g data-hit="backshell" data-id={c.id} style={{ cursor: "pointer" }}>
       <title>{`Backshell ${bs.pn}: ${bs.description}${clocking}. Clamp ${bs.clampMinMm}–${bs.clampMaxMm} mm${c.backshell.auto ? ", size follows the design" : ""}. Click to change.`}</title>
       <rect x={x0 - 2} y={y - (bend === "up" ? extra : 0) - 2} width={x1 - x0 + 4} height={h + extra + 4} fill="transparent" />
+      {/* name under the drawing; above it in the bundle layout when the body bends down into its lead */}
       {level !== "overview" && (
-        <text x={x + w / 2} y={y + h + (bend === "down" ? extra : 0) + 11} fontSize={9} textAnchor="middle" fill={semantic("text.secondary", theme)}>
+        <text x={x + w / 2} y={L.lead && bend === "down" ? y - 5 : y + h + (bend === "down" ? extra : 0) + 11 + (s - 1) * 4} fontSize={9 * Math.min(s, 1.15)} textAnchor="middle" fill={semantic("text.secondary", theme)}>
           {backshellLabel(bs)}
         </text>
       )}
@@ -98,7 +128,7 @@ function BackshellTag({ c, L, cat, theme, level }: { c: ConnectorInstance; L: Co
 
 function FaceThumb({ c, L, cat, theme, cx: x, cy: y, r }: { c: ConnectorInstance; L: ConnLayout; cat: CatalogIndex; theme: "dark" | "light"; cx: number; cy: number; r: number }) {
   const part = cat.connector(c.pn);
-  if (!part) return null;
+  if (!part || part.flyingLead) return null;
   const cavs = part.arrangement.cavities;
   const R = Math.max(...cavs.map((q) => Math.hypot(q.x, q.y)), 1) + 1.2;
   const s = (r - 2) / R;
@@ -131,9 +161,14 @@ function ColorRect({ color, x, y, theme }: { color: Wire["color"]; x: number; y:
   );
 }
 
-export const ConnectorView = memo(function ConnectorView({ c, L, level, names, cat, theme, selected, selectedPins, severity, editingCavity, dragTargets, dimmed, wiresByPin, potted, flash, ncLabel }: Props) {
+/** SVG text collapses runs of spaces; names are shown exactly as typed. */
+const PRE = { whiteSpace: "pre" } as const;
+const UI_FONT = { fontFamily: "var(--font-ui)" } as const;
+
+export const ConnectorView = memo(function ConnectorView({ c, L, level, names, cat, theme, selected, selectedPins, severity, editingCavity, dragTargets, dimmed, wiresByPin, potted, flash, ncLabel, leadWidth = 0 }: Props) {
   const part = cat.connector(c.pn);
   const { card } = L;
+  const kind = part ? (part.flyingLead ? "flying leads" : part.kind === "plug" ? "plug" : "receptacle") : "unknown part";
   const accent = semantic("accent", theme);
   const tp = semantic("text.primary", theme);
   const ts = semantic("text.secondary", theme);
@@ -147,8 +182,8 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
     const overview = level === "overview";
     return (
       <g opacity={dimmed ? 0.25 : 1} aria-label={`Connector ${c.refDes}, ${c.pn}`}>
-        {/* bundle attach stub from the block to the connector's bundle end */}
-        {!overview && <line x1={L.attachX} y1={L.anchor.y} x2={L.anchor.x} y2={L.anchor.y} stroke={semantic("bundle.fill", theme)} strokeWidth={5} strokeLinecap="round" />}
+        {/* straight lead from the cable exit to where the bundle starts */}
+        {L.lead && leadWidth > 0 && level !== "overview" && <line x1={L.lead.from.x} y1={L.lead.from.y} x2={L.lead.to.x} y2={L.lead.to.y} stroke={semantic("bundle.fill", theme)} strokeWidth={leadWidth} />}
         <Glyph c={c} L={L} cat={cat} theme={theme} potted={potted} />
         <g data-hit="connector" data-id={c.id} style={{ cursor: "move" }}>
           <title>{`${c.refDes} ${c.pn}: ${L.used}/${L.total} pins used. Pins and wires are edited in the schematic (Tab).`}</title>
@@ -156,7 +191,7 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
           <rect x={card.x} y={card.y} width={card.w} height={card.h} rx={8} fill={surface} stroke={selected || flash ? accent : border} strokeWidth={selected || flash ? 2 : 1} />
           {overview ? (
             <>
-              <text x={card.x + 10} y={card.y + 21} fontSize={15} fontWeight={600} fill={tp}>
+              <text x={card.x + 10} y={card.y + 21} fontSize={15} fontWeight={600} fill={tp} style={PRE}>
                 {c.refDes}
               </text>
               <text x={card.x + card.w - 10} y={card.y + 21} fontSize={12} textAnchor="end" fill={ts}>
@@ -165,14 +200,15 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
             </>
           ) : (
             <>
-              <text x={card.x + 10} y={card.y + 18} fontSize={14} fontWeight={600} fill={tp}>
+              <text x={card.x + 10} y={card.y + 18} fontSize={14} fontWeight={600} fill={tp} style={PRE}>
                 {c.refDes || "—"}
               </text>
               <text x={card.x + card.w - 10} y={card.y + 18} fontSize={10.5} textAnchor="end" fill={ts}>
                 {L.used}/{L.total} pins
               </text>
               <text className="mono" x={card.x + 10} y={card.y + 34} fontSize={10} fill={ts}>
-                {c.pn.length > 24 ? c.pn.slice(0, 23) + "…" : c.pn}
+                {c.pn}
+                <tspan fontSize={9.5} style={UI_FONT}>{` · ${kind}`}</tspan>
               </text>
             </>
           )}
@@ -191,40 +227,39 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
     );
   }
 
+  const B = L.body;
   const wide = level === "detail";
-  const colPin = card.x + 8;
-  const colSig = card.x + 40;
-  const colWire = card.x + (wide ? 150 : 160);
-  const colContact = card.x + 250;
+  const colPin = B.x + 8;
+  const colSig = B.x + 40;
+  const colWire = B.x + (wide ? 150 : 160);
+  const colContact = B.x + 250;
   return (
     <g opacity={dimmed ? 0.25 : 1} aria-label={`Connector ${c.refDes}, ${c.pn}`}>
-      <Glyph c={c} L={L} cat={cat} theme={theme} potted={potted} />
-      {/* bundle stub from card to anchor */}
+      {/* the card, with the connector drawing in a column on the mating side of the pin list */}
       <g data-hit="connector" data-id={c.id} style={{ cursor: "move" }}>
-        <rect x={L.glyph.x} y={L.glyph.y} width={L.glyph.w} height={L.glyph.h} fill="transparent" />
         <rect x={card.x} y={card.y} width={card.w} height={card.h} rx={8} fill={surface} stroke={selected || flash ? accent : border} strokeWidth={selected || flash ? 2 : 1} />
-        <text x={card.x + 10} y={card.y + 19} fontSize={14} fontWeight={600} fill={tp}>
+        <line x1={L.facing === 1 ? B.x : B.x + B.w} x2={L.facing === 1 ? B.x : B.x + B.w} y1={card.y + 8} y2={card.y + card.h - 8} stroke={border} />
+        <Glyph c={c} L={L} cat={cat} theme={theme} potted={potted} />
+        <text x={B.x + 10} y={card.y + 19} fontSize={14} fontWeight={600} fill={tp} style={PRE}>
           {c.refDes || "—"}
         </text>
-        <text x={card.x + 10 + Math.max(24, (c.refDes.length || 1) * 9)} y={card.y + 19} fontSize={10} fill={ts}>
-          {part ? (part.kind === "plug" ? "plug" : "receptacle") : "unknown part"}
-        </text>
-        <text className="mono" x={card.x + 10} y={card.y + 35} fontSize={10.5} fill={ts}>
+        <text className="mono" x={B.x + 10} y={card.y + 35} fontSize={10.5} fill={ts}>
           {c.pn}
+          <tspan fontSize={10} style={UI_FONT}>{` · ${kind}`}</tspan>
         </text>
         {unreviewed && (
           <g>
             <title>Insert {part!.arrangement.id} geometry is machine-extracted from MIL-STD-1560C and unreviewed</title>
-            <rect x={card.x + card.w - 106} y={card.y + 8} width={62} height={13} rx={3} fill="none" stroke={tt} strokeWidth={0.8} />
-            <text x={card.x + card.w - 75} y={card.y + 17.5} fontSize={8} textAnchor="middle" fill={tt}>
+            <rect x={B.x + B.w - 106} y={card.y + 8} width={62} height={13} rx={3} fill="none" stroke={tt} strokeWidth={0.8} />
+            <text x={B.x + B.w - 75} y={card.y + 17.5} fontSize={8} textAnchor="middle" fill={tt}>
               UNREVIEWED
             </text>
           </g>
         )}
       </g>
       <BackshellTag c={c} L={L} cat={cat} theme={theme} level={level} />
-      <FaceThumb c={c} L={L} cat={cat} theme={theme} cx={card.x + card.w - 22} cy={card.y + 22} r={16} />
-      <line x1={card.x} x2={card.x + card.w} y1={card.y + HEADER_H - 3} y2={card.y + HEADER_H - 3} stroke={border} />
+      <FaceThumb c={c} L={L} cat={cat} theme={theme} cx={B.x + B.w - 22} cy={card.y + 22} r={16} />
+      <line x1={B.x} x2={B.x + B.w} y1={card.y + HEADER_H - 3} y2={card.y + HEADER_H - 3} stroke={border} />
       {L.rows.map((r) => {
         const key = `${c.id}:${r.cavityId}`;
         const sel = selectedPins.has(key);
@@ -238,9 +273,9 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
         return (
           <g key={r.cavityId} data-hit="pin" data-id={key} opacity={ds && ds.valid === false ? 0.3 : 1} style={{ cursor: "crosshair" }}>
             <title>{ds?.reason ? ds.reason : `${c.refDes}-${r.cavityId} (size ${r.size})${name ? `: ${name}` : ""}${w ? `, ${w.label} ${w.gauge} AWG ${formatWireColor(w.color)}` : ""}. Drag to connect; double-click to name.`}</title>
-            <rect x={card.x + 1} y={r.top} width={card.w - 2} height={ROW_H} fill={sel ? "var(--bg-hover)" : "transparent"} />
-            {ds?.valid && <rect x={card.x + 2} y={r.top + 1} width={card.w - 4} height={ROW_H - 2} rx={3} fill="none" stroke={accent} strokeWidth={1} strokeDasharray="3 2" />}
-            {sel && <rect x={card.x + 1} y={r.top} width={3} height={ROW_H} fill={accent} />}
+            <rect x={B.x + 1} y={r.top} width={B.w - 2} height={ROW_H} fill={sel ? "var(--bg-hover)" : "transparent"} />
+            {ds?.valid && <rect x={B.x + 2} y={r.top + 1} width={B.w - 4} height={ROW_H - 2} rx={3} fill="none" stroke={accent} strokeWidth={1} strokeDasharray="3 2" />}
+            {sel && <rect x={B.x + 1} y={r.top} width={3} height={ROW_H} fill={accent} />}
             <text className="mono" x={colPin} y={r.y + 4} fontSize={11} fill={ts}>
               {r.cavityId}
             </text>
@@ -272,7 +307,7 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
       {L.collapsed && (
         <g data-hit="collapsed" data-id={c.id} style={{ cursor: "pointer" }}>
           <title>Show all cavities</title>
-          <text x={card.x + 40} y={L.collapsed.y + 4} fontSize={11} fill={accent}>
+          <text x={B.x + 40} y={L.collapsed.y + 4} fontSize={11} fill={accent}>
             + {L.collapsed.count} unused
           </text>
         </g>
@@ -287,7 +322,7 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
         </g>
       )}
       {potted && (
-        <g transform={`translate(${L.glyph.x + L.glyph.w / 2},${L.glyph.y - 8})`}>
+        <g transform={`translate(${L.glyph.x + L.glyph.w / 2},${Math.max(card.y + 10, L.glyph.y - 10)})`}>
           <title>Potted</title>
           <rect x={-7} y={-7} width={14} height={14} rx={3} fill={tp} />
           <text textAnchor="middle" y={4} fontSize={10} fontWeight={700} fill={surface}>

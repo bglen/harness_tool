@@ -1,10 +1,11 @@
-import { currentHarness, formatDiameter, formatLength, setAccessory, setBackshell, type Accessory } from "@hs/model";
+import { useState } from "react";
+import { buildUpFor, contactCmaRange, contactFill, contactPnFor, currentHarness, formatDiameter, formatLength, parseLength, setAccessory, setBackshell, setLeadEnd, setPinBuildUp, type Accessory } from "@hs/model";
 import { Check, X } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { useDerived } from "../store/analysis";
 import { svc } from "../lib/services";
-import { Button, cx, DemoTag, Field, Floating, inputCls, Section, Toggle } from "../ui/primitives";
+import { Button, cx, DemoTag, Field, Floating, inputCls, Section, Select, Toggle } from "../ui/primitives";
 import { FaceLegend, FaceView } from "../canvas/FaceView";
 
 const STYLE_LABEL: Record<string, string> = { strainRelief: "Strain relief", emiBand: "EMI/RFI with band-clamp platform", shieldRing: "Shield-termination ring", pottingBoot: "Potting boot adapter" };
@@ -84,7 +85,7 @@ export function AccessoriesPopover({ x, y, connectorId }: { x: number; y: number
   const c = h.connectors.find((cc) => cc.id === connectorId);
   const cat = svc().cat;
   const part = c && cat.connector(c.pn);
-  if (!c || !part) return null;
+  if (!c || !part || part.kind === "flyingLead") return null;
   const avail = cat.accessoriesFor(part.shellSize, part.kind);
   const kinds: { kind: Accessory["kind"]; label: string }[] = [
     { kind: "dustCap", label: "Dust cap / cover" },
@@ -153,6 +154,82 @@ export function FacePopover({ x, y, connectorId }: { x: number; y: number; conne
       <Button size="sm" variant="ghost" onClick={() => ui.openPopover(null)}>
         Close
       </Button>
+    </Floating>
+  );
+}
+
+const LEAD_FINISHES = [
+  { value: "tinned", label: "Stripped and tinned" },
+  { value: "stripped", label: "Stripped (bare strands)" },
+  { value: "ferrule", label: "Ferrule crimped" },
+  { value: "unterminated", label: "Cut only (left long, finished at installation)" },
+] as const;
+
+/** Flying-lead ends: finish of the bare wire ends and strip length. */
+export function LeadEndPopover({ x, y, ids }: { x: number; y: number; ids: string[] }) {
+  const project = useProject((s) => s.project)!;
+  const cs = currentHarness(project).connectors.filter((c) => ids.includes(c.id));
+  const first = cs[0];
+  const [strip, setStrip] = useState(formatLength(first?.leadEnd?.stripMm ?? 6, project.units).replace(" ", ""));
+  if (!first) return null;
+  const finish = first.leadEnd?.finish ?? "tinned";
+  const saveStrip = () => {
+    const mm = parseLength(strip, project.units);
+    if (mm !== null && mm >= 0) dispatch(setLeadEnd({ ids, stripMm: mm }));
+  };
+  return (
+    <Floating x={x} y={y} onClose={() => useUi.getState().openPopover(null)} width={320} className="flex flex-col gap-3 p-3">
+      <div className="text-sm font-semibold">Lead ends {cs.length === 1 ? `on ${first.refDes}` : `on ${cs.length} flying-lead ends`}</div>
+      <Field label="Finish">
+        <Select value={finish} onChange={(v) => dispatch(setLeadEnd({ ids, finish: v }))} options={LEAD_FINISHES.map((f) => ({ value: f.value, label: f.label }))} />
+      </Field>
+      <Field label="Strip length" hint="Added to each wire's cut length past the bundle end.">
+        <input className={cx(inputCls, "mono w-28")} value={strip} onChange={(e) => setStrip(e.target.value)} onBlur={saveStrip} onKeyDown={(e) => e.key === "Enter" && saveStrip()} />
+      </Field>
+      <div className="text-2xs text-text-tertiary">Change the number of leads with Part. Lead length is the bundle length to this end.</div>
+    </Floating>
+  );
+}
+
+/** CMA build-up in a contact: filler strands crimped in with the wire(s) to reach the contact's minimum circular mil area. */
+export function PinBuildUpPopover({ x, y, pinKey }: { x: number; y: number; pinKey: string }) {
+  const project = useProject((s) => s.project)!;
+  const h = currentHarness(project);
+  const [connectorId, cavityId] = pinKey.split(":") as [string, string];
+  const c = h.connectors.find((q) => q.id === connectorId);
+  if (!c) return null;
+  const cat = svc().cat;
+  const f = contactFill(h, connectorId, cavityId);
+  const range = contactCmaRange(cat, contactPnFor(h, cat, connectorId, cavityId, Math.max(...f.wires.map((w) => w.gauge), 22)));
+  const need = range ? buildUpFor({ ...f, buildUp: null, cma: f.wireCma }, range.min) : null;
+  const bu = c.pins[cavityId]?.buildUp;
+  const set = (b: { gauge: number; count: number } | null) => dispatch(setPinBuildUp({ connectorId, cavityId, buildUp: b }));
+  const fmt = (n: number) => n.toLocaleString("en-US");
+  const out = range && (f.cma < range.min || f.cma > range.max);
+  return (
+    <Floating x={x} y={y} onClose={() => useUi.getState().openPopover(null)} width={320} className="flex flex-col gap-2 p-3">
+      <div className="text-sm font-semibold">
+        CMA build-up at {c.refDes}-{cavityId}
+      </div>
+      <div className="text-xs text-text-secondary">
+        {f.wires.map((w) => `${w.label} (${w.gauge} AWG)`).join(", ")}: <span className={cx("mono", out ? "text-status-error" : "text-text-primary")}>{fmt(f.cma)} CMA</span>
+        {range ? ` · contact takes ${fmt(range.min)}–${fmt(range.max)}` : " · contact range unknown"}
+      </div>
+      {bu ? (
+        <div className="flex items-center gap-2 text-xs">
+          <input type="number" min={1} max={9} aria-label="Build-up strands" className={cx(inputCls, "mono h-7 w-14")} value={bu.count} onChange={(e) => set({ gauge: bu.gauge, count: Math.max(1, Number(e.target.value) || 1) })} />
+          <span>strands of</span>
+          <Select value={String(bu.gauge)} onChange={(v) => set({ gauge: Number(v), count: bu.count })} options={[16, 18, 20, 22, 24, 26, 28].map((g) => ({ value: String(g), label: `${g} AWG` }))} />
+          <button className="ml-auto text-accent hover:underline" onClick={() => set(null)}>
+            remove
+          </button>
+        </div>
+      ) : (
+        <Button size="sm" onClick={() => set(need ?? { gauge: Math.max(...f.wires.map((w) => w.gauge), 22), count: 1 })}>
+          {need ? `Add ${need.count}× ${need.gauge} AWG build-up` : "Add build-up"}
+        </Button>
+      )}
+      <div className="text-2xs text-text-tertiary">Recorded on the drawing notes, the BOM (filler wire) and the operations list.</div>
     </Floating>
   );
 }
