@@ -21,6 +21,7 @@ import {
   spliceGeometry,
   schematicRoutes,
   dragSegment,
+  dragEnds,
   moveWireEnd,
   setWirePath,
   uid,
@@ -53,17 +54,31 @@ import { Kbd } from "../ui/primitives";
 
 type Drag =
   | { kind: "pan"; sx: number; sy: number; vx: number; vy: number }
-  | { kind: "move"; ids: string[]; nodeIds: string[]; start: Point; cur: Point; moved: boolean; hitId: string; hitKind: "connector" | "node" }
+  | { kind: "move"; ids: string[]; nodeIds: string[]; start: Point; cur: Point; moved: boolean; hitId: string; hitKind: "connector" | "node"; rubber?: Rubber[] }
   | { kind: "wire"; from: { connectorId: string; cavityId: string }[]; start: Point; cur: Point; moved: boolean; srcKey: string }
   | { kind: "branch"; segmentId: string; t: number; start: Point; cur: Point; moved: boolean }
   | { kind: "reattach"; segmentId: string; end: "a" | "b"; start: Point; cur: Point; moved: boolean }
   | { kind: "marquee"; start: Point; cur: Point; additive: boolean }
   | { kind: "note"; id: string; start: Point; cur: Point; moved: boolean }
   | { kind: "label"; id: string; start: Point; cur: Point; moved: boolean; screen: Point }
-  | { kind: "splice"; id: string; start: Point; cur: Point; moved: boolean; facing: 1 | -1 }
+  | { kind: "splice"; id: string; start: Point; cur: Point; moved: boolean; facing: 1 | -1; rubber?: Rubber[] }
   | { kind: "wireSeg"; wireId: string; index: number; pts: Point[]; horizontal: boolean; dirs: [1 | -1, 1 | -1]; start: Point; cur: Point; moved: boolean }
   | { kind: "wireEnd"; wireId: string; end: "from" | "to"; origin: Point; start: Point; cur: Point; moved: boolean }
   | { kind: "spliceWire"; spliceId: string; barrel: number; origin: Point; start: Point; cur: Point; moved: boolean };
+
+/** A shaped wire attached to something being dragged, with its drawn path when the drag started (KiCad-style rubber band). */
+type Rubber = { id: string; pts: Point[] };
+
+/** The shaped wires with an end on a dragged part, with their paths at the start of the drag; bent as the part moves. */
+function rubberband(base: Harness, rubber: Rubber[] | undefined, dOf: (e: WireEnd) => Point | null): Harness["wires"] {
+  if (!rubber?.length) return base.wires;
+  return base.wires.map((w) => {
+    const r = rubber.find((x) => x.id === w.id);
+    const a = r && dOf(w.from);
+    const b = r && dOf(w.to);
+    return r && (a || b) ? { ...w, schPath: dragEnds(r.pts, a ?? null, b ?? null) } : w;
+  });
+}
 
 function hitAt(e: { target: EventTarget | null }): { hit: string; id: string } | null {
   const el = (e.target as Element | null)?.closest?.("[data-hit]");
@@ -187,7 +202,10 @@ export function Canvas() {
       const base = sp && spliceGeometry(h0, sp).center;
       // Keep its orientation while it moves (it would otherwise turn to face its wires).
       const facing = drag.facing;
-      return base ? { ...h0, splices: h0.splices.map((x) => (x.id === drag.id ? { ...x, facing, position: { x: snapToGrid(base.x + drag.cur.x - drag.start.x), y: snapToGrid(base.y + drag.cur.y - drag.start.y) } } : x)) } : h0;
+      if (!base) return h0;
+      const to = { x: snapToGrid(base.x + drag.cur.x - drag.start.x), y: snapToGrid(base.y + drag.cur.y - drag.start.y) };
+      const d = { x: to.x - base.x, y: to.y - base.y };
+      return { ...h0, splices: h0.splices.map((x) => (x.id === drag.id ? { ...x, facing, position: to } : x)), wires: rubberband(h0, drag.rubber, (e) => (e.kind === "splice" && e.spliceId === drag.id ? d : null)) };
     }
     if (drag?.kind === "label" && drag.moved) {
       const mm = labelDistanceAt(h0, drag.id, drag.cur);
@@ -201,6 +219,12 @@ export function Canvas() {
       ...h0,
       connectors: h0.connectors.map((c) => (drag.ids.includes(c.id) ? { ...c, position: { x: snap(c.position.x + dx), y: snap(c.position.y + dy) } } : c)),
       nodes: h0.nodes.map((n) => (drag.nodeIds.includes(n.id) ? { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } } : n)),
+      // Shaped wires on moved connectors follow their (grid-snapped) pins.
+      wires: rubberband(h0, drag.rubber, (e) => {
+        if (e.kind !== "pin" || !drag.ids.includes(e.connectorId)) return null;
+        const c = h0.connectors.find((x) => x.id === e.connectorId)!;
+        return { x: snapToGrid(c.position.x + dx) - snapToGrid(c.position.x), y: snapToGrid(c.position.y + dy) - snapToGrid(c.position.y) };
+      }),
     };
   }, [h0, drag]);
 
@@ -222,6 +246,11 @@ export function Canvas() {
   // Schematic wire polylines: drawn by the wire layer and dragged here (segments and ends of the selected wire).
   const autoRoute = project.settings.schematicAutoRoute;
   const schRoutes = useMemo(() => (!bundles && level !== "overview" ? schematicRoutes(h, layouts, { auto: autoRoute }) : null), [bundles, level, h, layouts, autoRoute]);
+  if (import.meta.env.DEV) (window as unknown as { __schRoutes?: unknown }).__schRoutes = schRoutes;
+  // KiCad-style dragging: shaped wires on a dragged part, captured at the start and saved bent on drop.
+  const shapedAt = (moving: (e: WireEnd) => boolean): Rubber[] =>
+    !schRoutes ? [] : h.wires.filter((w) => w.schPath?.length && (moving(w.from) || moving(w.to))).flatMap((w) => (schRoutes.get(w.id) ? [{ id: w.id, pts: schRoutes.get(w.id)! }] : []));
+  const bentPaths = (rubber?: Rubber[]) => (rubber ?? []).flatMap((r) => { const w = h.wires.find((x) => x.id === r.id); return w?.schPath ? [setWirePath({ ids: [r.id], path: w.schPath })] : []; });
   /** Which way a wire leaves an end: a pin card's attach side, or the splice barrel port's side. */
   const endDir = (e: WireEnd): 1 | -1 => {
     if (e.kind === "pin") return layouts.get(e.connectorId)?.facing ?? 1;
@@ -350,7 +379,7 @@ export function Canvas() {
       const nodeIds: string[] = [];
       // Select on press (not only on release) so a connector being dragged is selected, e.g. F flips it mid-drag.
       if (!already && !(e.shiftKey || e.ctrlKey || e.metaKey)) ui.select("connector", [hit.id]);
-      setDrag({ kind: "move", ids, nodeIds, start: p, cur: p, moved: false, hitId: hit.id, hitKind: "connector" });
+      setDrag({ kind: "move", ids, nodeIds, start: p, cur: p, moved: false, hitId: hit.id, hitKind: "connector", rubber: shapedAt((e) => e.kind === "pin" && ids.includes(e.connectorId)) });
       return;
     }
     if (hit.hit === "node") {
@@ -400,7 +429,7 @@ export function Canvas() {
     }
     if (hit.hit === "splice" && !bundles) {
       const sp = h.splices.find((x) => x.id === hit.id);
-      setDrag({ kind: "splice", id: hit.id, start: p, cur: p, moved: false, facing: (sp && (sp.facing ?? spliceGeometry(h, sp, layouts).ports[0]?.dir)) ?? -1 });
+      setDrag({ kind: "splice", id: hit.id, start: p, cur: p, moved: false, facing: (sp && (sp.facing ?? spliceGeometry(h, sp, layouts).ports[0]?.dir)) ?? -1, rubber: shapedAt((e) => e.kind === "splice" && e.spliceId === hit.id) });
       return;
     }
     if (hit.hit === "label") {
@@ -571,7 +600,7 @@ export function Canvas() {
           return { id, position: { x: n.position.x + dx, y: n.position.y + dy } };
         }),
       ];
-      dispatch(moveNodes({ moves }), dr.ids.length ? "Move connector" : "Move breakout");
+      dispatch([moveNodes({ moves }), ...bentPaths(dr.rubber)], dr.ids.length ? "Move connector" : "Move breakout");
       return;
     }
     if (dr.kind === "wire") {
@@ -675,7 +704,7 @@ export function Canvas() {
       if (!dr.moved) ui.select("splice", [dr.id], add);
       else {
         const moved = h.splices.find((x) => x.id === dr.id);
-        if (moved?.position) dispatch(setSpliceProps({ id: dr.id, position: moved.position, facing: moved.facing }), "Move splice");
+        if (moved?.position) dispatch([setSpliceProps({ id: dr.id, position: moved.position, facing: moved.facing }), ...bentPaths(dr.rubber)], "Move splice");
       }
       return;
     }

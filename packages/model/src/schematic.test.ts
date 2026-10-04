@@ -1,13 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { Harness, Point, Wire } from "./schema";
-import { dragSegment, gridCardTop, orthoThrough, roundedPath, SCH_GRID, SCH_LANE, schematicRoutes, splicePoint, type SchematicCard } from "./schematic";
+import { dragEnds, dragSegment, gridCardTop, orthoThrough, roundedPath, SCH_GRID, schematicRoutes, splicePoint, type SchematicCard } from "./schematic";
 
 /** A pin card whose rows sit at the given heights, attaching wires at `attachX` on the `facing` side. */
 function card(_id: string, attachX: number, facing: 1 | -1, rows: Record<string, number>): SchematicCard {
   const ys = Object.values(rows);
   const top = Math.min(...ys) - 40;
   const h = Math.max(...ys) - top + 20;
-  return { facing, card: { y: top, h }, attachX, rowByCavity: new Map(Object.entries(rows).map(([cavityId, y]) => [cavityId, { y }])) };
+  // The card body lies on the far side of its attach edge (an obstacle for routing).
+  return { facing, card: { x: facing === 1 ? attachX - 120 : attachX, y: top, w: 120, h }, attachX, rowByCavity: new Map(Object.entries(rows).map(([cavityId, y]) => [cavityId, { y }])) };
 }
 
 let n = 0;
@@ -80,7 +81,7 @@ describe("schematic wire routing", () => {
     }
     expect(xs.size).toBe(4);
     const sorted = [...xs].sort((a, b) => a - b);
-    for (let i = 1; i < sorted.length; i++) expect(sorted[i]! - sorted[i - 1]!).toBeCloseTo(SCH_LANE);
+    for (let i = 1; i < sorted.length; i++) expect((sorted[i]! - sorted[i - 1]!) % SCH_GRID).toBe(0);
     for (let i = 0; i < ws.length; i++) for (let j = i + 1; j < ws.length; j++) expect(conflicts(r.get(ws[i]!.id)!, r.get(ws[j]!.id)!)).toBe(0);
   });
 
@@ -130,11 +131,12 @@ describe("schematic wire routing", () => {
     const bottom = Math.max(L.get("A")!.card.y + L.get("A")!.card.h, L.get("B")!.card.y + L.get("B")!.card.h);
     for (const w of ws) {
       const pts = r.get(w.id)!;
-      expect(pts).toHaveLength(6);
       expectOrthogonal(pts);
-      expect(pts[2]!.y).toBeGreaterThan(bottom);
+      // leaves A to the right, enters B from the left, and goes round (not through) both cards
       expect(pts[1]!.x).toBeGreaterThan(400);
-      expect(pts[4]!.x).toBeLessThan(0);
+      expect(pts[pts.length - 2]!.x).toBeLessThan(0);
+      const top = Math.min(L.get("A")!.card.y, L.get("B")!.card.y);
+      expect(pts.some((q) => q.y > bottom || q.y < top)).toBe(true);
     }
     expect(conflicts(r.get(ws[0]!.id)!, r.get(ws[1]!.id)!)).toBe(0);
   });
@@ -150,7 +152,7 @@ describe("schematic wire routing", () => {
     const r = schematicRoutes(harness([w1, w2]), L);
     const x1 = r.get(w1.id)![1]!.x;
     const x2 = r.get(w2.id)![1]!.x;
-    expect(Math.abs(x1 - x2)).toBeGreaterThanOrEqual(SCH_LANE);
+    expect(Math.abs(x1 - x2)).toBeGreaterThanOrEqual(SCH_GRID);
   });
 
 
@@ -244,5 +246,67 @@ describe("wires the user shapes", () => {
     const r = schematicRoutes(harness([w1, w2]), L);
     expect(r.get(w1.id)).toEqual([{ x: 0, y: 100 }, { x: 60, y: 100 }, { x: 60, y: 300 }, { x: 400, y: 300 }]);
     expect(r.get(w2.id)!.length).toBeGreaterThan(2);
+  });
+});
+
+describe("splice bodies are obstacles", () => {
+  it("never runs a wire through a splice body, even from the barrel on the far side", () => {
+    // Pin card to the right of the splice, attaching on its left; the wire is on the splice's LEFT barrel.
+    const L = new Map([["B", card("B", 400, -1, { "1": 100 })]]);
+    const sp = { id: "s1", nodeId: "n1", barrels: 2, buildUp: [], position: { x: 200, y: 100 }, facing: -1 };
+    const w = { ...wire(["B", "1"], ["B", "1"]), from: { kind: "splice", spliceId: "s1", barrel: 0 } } as unknown as Wire;
+    const h = { wires: [w], splices: [sp], nodes: [{ id: "n1", kind: "breakout", position: { x: 0, y: 0 } }], connectors: [] } as unknown as Harness;
+    const pts = schematicRoutes(h, L).get(w.id)!;
+    expectOrthogonal(pts);
+    // leaves the left barrel heading left (outward), and no segment crosses the body (x 186..214 at y 100)
+    expect(pts[0]).toEqual({ x: 180, y: 100 });
+    expect(pts[1]!.x).toBeLessThan(180);
+    for (const [a, b] of segs(pts)) {
+      const crossesH = a.y === b.y && a.y > 93 && a.y < 107 && Math.min(a.x, b.x) < 214 && Math.max(a.x, b.x) > 186;
+      expect(crossesH).toBe(false);
+    }
+  });
+});
+
+describe("dragging parts (KiCad-style rubber band)", () => {
+  it("moves the attached segment with the part and slides the next corner, without adding detours", () => {
+    // pin (0,100) → right to 100 → down to 300 → right to the far pin (400,300)
+    const pts = [{ x: 0, y: 100 }, { x: 100, y: 100 }, { x: 100, y: 300 }, { x: 400, y: 300 }];
+    const path = dragEnds(pts, { x: 0, y: 40 }, null); // the part at the start moves 2 grid steps down
+    const full = orthoThrough({ x: 0, y: 140 }, path, { x: 400, y: 300 });
+    expectOrthogonal(full);
+    expect(full).toEqual([{ x: 0, y: 140 }, { x: 100, y: 140 }, { x: 100, y: 300 }, { x: 400, y: 300 }]);
+    const sideways = orthoThrough({ x: 60, y: 100 }, dragEnds(pts, { x: 60, y: 0 }, null), { x: 400, y: 300 });
+    // the jog shifts over with it
+    expect(sideways).toEqual([{ x: 60, y: 100 }, { x: 160, y: 100 }, { x: 160, y: 300 }, { x: 400, y: 300 }]);
+  });
+});
+
+describe("routing rules", () => {
+  it("never lets two nets share a line, and keeps wires off the cards", () => {
+    const L = new Map([
+      ["A", card("A", 0, 1, { "1": 100, "2": 120, "3": 140, "4": 160, "5": 180 })],
+      ["B", card("B", 400, -1, { "1": 260, "2": 280, "3": 100, "4": 300, "5": 120 })],
+      ["C", card("C", 400, -1, { "1": 420, "2": 440 })],
+    ]);
+    const ws = [wire(["A", "1"], ["B", "1"]), wire(["A", "2"], ["B", "2"]), wire(["A", "3"], ["B", "3"]), wire(["A", "4"], ["C", "1"]), wire(["A", "5"], ["C", "2"]), wire(["B", "4"], ["B", "5"])];
+    const r = schematicRoutes(harness(ws), L);
+    const all = ws.map((w) => r.get(w.id)!);
+    for (const p of all) expectOrthogonal(p);
+    for (let i = 0; i < all.length; i++)
+      for (let j = i + 1; j < all.length; j++)
+        for (const s of segs(all[i]!))
+          for (const t of segs(all[j]!)) {
+            if (isH(s) !== isH(t)) continue;
+            const k = isH(s) ? "x" : "y";
+            const same = isH(s) ? s[0].y === t[0].y : s[0].x === t[0].x;
+            const lo = Math.max(Math.min(s[0][k], s[1][k]), Math.min(t[0][k], t[1][k]));
+            const hi = Math.min(Math.max(s[0][k], s[1][k]), Math.max(t[0][k], t[1][k]));
+            expect(same && hi - lo > 1e-6).toBe(false);
+          }
+    // no wire runs inside a card body (between its x range, strictly inside its height)
+    for (const p of all)
+      for (const q of p.slice(1, -1))
+        for (const c of L.values()) expect(q.x > c.card.x! && q.x < c.card.x! + c.card.w! && q.y > c.card.y && q.y < c.card.y + c.card.h).toBe(false);
   });
 });

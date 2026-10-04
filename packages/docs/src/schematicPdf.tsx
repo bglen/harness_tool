@@ -41,7 +41,7 @@ export function SchematicDiagram({ data, width, height }: { data: DocData; width
     const x = facing === 1 ? ax - FAN - W : ax + FAN;
     const top = gridCardTop(snapToGrid(c.position.y), hh, HEADER, ROW);
     const rows = cavs.map((id, i) => ({ cavityId: id, y: top + HEADER + i * ROW + ROW / 2, signal: h.nets.find((n) => n.id === c.pins[id]?.netId)?.name ?? "" }));
-    cards.set(c.id, { c, x, w: W, facing, attachX: facing === 1 ? x + W : x, card: { y: top, h: hh }, rows, rowByCavity: new Map(rows.map((r) => [r.cavityId, r])) });
+    cards.set(c.id, { c, x, w: W, facing, attachX: facing === 1 ? x + W : x, card: { x, y: top, w: W, h: hh }, rows, rowByCavity: new Map(rows.map((r) => [r.cavityId, r])) });
   }
   const routes = schematicRoutes(h, cards);
   const pts: Point[] = [];
