@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { formatWireColor, type CatalogIndex, type ConnectorInstance, type Severity, type Wire } from "@hs/model";
+import { formatWireColor, leadEndAt, type CatalogIndex, type ConnectorInstance, type Severity, type Wire } from "@hs/model";
 import { needsCasing, semantic, wireColor } from "@hs/ui-tokens";
 import { GLYPH_H, ROW_H, HEADER_H, type ConnLayout, type ZoomLevel } from "../lib/geometry";
 import { BackshellShape, backshellLabel, bendOf, bendReach, REAR } from "./BackshellGlyph";
@@ -161,6 +161,9 @@ function ColorRect({ color, x, y, theme }: { color: Wire["color"]; x: number; y:
   );
 }
 
+/** Lead-end finish as shown on a flying-lead row. */
+const LEAD_SHORT = { tinned: "tin", stripped: "strip", ferrule: "ferrule", unterminated: "cut" } as const;
+
 /** SVG text collapses runs of spaces; names are shown exactly as typed. */
 const PRE = { whiteSpace: "pre" } as const;
 const UI_FONT = { fontFamily: "var(--font-ui)" } as const;
@@ -297,6 +300,14 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
             {wide && contact && (
               <text className="mono" x={colContact} y={r.y + 4} fontSize={9.5} fill={tt}>
                 {contact}
+              </text>
+            )}
+            {/* flying leads: this lead's end finish (accent when set on the lead itself rather than the end's default) */}
+            {part?.flyingLead && w && (
+              <text className="mono" x={B.x + B.w - 8} y={r.y + 4} fontSize={9.5} textAnchor="end" fill={pin?.leadEnd ? accent : tt}>
+                <title>{`${c.refDes}-${r.cavityId} lead end: ${leadEndAt(c, r.cavityId).finish}, strip ${leadEndAt(c, r.cavityId).stripMm} mm${pin?.leadEnd ? " (set on this lead)" : " (end default)"}. Select the lead and use Lead end… to change.`}</title>
+                {LEAD_SHORT[leadEndAt(c, r.cavityId).finish]}
+                {wide ? ` ${leadEndAt(c, r.cavityId).stripMm}mm` : ""}
               </text>
             )}
             {/* attach handle on the bundle side */}

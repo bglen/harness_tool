@@ -24,10 +24,15 @@ import {
   uid,
   BUILTIN_TEMPLATES,
   SCH_GRID,
+  snapToGrid,
   contactFill,
   dissolveSplice,
   endKey,
   makeSplice,
+  setSpliceProps,
+  spliceGeometry,
+  setSettings,
+  setWirePath,
   unpinWireProps,
   type Harness,
 } from "@hs/model";
@@ -199,7 +204,7 @@ export const ACTIONS: Action[] = [
     bar: ["connector"],
     menu: ["connector"],
     when: (c) => c.kind === "connector" && c.ids.length > 0,
-    run: (c) => dispatch(c.ids.map((id) => rotateConnector({ id, rotation: (c.h.connectors.find((x) => x.id === id)!.rotation + 180) % 360 }))),
+    run: (c) => dispatch(c.ids.map((id) => flipAboutBox(c.h.connectors.find((x) => x.id === id)!)), c.ids.length === 1 ? "Flip connector" : `Flip ${c.ids.length} connectors`),
   },
   {
     id: "cMarkNc",
@@ -270,6 +275,18 @@ export const ACTIONS: Action[] = [
     when: (c) => c.kind === "wire" && c.ids.some((id) => c.h.wires.find((w) => w.id === id)?.twistGroupId),
     run: (c) => dispatch(untwist({ groupIds: [...new Set(c.ids.map((id) => c.h.wires.find((w) => w.id === id)?.twistGroupId).filter(Boolean) as string[])] })),
   },
+  { id: "wAutoRoute", label: "Auto-route", group: "Wire", icon: "rotate-ccw", bar: ["wire"], menu: ["wire"], when: (c) => c.kind === "wire" && c.ids.some((id) => !!c.h.wires.find((w) => w.id === id)?.schPath?.length), run: (c) => dispatch(setWirePath({ ids: c.ids, path: null })) },
+  {
+    id: "autoRouteToggle",
+    label: "Auto-route schematic wires (toggle)",
+    group: "View",
+    icon: "git-branch",
+    run: () => {
+      const on = !getProject().settings.schematicAutoRoute;
+      dispatch(setSettings({ schematicAutoRoute: on }), on ? "Auto-route schematic wires" : "Plain schematic routes");
+      useUi.getState().toast({ kind: "info", text: on ? "Schematic wires without a path of their own are routed in lanes automatically." : "Auto-routing off: each wire gets a plain route; drag segments to arrange them." });
+    },
+  },
   { id: "wShield", label: "Shield", group: "Wire", icon: "shield", bar: ["wire"], menu: ["wire"], when: (c) => c.kind === "wire", run: (c) => pop("shield", c) },
   { id: "wCable", label: "Make cable…", group: "Wire", icon: "cable", menu: ["wire"], when: (c) => c.kind === "wire" && c.ids.length >= 1 && c.ids.length <= 8, run: (c) => pop("cable", c) },
   { id: "wReset", label: "Reset to defaults", group: "Wire", icon: "rotate-ccw", menu: ["wire"], run: (c) => dispatch(unpinWireProps({ ids: c.ids, fields: ["spec", "gauge", "color"] })) },
@@ -329,6 +346,16 @@ export const ACTIONS: Action[] = [
   // ─── Net ─────────────────────────────────────────────────────────────────
   { id: "netEdit", label: "Rename / class / topology", group: "Net", icon: "pencil", bar: ["net"], menu: ["net", "wire"], run: (c) => pop("net", c, { ids: c.kind === "wire" ? [...new Set(c.ids.map((id) => c.h.wires.find((w) => w.id === id)?.netId).filter(Boolean))] : c.ids }) },
   { id: "spliceEdit", label: "Part & CMA", group: "Splice", icon: "diamond", bar: ["splice"], menu: ["splice"], when: (c) => c.ids.length === 1, run: (c) => pop("splice", c) },
+  {
+    id: "spliceFlip",
+    label: "Flip splice",
+    group: "Splice",
+    icon: "flip-horizontal",
+    bar: ["splice"],
+    menu: ["splice"],
+    // Swap the sides of the symbol: barrel 1 to the other side, the other barrels with it (the wiring is unchanged).
+    run: (c) => dispatch(c.ids.flatMap((id) => { const s = c.h.splices.find((x) => x.id === id); return s ? [setSpliceProps({ id, facing: ((s.facing ?? spliceGeometry(c.h, s).ports[0]!.dir) === 1 ? -1 : 1) })] : []; }), "Flip splice"),
+  },
   { id: "spliceDissolve", label: "Make double crimp", group: "Splice", icon: "git-merge", bar: ["splice"], menu: ["splice"], run: (c) => dispatch(c.ids.map((id) => dissolveSplice({ spliceId: id }))) },
   {
     id: "makeSplice",
@@ -343,6 +370,7 @@ export const ACTIONS: Action[] = [
       dispatch(makeSplice({ at: t.at, others: t.others, spliceId: uid(), position: splicePlacement(c.h, t.at) }));
     },
   },
+  { id: "pLeadEnd", label: "Lead end…", group: "Connector", icon: "scissors", bar: ["pin"], menu: ["pin"], when: (c) => c.kind === "pin" && c.ids.length > 0 && c.ids.every((k) => !!svc().cat.connector(c.h.connectors.find((x) => x.id === k.split(":")[0])?.pn ?? "")?.flyingLead), run: (c) => pop("leadEnd", c) },
   { id: "pinBuildUp", label: "CMA build-up…", group: "Splice", icon: "plus", menu: ["pin"], when: (c) => c.kind === "pin" && c.ids.length === 1 && contactFill(c.h, ...(c.ids[0]!.split(":") as [string, string])).wires.length > 0, run: (c) => pop("pinBuildUp", c) },
 
   // ─── Delete ──────────────────────────────────────────────────────────────
@@ -442,4 +470,18 @@ function splicePlacement(h: Harness, at: { connectorId: string; cavityId: string
   const L = layoutConnector(conn, svc().cat, "harness");
   const row = L.rowByCavity.get(at.cavityId);
   return { x: L.attachX + L.facing * 3 * SCH_GRID, y: row?.y ?? L.anchor.y };
+}
+
+/**
+ * Flip a connector end for end about the centre of its box (schematic: the pin card; bundle layout: the drawing and
+ * name block), so it turns in place instead of jumping to the other side of its anchor.
+ */
+function flipAboutBox(conn: Harness["connectors"][number]) {
+  const bundles = useUi.getState().canvasMode === "bundles";
+  const L = layoutConnector(conn, svc().cat, "harness", bundles);
+  const x0 = Math.min(L.card.x, L.glyph.x);
+  const x1 = Math.max(L.card.x + L.card.w, L.glyph.x + L.glyph.w);
+  const cx = (x0 + x1) / 2;
+  const x = 2 * cx - L.anchor.x; // the anchor mirrored about the box centre
+  return rotateConnector({ id: conn.id, rotation: (conn.rotation + 180) % 360, position: { x: bundles ? x : snapToGrid(x), y: conn.position.y } });
 }

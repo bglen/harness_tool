@@ -18,4 +18,5 @@ export * from "./release";
 export * from "./drawingTemplate";
 export * from "./schematic";
 export * from "./cma";
+export * from "./revisions";
 export * from "./drawingTemplateBuiltins";

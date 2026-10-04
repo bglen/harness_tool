@@ -1,3 +1,5 @@
+import { resolvePedigree } from "./pedigree";
+import { DEFAULT_REVISION_SCHEME, firstRevision } from "./revisions";
 import { uid } from "./helpers";
 import { HarnessSchema, SCHEMA_VERSION, type Harness, type PedigreeScheme, type Project, ProjectSchema } from "./schema";
 
@@ -45,7 +47,7 @@ export function newProject(opts: { name?: string; units?: "mm" | "in"; scheme?: 
     partNumber: "HS-0001",
     units: opts.units ?? "in",
     pedigreeScheme: scheme,
-    revisions: [{ id: revId, label: "A", notes: "", frozen: false, activePedigreeId: defaultPedigreeOf(scheme), harness: emptyHarness() }],
+    revisions: [{ id: revId, label: firstRevision({ ...DEFAULT_REVISION_SCHEME, ...resolvePedigree(scheme, defaultPedigreeOf(scheme)).revisionScheme }), notes: "", frozen: false, activePedigreeId: defaultPedigreeOf(scheme), harness: emptyHarness() }],
     currentRevisionId: revId,
     created: now,
     updated: now,

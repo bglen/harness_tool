@@ -16,6 +16,7 @@ import {
   type ResolvedPedigree,
   type Revision,
   wireEndLabel,
+  leadEndAt,
 } from "@hs/model";
 import { computeBom, deriveOperations, type Bom, type OperationsList } from "@hs/ops";
 import { runDfm, type DfmSummary } from "@hs/dfm";
@@ -99,7 +100,7 @@ export function buildDocData(opts: {
             gauge: w ? String(w.gauge) : "",
             color: w ? formatWireColor(w.color) : "",
             colorCode: w ? [w.color.base, ...w.color.stripes] : [],
-            contact: part?.flyingLead ? (w ? `lead end, ${c.leadEnd?.finish ?? "tinned"}` : "") : net ? contactPnFor(h, cat, c.id, cav.id, w?.gauge) ?? "" : cav.special ? "(shielded, Phase 2)" : `${cat.sealingPlug(cav.size)?.pn ?? ""} (plug)`,
+            contact: part?.flyingLead ? (w ? `lead end, ${leadEndAt(c, cav.id).finish}, ${leadEndAt(c, cav.id).stripMm} mm strip` : "") : net ? contactPnFor(h, cat, c.id, cav.id, w?.gauge) ?? "" : cav.special ? "(shielded, Phase 2)" : `${cat.sealingPlug(cav.size)?.pn ?? ""} (plug)`,
           };
         }),
       };

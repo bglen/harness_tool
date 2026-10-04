@@ -21,6 +21,7 @@ import {
   connectToSplice,
   dissolveSplice,
   makeSplice,
+  moveWireEnd,
   currentHarness,
   currentRevision,
   derive,
@@ -37,6 +38,7 @@ import {
   setActivePedigree,
   setBackshell,
   setConnectorPart,
+  setLeadEnd,
   setNetProps,
   setPedigreeScheme,
   setPinContact,
@@ -790,5 +792,48 @@ describe("circular mil area in crimp barrels", () => {
     p = run(p, v[0]!.fix!.commands);
     expect(currentHarness(p).splices[0]!.buildUp).toEqual([{ barrel: 0, gauge: 28, count: 1 }]);
     expect(cma(p)).toHaveLength(0);
+  });
+});
+
+describe("flying-lead ends per wire", () => {
+  it("each lead can have its own finish and strip; ops and cut lengths follow", () => {
+    let p = run(newProject({ now: AT }), [addConnector({ id: "j1", pn: SOCKET, position: { x: 0, y: 0 } }), addConnector({ id: "fl", pn: "FL-3", position: { x: 400, y: 0 }, rotation: 180 })]);
+    p = run(p, [connectPins({ pairs: [1, 2, 3].map((i) => ({ a: { connectorId: "j1", cavityId: String(i) }, b: { connectorId: "fl", cavityId: String(i) } })) })]);
+    const lenOf = (proj: Project, cav: string) => {
+      const h = currentHarness(proj);
+      const w = h.wires.find((x) => [x.from, x.to].some((e) => e.kind === "pin" && e.connectorId === "fl" && e.cavityId === cav))!;
+      return derive(h, cat, proj.settings).wireLengthMm.get(w.id)!;
+    };
+    const before = lenOf(p, "2");
+    p = run(p, [setLeadEnd({ pins: [{ connectorId: "fl", cavityId: "1" }], finish: "ferrule" }), setLeadEnd({ pins: [{ connectorId: "fl", cavityId: "2" }], finish: "stripped", stripMm: 30 })]);
+    expect(lenOf(p, "2")).toBeGreaterThan(before);
+    const rev = currentRevision(p);
+    const ops = deriveOperations(p, rev, cat, profile, resolvePedigree(p.pedigreeScheme, rev.activePedigreeId), inspections).ops.filter((o) => o.kind === "leadEnd");
+    const by = (reason?: string) => ops.filter((o) => o.reason === reason).flatMap((o) => o.refs);
+    expect(by("Flying-lead ferrules crimped by hand")).toEqual(["FL1-1"]);
+    expect(by(undefined)).toEqual(["FL1-2"]); // bare strip: automated
+    expect(by("Flying-lead ends tinned by hand")).toEqual(["FL1-3"]); // end default
+    // back to the end's default
+    p = run(p, [setLeadEnd({ pins: [{ connectorId: "fl", cavityId: "2" }], clear: true })]);
+    expect(lenOf(p, "2")).toBe(before);
+  });
+});
+
+describe("moving wire ends", () => {
+  const pin = (connectorId: string, cavityId: string) => ({ connectorId, cavityId });
+  it("moves a branch to the other barrel of its splice and reconnects a pin end", () => {
+    let p = run(newProject({ now: AT }), [addConnector({ id: "j1", pn: SOCKET, position: { x: 0, y: 0 } }), addConnector({ id: "p2", pn: SOCKET, position: { x: 400, y: -100 }, rotation: 180 }), addConnector({ id: "p3", pn: SOCKET, position: { x: 400, y: 100 }, rotation: 180 })]);
+    p = run(p, [connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p2", "1") }] })]);
+    p = run(p, [connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p3", "1") }] }), makeSplice({ at: pin("j1", "1"), spliceId: "sp" })]);
+    const toP3 = currentHarness(p).wires.find((w) => [w.from, w.to].some((e) => e.kind === "pin" && e.connectorId === "p3"))!;
+    const spEnd = toP3.from.kind === "splice" ? "from" : "to";
+    p = run(p, [moveWireEnd({ wireId: toP3.id, end: spEnd, to: { kind: "splice", spliceId: "sp", barrel: 0 } })]);
+    const ends = () => currentHarness(p).wires.map((w) => [w.from, w.to].map((e) => (e.kind === "pin" ? `${e.connectorId}-${e.cavityId}` : `SP/${e.barrel}`)).sort().join(">")).sort();
+    expect(ends()).toEqual(["SP/0>j1-1", "SP/0>p3-1", "SP/1>p2-1"]);
+    // reconnect the p3 end to p3-2: p3-1 leaves the net, p3-2 joins it
+    const w = currentHarness(p).wires.find((x) => [x.from, x.to].some((e) => e.kind === "pin" && e.connectorId === "p3"))!;
+    p = run(p, [moveWireEnd({ wireId: w.id, end: w.from.kind === "pin" ? "from" : "to", to: { kind: "pin", connectorId: "p3", cavityId: "2" } })]);
+    expect(ends()).toContain("SP/0>p3-2");
+    expect(currentHarness(p).connectors.find((c) => c.id === "p3")!.pins["1"]?.netId ?? null).toBeNull();
   });
 });

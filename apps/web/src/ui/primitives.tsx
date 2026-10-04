@@ -135,7 +135,16 @@ export function Dialog({ open, onClose, title, children, width = 640, footer, de
     <RDialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <RDialog.Portal>
         <RDialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-        <RDialog.Content className="pop-in fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] -translate-x-1/2 -translate-y-1/2 flex-col rounded-card border border-border-subtle bg-bg-surface-1 shadow-2xl" style={{ width: `min(${width}px, 96vw)` }}>
+        <RDialog.Content
+          className="pop-in fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] -translate-x-1/2 -translate-y-1/2 flex-col rounded-card border border-border-subtle bg-bg-surface-1 shadow-2xl outline-none"
+          style={{ width: `min(${width}px, 96vw)` }}
+          // Focus the first field (or the dialog itself), not the Close button: its "Esc" tooltip would swallow the first Escape.
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            const el = e.currentTarget as HTMLElement;
+            (el.querySelector<HTMLElement>("[autofocus], input:not([type=hidden]):not([disabled]), textarea, select") ?? el).focus();
+          }}
+        >
           <div className="flex items-center justify-between border-b border-border-subtle px-4 py-3">
             <div>
               <RDialog.Title className="text-md font-semibold">{title}</RDialog.Title>

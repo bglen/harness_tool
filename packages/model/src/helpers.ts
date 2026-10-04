@@ -1,5 +1,5 @@
-import type { CatalogIndex, ConnectorKind } from "./catalog";
-import type { ConnectorInstance, Harness, Net, NetMember, Project, Revision, Settings, WireEnd } from "./schema";
+import { FLYING_LEAD_SIZE, type CatalogIndex, type ConnectorKind } from "./catalog";
+import type { ConnectorInstance, Harness, LeadEnd, Net, NetMember, Project, Revision, Settings, WireEnd } from "./schema";
 
 /**
  * Filter an array property, assigning only when something is removed.
@@ -144,7 +144,8 @@ export function defaultGaugeForEnds(h: Harness, cat: CatalogIndex, ends: WireEnd
     if (e.kind !== "pin") continue;
     const c = connectorById(h, e.connectorId);
     const cav = c && cat.cavity(c.pn, e.cavityId);
-    if (cav) gauge = Math.max(gauge, gaugeForContactSize(cav.size));
+    // Flying leads take any gauge: the contact at the other end decides.
+    if (cav && cav.size !== FLYING_LEAD_SIZE) gauge = Math.max(gauge, gaugeForContactSize(cav.size));
   }
   return gauge || 22;
 }
@@ -198,4 +199,9 @@ export function wireEndLabel(h: Harness, e: WireEnd): string {
   const s = h.splices.find((x) => x.id === e.spliceId);
   if (!s) return "SPLICE";
   return s.barrels > 1 ? `${s.label}.${(e.barrel ?? 0) + 1}` : s.label;
+}
+
+/** Finish of a flying lead: its own setting, else the flying-lead end's default (tinned, 6 mm strip). */
+export function leadEndAt(c: ConnectorInstance, cavityId: string): LeadEnd {
+  return c.pins[cavityId]?.leadEnd ?? c.leadEnd ?? { finish: "tinned", stripMm: 6 };
 }

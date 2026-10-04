@@ -114,7 +114,9 @@ export function layoutConnector(c: ConnectorInstance, cat: CatalogIndex, level: 
       : compact
         ? Math.max(10 + textWidth(c.refDes, 14, 600) + 12 + textWidth(pinsText, 10.5) + 10, 10 + pnRow(10) + 10)
         : Math.max(10 + textWidth(c.refDes, 14, 600) + 8 + (unreviewed ? HEADER_RIGHT_UNREVIEWED : HEADER_RIGHT), 10 + pnRow(10.5) + HEADER_RIGHT);
-  const bodyW = Math.ceil(Math.max(level === "overview" ? 120 : compact ? COMPACT_W : level === "detail" ? CARD_W_DETAIL : CARD_W, contentW));
+  // Flying-lead cards carry a lead-end finish column at the right.
+  const finishCol = part?.flyingLead && !compact ? 48 : 0;
+  const bodyW = Math.ceil(Math.max((level === "overview" ? 120 : compact ? COMPACT_W : level === "detail" ? CARD_W_DETAIL : CARD_W) + finishCol, contentW));
   const fan = FAN;
   // Schematic pin cards sit on the grid (anchor, attach edge and every pin row), whatever the stored position.
   const anchor = compact ? c.position : { x: snapToGrid(c.position.x), y: snapToGrid(c.position.y) };

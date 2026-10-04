@@ -1,4 +1,4 @@
-import { buildUps, cavityStates, derive, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
+import { buildUps, cavityStates, derive, leadEndAt, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
 
 export type OpKind =
   | "connectorLoad"
@@ -112,10 +112,12 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
   for (const c of h.connectors) {
     const part = cat.connector(c.pn);
     if (part?.flyingLead) {
-      // Bare wire ends: nothing to place or insert; each wired lead is stripped (and tinned / ferruled) instead.
-      const fin = c.leadEnd?.finish ?? "tinned";
+      // Bare wire ends: nothing to place or insert; each wired lead is finished on its own (strip, tin, ferrule).
       const leads = new Set(h.wires.flatMap((w) => [w.from, w.to]).flatMap((e) => (e.kind === "pin" && e.connectorId === c.id ? [e.cavityId] : [])));
-      if (fin !== "unterminated") push("leadEnd", leads.size, fin === "stripped", [...leads].map((l) => `${c.refDes}-${l}`), fin === "stripped" ? undefined : fin === "tinned" ? "Flying-lead ends tinned by hand" : "Flying-lead ferrules crimped by hand");
+      for (const l of leads) {
+        const fin = leadEndAt(c, l).finish;
+        if (fin !== "unterminated") push("leadEnd", 1, fin === "stripped", [`${c.refDes}-${l}`], fin === "stripped" ? undefined : fin === "tinned" ? "Flying-lead ends tinned by hand" : "Flying-lead ferrules crimped by hand");
+      }
       continue;
     }
     const ok = !!part?.machineReady && caps.connectorSlashes.includes(part.slash);

@@ -8,6 +8,7 @@ import {
   connectPins,
   currentHarness,
   derive,
+  commitRatsnest,
   deleteWires,
   formatLength,
   formatWireColor,
@@ -117,13 +118,20 @@ describe("commands", () => {
     expect(h.wires.every((w) => w.to.kind === "splice" || w.from.kind === "splice")).toBe(true);
   });
 
-  it("delete wire disconnects the far pin", () => {
+  it("delete wire removes the connection but keeps both pins on the net (names kept, shown as unrouted)", () => {
     let p = twoConnectors();
     p = apply(p, connectPins({ pairs: [{ a: { connectorId: "c1", cavityId: "1" }, b: { connectorId: "c2", cavityId: "1" } }] }));
     p = apply(p, deleteWires({ ids: [currentHarness(p).wires[0]!.id] }));
-    const h = currentHarness(p);
+    let h = currentHarness(p);
     expect(h.wires).toHaveLength(0);
-    expect(h.nets[0]!.members).toHaveLength(1);
+    expect(h.nets[0]!.members).toHaveLength(2);
+    expect(h.connectors.every((c) => c.pins["1"]?.netId === h.nets[0]!.id)).toBe(true);
+    expect(ratsnest(h)).toHaveLength(1);
+    // committing the unrouted connection wires it again
+    p = apply(p, commitRatsnest({}));
+    h = currentHarness(p);
+    expect(h.wires).toHaveLength(1);
+    expect(ratsnest(h)).toHaveLength(0);
   });
 });
 

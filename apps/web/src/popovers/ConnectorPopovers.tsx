@@ -159,36 +159,106 @@ export function FacePopover({ x, y, connectorId }: { x: number; y: number; conne
 }
 
 const LEAD_FINISHES = [
-  { value: "tinned", label: "Stripped and tinned" },
-  { value: "stripped", label: "Stripped (bare strands)" },
-  { value: "ferrule", label: "Ferrule crimped" },
-  { value: "unterminated", label: "Cut only (left long, finished at installation)" },
+  { value: "tinned", label: "Stripped and tinned", short: "Tinned" },
+  { value: "stripped", label: "Stripped (bare strands)", short: "Stripped" },
+  { value: "ferrule", label: "Ferrule crimped", short: "Ferrule" },
+  { value: "unterminated", label: "Cut only (left long, finished at installation)", short: "Cut only" },
 ] as const;
 
-/** Flying-lead ends: finish of the bare wire ends and strip length. */
+/**
+ * Flying-lead end finishes. The end's default applies to every lead without its own setting; each lead can have its
+ * own finish and strip length (one bundle of flying leads often mixes tinned, ferruled and cut-only ends).
+ * Opened from selected lead rows, it shows just those leads.
+ */
 export function LeadEndPopover({ x, y, ids }: { x: number; y: number; ids: string[] }) {
   const project = useProject((s) => s.project)!;
-  const cs = currentHarness(project).connectors.filter((c) => ids.includes(c.id));
-  const first = cs[0];
-  const [strip, setStrip] = useState(formatLength(first?.leadEnd?.stripMm ?? 6, project.units).replace(" ", ""));
-  if (!first) return null;
-  const finish = first.leadEnd?.finish ?? "tinned";
-  const saveStrip = () => {
-    const mm = parseLength(strip, project.units);
-    if (mm !== null && mm >= 0) dispatch(setLeadEnd({ ids, stripMm: mm }));
-  };
+  const h = currentHarness(project);
+  const units = project.units;
+  // Connector ids, or "connectorId:cavityId" keys for selected lead rows.
+  const byPin = ids.some((id) => id.includes(":"));
+  const cs = h.connectors.filter((c) => ids.some((id) => (byPin ? id.split(":")[0] === c.id : id === c.id)));
+  if (!cs.length) return null;
+  const wired = (cid: string, cav: string) => h.wires.filter((w) => [w.from, w.to].some((e) => e.kind === "pin" && e.connectorId === cid && e.cavityId === cav));
+  const leads = cs.flatMap((c) =>
+    Object.keys(c.pins)
+      .filter((cav) => (byPin ? ids.includes(`${c.id}:${cav}`) : wired(c.id, cav).length > 0))
+      .sort((a, b) => a.localeCompare(b, "en", { numeric: true }))
+      .map((cav) => ({ c, cav, wire: wired(c.id, cav)[0], net: h.nets.find((n) => n.id === c.pins[cav]?.netId)?.name ?? "", own: c.pins[cav]?.leadEnd })),
+  );
+  const fmt = (mm: number) => formatLength(mm, units).replace(" ", "");
+  const label = (f: string) => LEAD_FINISHES.find((x) => x.value === f)?.short ?? f;
   return (
-    <Floating x={x} y={y} onClose={() => useUi.getState().openPopover(null)} width={320} className="flex flex-col gap-3 p-3">
-      <div className="text-sm font-semibold">Lead ends {cs.length === 1 ? `on ${first.refDes}` : `on ${cs.length} flying-lead ends`}</div>
-      <Field label="Finish">
-        <Select value={finish} onChange={(v) => dispatch(setLeadEnd({ ids, finish: v }))} options={LEAD_FINISHES.map((f) => ({ value: f.value, label: f.label }))} />
-      </Field>
-      <Field label="Strip length" hint="Added to each wire's cut length past the bundle end.">
-        <input className={cx(inputCls, "mono w-28")} value={strip} onChange={(e) => setStrip(e.target.value)} onBlur={saveStrip} onKeyDown={(e) => e.key === "Enter" && saveStrip()} />
-      </Field>
-      <div className="text-2xs text-text-tertiary">Change the number of leads with Part. Lead length is the bundle length to this end.</div>
+    <Floating x={x} y={y} onClose={() => useUi.getState().openPopover(null)} width={520} className="flex max-h-[70vh] flex-col gap-3 p-3">
+      <div className="text-sm font-semibold">Lead ends {cs.length === 1 ? `on ${cs[0]!.refDes}` : `on ${cs.length} flying-lead ends`}</div>
+      {!byPin && (
+        <div className="flex items-end gap-2 rounded-control border border-border-subtle p-2">
+          <Field label="Default finish (leads without their own)">
+            <Select value={cs[0]!.leadEnd?.finish ?? "tinned"} onChange={(v) => dispatch(setLeadEnd({ ids: cs.map((c) => c.id), finish: v }))} options={LEAD_FINISHES.map((f) => ({ value: f.value, label: f.label }))} />
+          </Field>
+          <Field label="Default strip">
+            <LengthInput mm={cs[0]!.leadEnd?.stripMm ?? 6} units={units} onCommit={(mm) => mm !== null && dispatch(setLeadEnd({ ids: cs.map((c) => c.id), stripMm: mm }))} />
+          </Field>
+        </div>
+      )}
+      <div className="scroll-thin min-h-0 overflow-auto rounded-control border border-border-subtle">
+        <table className="w-full text-xs">
+          <thead className="bg-bg-surface-2 text-left text-2xs text-text-tertiary">
+            <tr>
+              <th className="px-2 py-1">Lead</th>
+              <th className="px-2 py-1">Signal / wire</th>
+              <th className="px-2 py-1">Finish</th>
+              <th className="px-2 py-1">Strip</th>
+            </tr>
+          </thead>
+          <tbody>
+            {leads.map(({ c, cav, wire, net, own }) => {
+              const pin = [{ connectorId: c.id, cavityId: cav }];
+              const def = c.leadEnd ?? { finish: "tinned" as const, stripMm: 6 };
+              return (
+                <tr key={`${c.id}:${cav}`} className="border-t border-border-subtle">
+                  <td className="mono px-2 py-1">
+                    {c.refDes}-{cav}
+                  </td>
+                  <td className="mono truncate px-2 py-1 text-text-secondary">{[net, wire?.label].filter(Boolean).join(" · ") || "—"}</td>
+                  <td className="px-2 py-1">
+                    <Select
+                      value={own?.finish ?? ""}
+                      onChange={(v) => dispatch(v ? setLeadEnd({ pins: pin, finish: v as LeadFinish }) : setLeadEnd({ pins: pin, clear: true }))}
+                      options={[{ value: "", label: `Default (${label(def.finish)})` }, ...LEAD_FINISHES.map((f) => ({ value: f.value, label: f.short }))]}
+                    />
+                  </td>
+                  <td className="px-2 py-1">
+                    <LengthInput mm={own?.stripMm} placeholder={fmt(def.stripMm)} units={units} onCommit={(mm) => dispatch(mm === null ? setLeadEnd({ pins: pin, clear: true }) : setLeadEnd({ pins: pin, stripMm: mm }))} />
+                  </td>
+                </tr>
+              );
+            })}
+            {!leads.length && (
+              <tr>
+                <td colSpan={4} className="px-2 py-2 text-text-tertiary">
+                  No wired leads yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <div className="text-2xs text-text-tertiary">Strip length is added to each wire's cut length past the bundle end. Change the number of leads with Part; lead length is the bundle length to this end.</div>
     </Floating>
   );
+}
+
+type LeadFinish = (typeof LEAD_FINISHES)[number]["value"];
+
+/** Length field in project units; blank (when allowed) commits null. */
+function LengthInput({ mm, units, onCommit, placeholder }: { mm?: number; units: "mm" | "in"; onCommit: (mm: number | null) => void; placeholder?: string }) {
+  const [v, setV] = useState(mm === undefined ? "" : formatLength(mm, units).replace(" ", ""));
+  const commit = () => {
+    if (!v.trim()) return placeholder !== undefined && mm !== undefined && onCommit(null);
+    const n = parseLength(v, units);
+    if (n !== null && n >= 0) onCommit(n);
+  };
+  return <input className={cx(inputCls, "mono h-7 w-24 text-xs")} value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && commit()} />;
 }
 
 /** CMA build-up in a contact: filler strands crimped in with the wire(s) to reach the contact's minimum circular mil area. */

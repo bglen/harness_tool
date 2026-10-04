@@ -1,5 +1,5 @@
 import * as DM from "@radix-ui/react-dropdown-menu";
-import { currentRevision, formatMoney, resolvePedigree, setActivePedigree, setProjectProps } from "@hs/model";
+import { currentRevision, formatMoney, resolvePedigree, setActivePedigree, setProjectProps, setRevisionLabel } from "@hs/model";
 import { Check, ChevronDown, CircleAlert, CloudOff, Download, FileInput, HardDrive, Loader2, Redo2, Share2, Undo2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { dispatch, useProject } from "../store/project";
@@ -180,6 +180,14 @@ export function TopBar() {
   const ui = useUi();
   const rev = currentRevision(project);
   const [editingName, setEditingName] = useState(false);
+  const [editingPn, setEditingPn] = useState(false);
+  const [editingRev, setEditingRev] = useState(false);
+  // Part numbers usually come from the company's own system: pasted in, trimmed, never left empty.
+  const savePn = (v: string) => {
+    const pn = v.trim();
+    if (pn && pn !== project.partNumber) dispatch(setProjectProps({ partNumber: pn }), `Part number ${pn}`);
+    setEditingPn(false);
+  };
   return (
     <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border-subtle bg-bg-app px-3" role="banner">
       <div className="flex items-center gap-2">
@@ -197,12 +205,12 @@ export function TopBar() {
         <DM.Root>
           <DM.Trigger className="flex items-center gap-1 rounded-control px-1.5 py-1 text-sm hover:bg-bg-hover" aria-label="Project menu">
             <span className="max-w-[200px] truncate font-medium">{project.name}</span>
-            <span className="mono whitespace-nowrap text-xs text-text-tertiary">{project.partNumber}</span>
             <ChevronDown size={12} className="text-text-tertiary" />
           </DM.Trigger>
           <DM.Portal>
             <DM.Content className={menuCls} sideOffset={6} align="start">
               <Item onSelect={() => setEditingName(true)}>Rename</Item>
+              <Item onSelect={() => setEditingPn(true)}>Change part number</Item>
               <Item onSelect={() => ui.openDialog("settings")}>Project settings…</Item>
               <DM.Separator className="my-1 h-px bg-border-subtle" />
               <Item onSelect={() => createNewProject()}>New project</Item>
@@ -217,6 +225,42 @@ export function TopBar() {
           </DM.Portal>
         </DM.Root>
       )}
+      {/* Harness part number: click to edit or paste one from your own numbering system */}
+      {editingPn ? (
+        <input
+          autoFocus
+          className="mono h-7 w-40 rounded-control border border-accent bg-bg-surface-1 px-2 text-xs"
+          defaultValue={project.partNumber}
+          spellCheck={false}
+          aria-label="Harness part number"
+          onFocus={(e) => e.currentTarget.select()}
+          onBlur={(e) => savePn(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") setEditingPn(false);
+          }}
+        />
+      ) : (
+        <button className="mono -ml-1 whitespace-nowrap rounded-control px-1 py-1 text-xs text-text-tertiary hover:bg-bg-hover hover:text-text-primary" title="Harness part number: click to change or paste your own" onClick={() => setEditingPn(true)}>
+          {project.partNumber}
+        </button>
+      )}
+      {editingRev ? (
+        <input
+          autoFocus
+          className="mono h-7 w-24 rounded-control border border-accent bg-bg-surface-1 px-2 text-sm"
+          defaultValue={rev.labelPinned ? rev.label : ""}
+          placeholder={rev.label}
+          spellCheck={false}
+          aria-label="Revision label (blank = follow the pedigree's revision scheme)"
+          title="Blank follows the pedigree's revision scheme"
+          onBlur={(e) => (dispatch(setRevisionLabel({ label: e.target.value })), setEditingRev(false))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") setEditingRev(false);
+          }}
+        />
+      ) : (
       <DM.Root>
         <DM.Trigger className="flex items-center gap-1 rounded-control px-1.5 py-1 text-sm hover:bg-bg-hover" aria-label="Revision">
           <span className="mono whitespace-nowrap">Rev {rev.label}</span>
@@ -231,12 +275,16 @@ export function TopBar() {
               </Item>
             ))}
             <DM.Separator className="my-1 h-px bg-border-subtle" />
+            <Item disabled={rev.frozen} onSelect={() => setEditingRev(true)}>
+              Rename Rev {rev.label}…
+            </Item>
             <Item disabled={rev.frozen} onSelect={() => ui.openDialog("freeze")}>
               Freeze Rev {rev.label}…
             </Item>
           </DM.Content>
         </DM.Portal>
       </DM.Root>
+      )}
       <PedigreeSwitcher />
       <SaveState />
       <div className="flex items-center">

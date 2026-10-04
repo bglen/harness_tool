@@ -35,27 +35,58 @@ export function parallelPairs(net: Net): [Net["members"][number], Net["members"]
  * pins no longer on the net are ignored. Returns null when the drawing doesn't cover the whole net.
  */
 export function drawnLinks(net: Net): [string, string][] | null {
+  const links = validLinks(net);
+  if (!links.length || net.members.length < 2) return null;
+  return linkGroups(net, links).length === 1 ? links : null;
+}
+
+/** Links between the net's pins (and splice barrels), without duplicates or links to pins no longer on the net. */
+function validLinks(net: Net): [string, string][] {
   const keys = new Set(net.members.map((m) => `${m.connectorId}:${m.cavityId}`));
   const seen = new Set<string>();
-  const links = (net.links ?? []).filter(([a, b]) => {
+  return (net.links ?? []).filter(([a, b]) => {
     const k = a < b ? `${a}|${b}` : `${b}|${a}`;
     // Splice barrels are junctions the user placed; links to them are kept (sync drops links to deleted splices).
     if (a === b || !(keys.has(a) || isSpliceKey(a)) || !(keys.has(b) || isSpliceKey(b)) || seen.has(k)) return false;
     seen.add(k);
     return true;
   });
-  if (!links.length || keys.size < 2) return null;
-  // Every member reachable from the first through drawn links?
+}
+
+/** The links that get wires: the drawing when it covers the net, else (explicitly wired nets) just what is drawn. */
+export function wiredLinks(net: Net): [string, string][] {
+  return drawnLinks(net) ?? validLinks(net);
+}
+
+/** The net's pins grouped by what the links connect (barrels of one splice count as joined). */
+function linkGroups(net: Net, links: [string, string][]): string[][] {
   const adj = new Map<string, string[]>();
-  for (const [a, b] of links) (adj.get(a) ?? adj.set(a, []).get(a)!).push(b), (adj.get(b) ?? adj.set(b, []).get(b)!).push(a);
-  // The barrels of one splice are joined inside it.
+  const add = (a: string, b: string) => (adj.get(a) ?? adj.set(a, []).get(a)!).push(b);
+  for (const [a, b] of links) add(a, b), add(b, a);
   const ports = [...adj.keys()].filter(isSpliceKey);
-  for (const p of ports) for (const q of ports) if (p !== q && p.slice(0, p.lastIndexOf(":")) === q.slice(0, q.lastIndexOf(":"))) adj.get(p)!.push(q);
-  const start = keys.values().next().value!;
-  const reach = new Set([start]);
-  const q = [start];
-  while (q.length) for (const n of adj.get(q.pop()!) ?? []) if (!reach.has(n)) reach.add(n), q.push(n);
-  return [...keys].every((k) => reach.has(k)) ? links : null;
+  for (const p of ports) for (const q of ports) if (p !== q && p.slice(0, p.lastIndexOf(":")) === q.slice(0, q.lastIndexOf(":"))) add(p, q);
+  const seen = new Set<string>();
+  const groups: string[][] = [];
+  for (const m of net.members) {
+    const start = `${m.connectorId}:${m.cavityId}`;
+    if (seen.has(start)) continue;
+    const group: string[] = [];
+    const q = [start];
+    seen.add(start);
+    while (q.length) {
+      const k = q.pop()!;
+      if (!isSpliceKey(k)) group.push(k);
+      for (const n of adj.get(k) ?? []) if (!seen.has(n)) seen.add(n), q.push(n);
+    }
+    groups.push(group);
+  }
+  return groups;
+}
+
+/** Explicitly wired nets: one unrouted connection per group of pins the drawn links don't reach. */
+export function unreachedPairs(net: Net): [WireEnd, WireEnd][] {
+  const groups = linkGroups(net, validLinks(net));
+  return groups.slice(1).map((g) => [parseLinkKey(g[0]!), parseLinkKey(groups[0]![0]!)]);
 }
 
 /**
@@ -66,6 +97,7 @@ export function drawnLinks(net: Net): [string, string][] | null {
 export function effectiveTopology(net: Net): "daisy" | "splice" | "parallel" | "wired" {
   if (net.members.length < 2) return "daisy";
   if (net.topology === "splice" && net.members.length >= 3) return "splice";
+  if (net.wiringExplicit) return "wired";
   if (net.topologyConfirmed) {
     if (net.topology === "parallel") return parallelPairs(net) ? "parallel" : "daisy";
     if (net.topology === "daisy") return "daisy";
@@ -82,7 +114,7 @@ export function joinKind(net: Net): "splice" | "doubleCrimp" | null {
   if (t === "parallel") return null;
   if (t === "wired") {
     const count = new Map<string, number>();
-    const links = drawnLinks(net)!;
+    const links = wiredLinks(net);
     for (const [a, b] of links) for (const k of [a, b]) if (!isSpliceKey(k)) count.set(k, (count.get(k) ?? 0) + 1);
     if ([...count.values()].some((n) => n > 1)) return "doubleCrimp";
     return links.some(([a, b]) => isSpliceKey(a) || isSpliceKey(b)) ? "splice" : null;
@@ -103,7 +135,7 @@ export function desiredPairs(h: Harness, net: Net): [WireEnd, WireEnd][] {
     const idx = new Map(h.connectors.map((c, i) => [c.id, i]));
     // Pins before splice barrels; pins in connector order.
     const rank = (e: WireEnd) => (e.kind === "pin" ? idx.get(e.connectorId) ?? 0 : 1e9);
-    return drawnLinks(net)!.map(([x, y]) => {
+    return wiredLinks(net).map(([x, y]) => {
       const [a, b] = [parseLinkKey(x), parseLinkKey(y)];
       return rank(a) <= rank(b) ? [a, b] : [b, a];
     });
@@ -144,6 +176,8 @@ export function ratsnest(h: Harness): { netId: string; a: WireEnd; b: WireEnd }[
   const have = new Set(h.wires.map((w) => pairKey(w.from, w.to)));
   const out: { netId: string; a: WireEnd; b: WireEnd }[] = [];
   for (const n of h.nets) for (const [a, b] of desiredPairs(h, n)) if (!have.has(pairKey(a, b))) out.push({ netId: n.id, a, b });
+  // Explicitly wired nets: pins their drawn links don't reach still need connecting (one line per unreached group).
+  for (const n of h.nets) if (n.wiringExplicit) for (const [a, b] of unreachedPairs(n)) out.push({ netId: n.id, a, b });
   return out;
 }
 

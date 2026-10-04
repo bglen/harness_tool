@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { currentRevision, defaultPedigreeOf, formatMoney, monotonicityWarnings, resolvePedigree, type InspectionReq, type Pedigree, type PedigreeScheme } from "@hs/model";
+import { currentRevision, defaultPedigreeOf, stableStringify, DEFAULT_REVISION_SCHEME, firstRevision, nextRevision, revisionPreview, formatMoney, monotonicityWarnings, resolvePedigree, type InspectionReq, type Pedigree, type PedigreeScheme } from "@hs/model";
 import { tokens } from "@hs/ui-tokens";
 import { Copy, Plus, Trash2 } from "lucide-react";
-import { dispatch, useProject } from "../store/project";
+import { dispatch, getProject, useProject } from "../store/project";
 import { useUi } from "../store/ui";
 import { useAnalysis } from "../store/analysis";
 import { svc } from "../lib/services";
@@ -29,11 +29,26 @@ export function PedigreeEditor() {
   const bump = (v: string) => v.replace(/(\d+)$/, (m) => String(Number(m) + 1));
   const [org, setOrg] = useState(() => getOrgScheme());
   const defaultId = defaultPedigreeOf(scheme);
-  const saveToDesign = () => dispatch({ type: "setPedigreeScheme", payload: { scheme: { ...scheme, version: bump(scheme.version) } } }, "Edit pedigrees");
+  // Unsaved edits: each pedigree against the scheme saved in the design (version bumps don't count).
+  const saved = project.pedigreeScheme;
+  const savedById = new Map(saved.pedigrees.map((x) => [x.id, x]));
+  const editState = (x: Pedigree): "new" | "edited" | null => (!savedById.has(x.id) ? "new" : stableStringify(x) === stableStringify(savedById.get(x.id)) ? null : "edited");
+  const removed = saved.pedigrees.filter((x) => !scheme.pedigrees.some((y) => y.id === x.id));
+  const schemeEdited = scheme.name !== saved.name || (scheme.defaultPedigreeId ?? "") !== (saved.defaultPedigreeId ?? "");
+  const edits = scheme.pedigrees.filter((x) => editState(x)).length + removed.length + (schemeEdited ? 1 : 0);
+  const saveToDesign = () => {
+    dispatch({ type: "setPedigreeScheme", payload: { scheme: { ...scheme, version: bump(scheme.version) } } }, "Edit pedigrees");
+    // Keep editing on what was just saved, so the edited markers clear.
+    setScheme(structuredClone(getProject().pedigreeScheme));
+  };
+  const closeAsk = () => {
+    if (edits && !confirm(`Discard ${edits} unsaved pedigree change${edits === 1 ? "" : "s"}?`)) return;
+    close();
+  };
   return (
     <Dialog
       open
-      onClose={close}
+      onClose={closeAsk}
       title="Pedigrees"
       width={1080}
       description="A pedigree captures everything that changes between build classes: rule severities, inspections, workmanship, parts policy, process limits, documentation and markings."
@@ -55,15 +70,19 @@ export function PedigreeEditor() {
             {org && <option value="__org">Organization scheme: {org.name}</option>}
             {svc().library.rulesets.filter((r) => r.pedigreeScheme).map((r) => <option key={r.id} value={r.id}>{r.pedigreeScheme!.name}</option>)}
           </select>
-          <Button variant="ghost" onClick={close}>Cancel</Button>
+          {edits > 0 && <span className="text-xs text-status-warning">{edits} unsaved change{edits === 1 ? "" : "s"}</span>}
+          <Button variant="ghost" onClick={closeAsk}>Close</Button>
           <Button variant="secondary" title="Save to this design and make it the scheme (and default pedigree) new designs start with, in this browser" onClick={() => {
             setOrgScheme(scheme);
             setOrg(scheme);
             saveToDesign();
             ui.toast({ kind: "success", text: `New designs will use “${scheme.name}” starting on ${scheme.pedigrees.find((x) => x.id === defaultId)?.code}` });
-            close();
           }}>Save as organization scheme</Button>
-          <Button variant="primary" onClick={() => (saveToDesign(), close())}>Save to this design</Button>
+          {edits > 0 && (
+            <Button variant="primary" onClick={() => (saveToDesign(), ui.toast({ kind: "success", text: "Pedigrees saved to this design" }))}>
+              Save changes
+            </Button>
+          )}
         </>
       }
     >
@@ -79,9 +98,12 @@ export function PedigreeEditor() {
               <span className="mono text-xs font-semibold">{x.code}</span>
               <span className="truncate text-sm">{x.name}</span>
               {x.id === defaultId && <span className="rounded-chip border border-accent px-1 text-2xs text-accent" title="New designs start on this pedigree">default</span>}
+              {editState(x) && <span className="rounded-chip border border-status-warning px-1 text-2xs text-status-warning" title="Unsaved changes">{editState(x)}</span>}
               {x.extends && <span className="ml-auto text-2xs text-text-tertiary">extends {scheme.pedigrees.find((y) => y.id === x.extends)?.code}</span>}
             </button>
           ))}
+          {removed.length > 0 && <div className="px-2 text-2xs text-status-warning">Removed (unsaved): {removed.map((x) => x.code).join(", ")}</div>}
+          {schemeEdited && <div className="px-2 text-2xs text-status-warning">Scheme name or default changed (unsaved)</div>}
           <div className="mt-1 flex gap-1">
             <Button size="sm" variant="ghost" onClick={() => {
               const id = `p${Date.now().toString(36)}`;
@@ -148,6 +170,7 @@ export function PedigreeEditor() {
                   <input className={inputCls} placeholder={`inherited: ${resolved.workmanship}`} value={p.workmanship ?? ""} onChange={(e) => upd({ workmanship: e.target.value || undefined })} />
                 </Field>
                 <div className="col-span-2"><Field label="Description"><textarea className={cx(inputCls, "h-16 py-1")} value={p.description} onChange={(e) => upd({ description: e.target.value })} /></Field></div>
+                <RevisionSchemeFields p={p} resolved={resolved.revisionScheme} parentCode={p.extends ? scheme.pedigrees.find((x) => x.id === p.extends)?.code : undefined} onChange={(revisionScheme) => upd({ revisionScheme })} />
               </div>
             )}
             {tab === "Inspections" && (
@@ -284,5 +307,53 @@ export function PedigreeCompare() {
         </tbody>
       </table>
     </Dialog>
+  );
+}
+
+/**
+ * A pedigree's revision scheme: letters, numbers or letter+number, with start, prefix, padding and skipped letters.
+ * Fields left unset inherit from the parent pedigree (the preview shows the result).
+ */
+function RevisionSchemeFields({ p, resolved, parentCode, onChange }: { p: Pedigree; resolved: Pedigree["revisionScheme"]; parentCode?: string; onChange: (v: Pedigree["revisionScheme"]) => void }) {
+  const own = p.revisionScheme ?? {};
+  const eff = { ...DEFAULT_REVISION_SCHEME, ...resolved };
+  const set = (patch: Partial<NonNullable<Pedigree["revisionScheme"]>>) => {
+    const next = { ...own, ...patch };
+    for (const k of Object.keys(next) as (keyof typeof next)[]) if (next[k] === undefined || next[k] === "") delete next[k];
+    onChange(Object.keys(next).length ? next : undefined);
+  };
+  const STARTS = { alpha: "A", numeric: "1", alphanumeric: "A1" } as const;
+  return (
+    <div className="col-span-2 flex flex-col gap-2 rounded-control border border-border-subtle p-3">
+      <div className="flex items-baseline justify-between">
+        <span className="label-caps">Revision scheme</span>
+        <span className="text-2xs text-text-tertiary">{own.style || own.start || own.prefix || own.skip !== undefined || own.pad !== undefined ? "set on this pedigree" : parentCode ? `inherited from ${parentCode}` : "default (ASME Y14.35 letters)"}</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        <Field label="Style">
+          <Select value={eff.style} onChange={(v) => set({ style: v as typeof eff.style, start: STARTS[v as typeof eff.style] })} options={[{ value: "alpha", label: "Letters (A, B, C)" }, { value: "numeric", label: "Numbers (1, 2, 3)" }, { value: "alphanumeric", label: "Letter + number (A1, A2)" }]} />
+        </Field>
+        <Field label="First revision">
+          <input className={cx(inputCls, "mono")} value={own.start ?? ""} placeholder={eff.start} onChange={(e) => set({ start: e.target.value.toUpperCase() || undefined })} />
+        </Field>
+        <Field label="Prefix">
+          <input className={cx(inputCls, "mono")} value={own.prefix ?? ""} placeholder={eff.prefix || "none"} onChange={(e) => set({ prefix: e.target.value.toUpperCase() || undefined })} />
+        </Field>
+        {eff.style === "numeric" ? (
+          <Field label="Digits (zero-pad)">
+            <input type="number" min={0} max={6} className={cx(inputCls, "mono")} value={own.pad ?? ""} placeholder={String(eff.pad)} onChange={(e) => set({ pad: e.target.value === "" ? undefined : Math.max(0, Math.min(6, Number(e.target.value))) })} />
+          </Field>
+        ) : (
+          <Field label="Letters never used">
+            <input className={cx(inputCls, "mono")} value={own.skip ?? ""} placeholder={eff.skip} onChange={(e) => set({ skip: e.target.value.toUpperCase().replace(/[^A-Z]/g, "") || undefined })} />
+          </Field>
+        )}
+      </div>
+      <div className="text-xs text-text-secondary">
+        Sequence: <span className="mono text-text-primary">{revisionPreview(eff, 6).join(", ")} …</span>
+        {eff.style === "alphanumeric" && <span className="text-text-tertiary"> · a major revision moves to the next letter ({nextRevision(firstRevision(eff), eff, true)})</span>}
+      </div>
+      <div className="text-2xs text-text-tertiary">A working revision takes the next label in its pedigree's scheme; switching pedigree relabels it until you type a label yourself.</div>
+    </div>
   );
 }

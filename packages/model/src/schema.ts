@@ -14,6 +14,10 @@ export const WireColorSchema = z.object({
 
 // ─── Harness entities (§4.1) ────────────────────────────────────────────────
 
+/** How a bare (flying-lead) wire end is finished, and how much insulation is stripped. */
+export const LeadEndSchema = z.object({ finish: z.enum(["stripped", "tinned", "ferrule", "unterminated"]).default("tinned"), stripMm: z.number().nonnegative().default(6) });
+export type LeadEnd = z.infer<typeof LeadEndSchema>;
+
 export const PinAssignmentSchema = z.object({
   netId: Id.nullable(),
   /** Contact PN override; null/undefined = derived default (§6.2). */
@@ -24,6 +28,8 @@ export const PinAssignmentSchema = z.object({
   noConnect: z.boolean().optional(),
   /** CMA build-up: filler strands crimped in with the wire(s) to bring the barrel's circular mil area up to the contact's minimum. */
   buildUp: z.object({ gauge: z.number(), count: z.number().int().min(1) }).optional(),
+  /** Flying-lead positions: this lead's own end finish (else the flying-lead end's default). */
+  leadEnd: LeadEndSchema.optional(),
 });
 export type PinAssignment = z.infer<typeof PinAssignmentSchema>;
 
@@ -56,7 +62,7 @@ export const ConnectorSchema = z.object({
   showUnused: z.boolean().default(false),
   description: z.string().default(""),
   /** Flying-lead ends only: how the bare wire ends are finished. */
-  leadEnd: z.object({ finish: z.enum(["stripped", "tinned", "ferrule", "unterminated"]).default("tinned"), stripMm: z.number().nonnegative().default(6) }).optional(),
+  leadEnd: LeadEndSchema.optional(),
 });
 export type ConnectorInstance = z.infer<typeof ConnectorSchema>;
 
@@ -84,6 +90,11 @@ export const NetSchema = z.object({
    * follow them exactly (e.g. P1-1→P2-1 plus a loopback P1-1→P1-5) instead of an automatic daisy order.
    */
   links: z.array(z.tuple([z.string(), z.string()])).default([]),
+  /**
+   * Only the drawn links are wired: pins on the net they don't reach stay unwired (shown as unrouted) instead of being
+   * wired automatically. Set when the user deletes a wire, so the pins keep their signal name.
+   */
+  wiringExplicit: z.boolean().optional(),
 });
 export type Net = z.infer<typeof NetSchema>;
 
@@ -109,6 +120,8 @@ export const WireSchema = z.object({
   /** Fields the user set explicitly; derivation won't overwrite them. */
   pinned: z.array(z.enum(["spec", "gauge", "color"])).default([]),
   extraLengthMm: z.number().default(0),
+  /** Schematic: corner points the user dragged the wire through (from `from` to `to`); absent = routed automatically. */
+  schPath: z.array(Point).optional(),
 });
 export type Wire = z.infer<typeof WireSchema>;
 
@@ -147,6 +160,8 @@ export const SpliceSchema = z.object({
   barrels: z.number().int().min(1).max(8).default(1),
   /** Where the splice sits on the schematic (bundle layout: at its node). */
   position: Point.optional(),
+  /** Schematic: the side barrel 1 faces (-1 left, 1 right); the other barrels face the other way. Unset = toward its wires. */
+  facing: z.union([z.literal(1), z.literal(-1)]).optional(),
   /** CMA build-up filler strands per barrel. */
   buildUp: z.array(z.object({ barrel: z.number().int().nonnegative(), gauge: z.number(), count: z.number().int().min(1) })).default([]),
 });
@@ -408,6 +423,19 @@ export const PedigreeSchema = z.object({
     .optional(),
   documentation: z.array(z.string()).optional(),
   markings: z.array(z.object({ text: z.string(), type: z.enum(["tag", "label"]), color: z.string().optional() })).optional(),
+  /** How revisions built to this pedigree are labelled (unset fields inherit). */
+  revisionScheme: z
+    .object({
+      style: z.enum(["alpha", "numeric", "alphanumeric"]).optional(),
+      /** First revision, e.g. "A", "1", "01", "A1". */
+      start: z.string().optional(),
+      /** Letters never used (alpha / alphanumeric). */
+      skip: z.string().optional(),
+      /** Zero-pad numbers to this many digits (0 = none). */
+      pad: z.number().int().min(0).max(6).optional(),
+      prefix: z.string().optional(),
+    })
+    .optional(),
   extraRulesetIds: z.array(z.string()).optional(),
 });
 export type Pedigree = z.infer<typeof PedigreeSchema>;
@@ -483,6 +511,8 @@ export const SettingsSchema = z.object({
   autoCommit: z.boolean().default(true),
   serviceLoopMm: z.number().default(0),
   defaultWireSpec: z.string().default("M22759/16"),
+  /** Schematic: wires without a path of their own get automatic lanes (on) or a plain route each (off). */
+  schematicAutoRoute: z.boolean().default(true),
   defaultColor: WireColorSchema.default({ base: 9, stripes: [] }),
   colorByClass: z.boolean().default(false),
   classColors: z.record(z.string(), WireColorSchema).default({
@@ -595,6 +625,8 @@ export const RevisionSchema = z.object({
   frozen: z.boolean().default(false),
   frozenAt: z.string().optional(),
   activePedigreeId: z.string(),
+  /** The label was typed by the user: it no longer follows the pedigree's revision scheme. */
+  labelPinned: z.boolean().optional(),
   harness: HarnessSchema,
   /** Typed release record, present on revisions frozen with schema v2+. */
   release: ReleaseSnapshotSchema.optional(),
@@ -674,4 +706,13 @@ export function safeParseProject(json: unknown): { ok: true; project: Project; n
   } catch (e) {
     return { ok: false, error: (e as Error).message };
   }
+}
+
+/** A pedigree's revision scheme with every field resolved (see revisions.ts). */
+export interface RevisionScheme {
+  style: "alpha" | "numeric" | "alphanumeric";
+  start: string;
+  skip: string;
+  pad: number;
+  prefix: string;
 }

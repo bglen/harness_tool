@@ -2,7 +2,7 @@ import { memo, useMemo } from "react";
 import { colorAbbr, describeWireColor, ratsnest, type Derived, type Harness, type Point, type Severity, type Wire, type WireEnd } from "@hs/model";
 import { needsCasing, semantic, wireColor } from "@hs/ui-tokens";
 import { LANE, laneMap, nodePos, wirePath, wireTrunk, type ConnLayout, type ZoomLevel } from "../lib/geometry";
-import { connectorPairs, roundedPath, schematicRoutes, splicePoint } from "@hs/model";
+import { connectorPairs, roundedPath, splicePoint } from "@hs/model";
 import type { CanvasMode } from "../store/ui";
 
 interface Props {
@@ -21,6 +21,8 @@ interface Props {
   flash: Set<string>;
   /** Schematic: every wire pin-to-pin. Bundle layout: wires hidden except ones no bundle carries yet (all of them in shield view). */
   mode: CanvasMode;
+  /** Schematic polylines per wire (computed by the canvas, which also drags them); null outside the schematic. */
+  schRoutes: Map<string, Point[]> | null;
 }
 
 interface WireGeom {
@@ -79,10 +81,10 @@ const WireView = memo(function WireView({ id, path, unrouted, base, stripes, tit
   );
 });
 
-export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, selected, hoverId, sev, focusNetId, shieldView, colorLabels, k, flash, mode }: Props) {
+export const WireLayer = memo(function WireLayer({ h, d, layouts, level, theme, selected, hoverId, sev, focusNetId, shieldView, colorLabels, k, flash, mode, schRoutes }: Props) {
   const schematic = mode === "schematic";
   const lanes = useMemo(() => (schematic ? new Map<string, Map<string, number>>() : laneMap(h, d)), [schematic, h, d]);
-  const routes = useMemo(() => (schematic && level !== "overview" ? schematicRoutes(h, layouts) : null), [schematic, level, h, layouts]);
+  const routes = schRoutes;
   const gap = level === "detail" ? LANE : LANE * 0.75;
   const canvasBg = semantic("bg.canvas", theme);
   const accent = semantic("accent", theme);

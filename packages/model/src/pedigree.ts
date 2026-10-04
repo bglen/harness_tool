@@ -34,6 +34,8 @@ export function resolvePedigree(scheme: PedigreeScheme, id: string): ResolvedPed
     workmanship: "IPC/WHMA-A-620 Class 3",
     lineage: chain.map((p) => p.id).reverse(),
   };
+  // Revision scheme: field by field down the chain.
+  let rs: Pedigree["revisionScheme"];
   for (const p of chain) {
     if (p.workmanship) out.workmanship = p.workmanship;
     if (p.inspections) {
@@ -48,7 +50,9 @@ export function resolvePedigree(scheme: PedigreeScheme, id: string): ResolvedPed
     if (p.documentation) out.documentation = [...p.documentation];
     if (p.markings) out.markings = [...p.markings];
     if (p.extraRulesetIds) out.extraRulesetIds = [...p.extraRulesetIds];
+    if (p.revisionScheme) rs = { ...rs, ...p.revisionScheme };
   }
+  out.revisionScheme = rs;
   out.inspections = out.inspections.filter((i) => i.sampling !== "none");
   return out;
 }

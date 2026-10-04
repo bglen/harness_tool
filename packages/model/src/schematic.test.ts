@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Harness, Point, Wire } from "./schema";
-import { gridCardTop, roundedPath, SCH_GRID, SCH_LANE, schematicRoutes, splicePoint, type SchematicCard } from "./schematic";
+import { dragSegment, gridCardTop, orthoThrough, roundedPath, SCH_GRID, SCH_LANE, schematicRoutes, splicePoint, type SchematicCard } from "./schematic";
 
 /** A pin card whose rows sit at the given heights, attaching wires at `attachX` on the `facing` side. */
 function card(_id: string, attachX: number, facing: 1 | -1, rows: Record<string, number>): SchematicCard {
@@ -202,5 +202,47 @@ describe("schematic wire routing", () => {
     expect(d.startsWith("M0,0")).toBe(true);
     expect(d.endsWith("L100,80")).toBe(true);
     expect((d.match(/Q/g) ?? []).length).toBe(2);
+  });
+});
+
+describe("wires the user shapes", () => {
+  it("keeps a drawn path orthogonal as the ends move", () => {
+    const pts = orthoThrough({ x: 0, y: 0 }, [{ x: 100, y: 0 }, { x: 100, y: 80 }], { x: 300, y: 95 });
+    expectOrthogonal(pts);
+    expect(pts[0]).toEqual({ x: 0, y: 0 });
+    expect(pts[pts.length - 1]).toEqual({ x: 300, y: 95 });
+    // last leg enters the pin horizontally
+    expect(pts[pts.length - 2]!.y).toBe(95);
+  });
+
+  it("drags a middle segment and keeps the pins fixed", () => {
+    const route = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 100, y: 80 }, { x: 300, y: 80 }];
+    const path = dragSegment(route, 1, 40, 1, -1); // vertical segment 40 px to the right
+    const full = orthoThrough(route[0]!, path, route[3]!);
+    expectOrthogonal(full);
+    expect(full.some((p) => p.x === 140)).toBe(true);
+    expect(full[0]).toEqual({ x: 0, y: 0 });
+    expect(full[full.length - 1]).toEqual({ x: 300, y: 80 });
+  });
+
+  it("drags the first segment by adding a jog at the pin", () => {
+    const route = [{ x: 0, y: 0 }, { x: 300, y: 0 }];
+    const full = orthoThrough(route[0]!, dragSegment(route, 0, 60, 1, -1), route[1]!);
+    expectOrthogonal(full);
+    expect(full[0]).toEqual({ x: 0, y: 0 });
+    expect(full[full.length - 1]).toEqual({ x: 300, y: 0 });
+    expect(full.some((p) => p.y === 60)).toBe(true);
+  });
+
+  it("routes wires with a path through it, and the rest automatically", () => {
+    const L = new Map([
+      ["A", card("A", 0, 1, { "1": 100, "2": 120 })],
+      ["B", card("B", 400, -1, { "1": 300, "2": 320 })],
+    ]);
+    const w1 = { ...wire(["A", "1"], ["B", "1"]), schPath: [{ x: 60, y: 100 }, { x: 60, y: 300 }] } as Wire;
+    const w2 = wire(["A", "2"], ["B", "2"]);
+    const r = schematicRoutes(harness([w1, w2]), L);
+    expect(r.get(w1.id)).toEqual([{ x: 0, y: 100 }, { x: 60, y: 100 }, { x: 60, y: 300 }, { x: 400, y: 300 }]);
+    expect(r.get(w2.id)!.length).toBeGreaterThan(2);
   });
 });

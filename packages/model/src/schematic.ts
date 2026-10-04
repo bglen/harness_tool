@@ -120,7 +120,8 @@ export function spliceGeometry(h: Harness, s: Harness["splices"][number], layout
   };
   const side = (x: number | null, fallback: 1 | -1): 1 | -1 => (x === null || Math.abs(x - center.x) < 1 ? fallback : x > center.x ? 1 : -1);
   const barrels = Math.max(1, s.barrels ?? 1);
-  const first = side(farX(barrels === 1 ? null : 0), -1);
+  // A stored orientation wins, so the symbol never flips on its own while it is dragged around.
+  const first = s.facing ?? side(farX(barrels === 1 ? null : 0), -1);
   const ports: SpliceGeometry["ports"] = [];
   let rowsOther = 0;
   for (let b = 0; b < barrels; b++) {
@@ -189,8 +190,8 @@ function place(b: Block, placed: Block[]): number {
   return Math.min(Math.max(b.start, b.lo), b.hi - width);
 }
 
-/** Orthogonal pin-to-pin polyline for every wire, keyed by wire id, running from `wire.from` to `wire.to`. */
-export function schematicRoutes(h: Harness, layouts: Map<string, SchematicCard>): Map<string, Point[]> {
+/** Automatic lanes for a set of wires (see the file comment). */
+function autoRoutes(h: Harness, layouts: Map<string, SchematicCard>): Map<string, Point[]> {
   const reqs: Req[] = [];
   const out = new Map<string, Point[]>();
   for (const w of h.wires) {
@@ -326,4 +327,87 @@ export function connectorPairs(h: Harness): { a: string; b: string; count: numbe
     e.count++;
   }
   return [...m.values()];
+}
+
+/**
+ * Orthogonal pin-to-pin polyline for every wire, keyed by wire id, running from `wire.from` to `wire.to`.
+ * Wires with a path of their own (dragged by the user) run through it, kept orthogonal as their ends move; the rest
+ * get automatic lanes (`auto`, the default) or, with auto-routing off, a plain route each that ignores the others.
+ */
+export function schematicRoutes(h: Harness, layouts: Map<string, SchematicCard>, opts: { auto?: boolean } = {}): Map<string, Point[]> {
+  const manual = h.wires.filter((w) => w.schPath?.length);
+  const rest = h.wires.filter((w) => !w.schPath?.length);
+  const out = new Map<string, Point[]>();
+  if (opts.auto ?? true) for (const [k, v] of autoRoutes({ ...h, wires: rest }, layouts)) out.set(k, v);
+  else for (const w of rest) for (const [k, v] of autoRoutes({ ...h, wires: [w] }, layouts)) out.set(k, v);
+  for (const w of manual) {
+    const a = endOf(h, w.from, layouts);
+    const b = endOf(h, w.to, layouts);
+    if (a && b) out.set(w.id, orthoThrough(a.p, w.schPath!, b.p));
+  }
+  return out;
+}
+
+/**
+ * Polyline from `a` through `via` to `b` with right-angle corners added wherever two points aren't in line: it leaves
+ * `a` horizontally, alternates, and enters `b` horizontally when it can. Duplicate and in-line points are dropped.
+ */
+export function orthoThrough(a: Point, via: Point[], b: Point): Point[] {
+  const P = [a, ...via, b];
+  const out: Point[] = [a];
+  let prevH = false;
+  for (let i = 1; i < P.length; i++) {
+    const q = P[i]!;
+    const last = out[out.length - 1]!;
+    if (last.x !== q.x && last.y !== q.y) {
+      // First leg horizontal; last leg horizontal (vertical, then into the pin); otherwise alternate.
+      const corner = i === 1 ? { x: q.x, y: last.y } : i === P.length - 1 || prevH ? { x: last.x, y: q.y } : { x: q.x, y: last.y };
+      out.push(corner);
+    }
+    const l2 = out[out.length - 1]!;
+    prevH = l2.y === q.y;
+    out.push(q);
+  }
+  return simplifyPolyline(out);
+}
+
+/** Drop repeated points and points in line with their neighbours. */
+export function simplifyPolyline(pts: Point[]): Point[] {
+  const P = pts.filter((p, i) => i === 0 || p.x !== pts[i - 1]!.x || p.y !== pts[i - 1]!.y);
+  return P.filter((p, i) => {
+    if (i === 0 || i === P.length - 1) return true;
+    const a = P[i - 1]!;
+    const b = P[i + 1]!;
+    return !((a.x === p.x && p.x === b.x) || (a.y === p.y && p.y === b.y));
+  });
+}
+
+/**
+ * Drag one segment of a wire's drawn polyline perpendicular to itself by `delta` (grid units already applied). The pin
+ * ends stay put: dragging the first or last segment adds a short jog at the pin instead. Returns the new corner points
+ * (the wire's `schPath`).
+ */
+export function dragSegment(pts: Point[], index: number, delta: number, dirStart: 1 | -1 = 1, dirEnd: 1 | -1 = -1): Point[] {
+  let P = pts.map((p) => ({ ...p }));
+  let k = index;
+  const horizontal = P[k]!.y === P[k + 1]!.y;
+  // Keep the end points: split off a stub so only the inner part of an end segment moves.
+  if (k === P.length - 2) {
+    const e = P[P.length - 1]!;
+    const stub = horizontal ? { x: e.x + dirEnd * SCH_STUB, y: e.y } : { x: e.x, y: e.y };
+    P = [...P.slice(0, -1), stub, e];
+  }
+  if (k === 0) {
+    const s = P[0]!;
+    const stub = horizontal ? { x: s.x + dirStart * SCH_STUB, y: s.y } : { x: s.x, y: s.y };
+    P = [s, stub, ...P.slice(1)];
+    k = 1;
+  }
+  for (const i of [k, k + 1]) {
+    if (i === 0 || i === P.length - 1) continue;
+    if (horizontal) P[i]!.y += delta;
+    else P[i]!.x += delta;
+  }
+  const full = orthoThrough(P[0]!, P.slice(1, -1), P[P.length - 1]!);
+  return full.slice(1, -1);
 }

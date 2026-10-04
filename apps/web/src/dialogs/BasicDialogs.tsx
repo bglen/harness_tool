@@ -17,6 +17,9 @@ import {
   WIRE_COLORS,
   type FinishingPreset,
   defaultPedigreeOf,
+  revisionPreview,
+  revisionSchemeOf,
+  workingRevisionLabel,
 } from "@hs/model";
 import { computeBom, deriveOperations } from "@hs/ops";
 import { makeQuoteSummary } from "../lib/summary";
@@ -196,6 +199,13 @@ export function FreezeDialog() {
   const project = useProject((s) => s.project)!;
   const rev = currentRevision(project);
   const [notes, setNotes] = useState("");
+  // Next revision: from the pedigree's revision scheme unless typed here.
+  const [nextLabel, setNextLabel] = useState("");
+  const [major, setMajor] = useState(false);
+  const revScheme = revisionSchemeOf(project, rev.activePedigreeId);
+  const asFrozen = { ...project, revisions: project.revisions.map((r) => (r.id === rev.id ? { ...r, frozen: true } : r)) };
+  const autoNext = workingRevisionLabel(asFrozen, rev.activePedigreeId, { major });
+  const clash = !!nextLabel.trim() && project.revisions.some((r) => r.label === nextLabel.trim());
   const close = () => ui.closeDialog("freeze");
   return (
     <Dialog
@@ -211,7 +221,7 @@ export function FreezeDialog() {
           </Button>
           <Button
             variant="primary"
-            disabled={rev.frozen}
+            disabled={rev.frozen || clash}
             onClick={async () => {
               const p = getProject();
               const s = svc();
@@ -236,8 +246,8 @@ export function FreezeDialog() {
                 },
               });
               release.outputs = releaseOutputHashes({ ...p, revisions: p.revisions.map((x) => (x.id === r.id ? { ...x, frozen: true, frozenAt: at, release } : x)) }, r.id);
-              if (dispatch(freezeRevision({ notes, newRevisionId: uid(), release, at }), `Freeze Rev ${rev.label}`)) {
-                ui.toast({ kind: "success", text: `Rev ${rev.label} frozen. You're now editing the next revision. Its release package is in Outputs → Package.` });
+              if (dispatch(freezeRevision({ notes, newRevisionId: uid(), release, at, nextLabel: nextLabel.trim() || undefined, major }), `Freeze Rev ${rev.label}`)) {
+                ui.toast({ kind: "success", text: `Rev ${rev.label} frozen. You're now editing Rev ${nextLabel.trim() || autoNext}. Its release package is in Outputs → Package.` });
                 close();
               }
             }}
@@ -250,6 +260,11 @@ export function FreezeDialog() {
       <Field label="Revision notes">
         <textarea className={cx(inputCls, "h-24 py-1")} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="What changed in this revision?" />
       </Field>
+      <Field label="Work continues on" hint={`Next in the ${revisionPreview(revScheme, 3).join(", ")} … scheme of this revision's pedigree. Type a label to use your own.`}>
+        <input className={cx(inputCls, "mono w-32")} value={nextLabel} placeholder={autoNext} onChange={(e) => setNextLabel(e.target.value)} aria-label="Next revision label" />
+      </Field>
+      {clash && <div className="text-xs text-status-error">Rev {nextLabel.trim()} already exists.</div>}
+      {revScheme.style === "alphanumeric" && !nextLabel.trim() && <Toggle checked={major} onChange={setMajor} label={`Major revision (next letter: ${workingRevisionLabel(asFrozen, rev.activePedigreeId, { major: true })} instead of ${workingRevisionLabel(asFrozen, rev.activePedigreeId)})`} />}
     </Dialog>
   );
 }
@@ -283,6 +298,9 @@ export function SettingsDialog() {
         <Field label="Default wire spec">
           <Select value={st.defaultWireSpec} onChange={(v) => dispatch(setSettings({ defaultWireSpec: v }))} options={svc().cat.wireSpecs().map((s) => ({ value: s, label: s }))} />
         </Field>
+        <div className="col-span-2">
+          <Toggle checked={st.schematicAutoRoute} onChange={(v) => dispatch(setSettings({ schematicAutoRoute: v }))} label="Auto-route schematic wires (wires you have dragged keep their own path either way)" />
+        </div>
         <Field label="Default wire color">
           <Select value={st.defaultColor.base} onChange={(v) => dispatch(setSettings({ defaultColor: { base: v, stripes: [] } }))} options={WIRE_COLORS.map((c) => ({ value: c.code, label: `${c.code} ${c.name}` }))} />
         </Field>

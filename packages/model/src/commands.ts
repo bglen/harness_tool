@@ -6,8 +6,9 @@ function snapshot<T>(v: T): T {
 }
 import type { CatalogIndex, ConnectorKind } from "./catalog";
 import { derive } from "./derive";
-import { connectorById, currentHarness, currentRevision, endKey, isNoConnectName, isSpliceKey, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, parseLinkKey, prune, spliceKey, uid } from "./helpers";
+import { connectorById, currentHarness, currentRevision, endKey, isNoConnectName, isSpliceKey, leadEndAt, memberKey, netOfPin, nextLabel, nextNetName, nextRefDes, parseLinkKey, prune, spliceKey, uid } from "./helpers";
 import { activePedigree } from "./pedigree";
+import { workingRevisionLabel } from "./revisions";
 import { normalizePn } from "./pn38999";
 import type {
   Accessory,
@@ -19,6 +20,7 @@ import type {
   Harness,
   Hardware,
   Label,
+  LeadEnd,
   Layer,
   Net,
   NetClass,
@@ -37,7 +39,7 @@ import type {
   Waiver,
   WireEnd,
 } from "./schema";
-import { desiredPairs, drawnLinks, normalize, parallelPairs } from "./sync";
+import { desiredPairs, drawnLinks, normalize, parallelPairs, unreachedPairs } from "./sync";
 import type { WireColor } from "./colors";
 import type { DrawingTemplate } from "./drawingTemplate";
 
@@ -271,11 +273,14 @@ export const moveNodes = def<{ moves: { id: string; position: Point }[] }>("move
   },
 });
 
-export const rotateConnector = def<{ id: string; rotation: number }>("rotateConnector", {
+/** Rotate a connector; `position` moves its anchor too (flip keeps the connector box where it was). */
+export const rotateConnector = def<{ id: string; rotation: number; position?: Point }>("rotateConnector", {
   label: () => "Rotate connector",
   run(proj, p) {
     const c = connectorById(H(proj), p.id);
-    if (c) c.rotation = ((p.rotation % 360) + 360) % 360;
+    if (!c) return;
+    c.rotation = ((p.rotation % 360) + 360) % 360;
+    if (p.position) c.position = { ...p.position };
   },
 });
 
@@ -573,6 +578,15 @@ export const commitRatsnest = def<{ netIds?: string[]; connectorIds?: string[] }
   label: () => "Commit connections",
   run(proj, p, { cat }) {
     const h = H(proj);
+    // Explicitly wired nets: committing draws the missing connections (then the drawing covers the net again).
+    for (const n of h.nets) {
+      if (!n.wiringExplicit || (p.netIds && !p.netIds.includes(n.id))) continue;
+      for (const [a, b] of unreachedPairs(n)) {
+        if (p.connectorIds && ![a, b].some((e) => e.kind === "pin" && p.connectorIds!.includes(e.connectorId))) continue;
+        (n.links ??= []).push([endKey(a), endKey(b)]);
+      }
+      if (!unreachedPairs(n).length) n.wiringExplicit = false;
+    }
     const prev = proj.settings.autoCommit;
     // Temporarily create wires by running a normalize pass with auto-commit, then filter scope.
     const before = new Set(h.wires.map((w) => w.id));
@@ -643,7 +657,10 @@ export const setWireDefaults = def<{ netClass?: NetClass; spec?: string; gauge?:
   },
 });
 
-/** Delete a wire = disconnect its far-end pin from the net (a wire can't exist without connectivity). */
+/**
+ * Delete a wire = remove that one connection. Both pins keep their net (and signal name); the net is then wired only
+ * as drawn, so the pins left unconnected show as an unrouted connection instead of being re-wired automatically.
+ */
 export const deleteWires = def<{ ids: string[] }>("deleteWires", {
   label: (p) => (p.ids.length === 1 ? "Delete wire" : `Delete ${p.ids.length} wires`),
   run(proj, p) {
@@ -651,12 +668,11 @@ export const deleteWires = def<{ ids: string[] }>("deleteWires", {
     for (const id of p.ids) {
       const w = h.wires.find((x) => x.id === id);
       if (!w) continue;
-      // Forget the drawn connection this wire came from.
       const net = h.nets.find((n) => n.id === w.netId);
-      if (net?.links?.length) unlink(net, endKey(w.from), endKey(w.to));
-      const end = w.to.kind === "pin" ? w.to : w.from.kind === "pin" ? w.from : null;
-      // The far pin leaves the net, unless it's still wired some other way (another drawn branch).
-      if (end && end.kind === "pin" && !(net && w.to.kind === "splice" && linksAt(net, memberKey(end)).length)) setPinNet(h, { connectorId: end.connectorId, cavityId: end.cavityId }, null);
+      if (!net) continue;
+      materializeLinks(h, net);
+      unlink(net, endKey(w.from), endKey(w.to));
+      net.wiringExplicit = true;
     }
   },
 });
@@ -1083,8 +1099,8 @@ export const deleteNodes = def<{ ids: string[] }>("deleteNodes", {
  * Edit a splice. `pn`: a part number pins it (and sets the barrel count from the catalog part); "" lets the part
  * follow the wires again. Wires on barrels that no longer exist move to the last barrel.
  */
-export const setSpliceProps = def<{ id: string; type?: Splice["type"]; cover?: Splice["cover"]; pn?: string; nodeId?: string; barrels?: number; position?: Point; buildUp?: Splice["buildUp"] }>("setSpliceProps", {
-  label: (p) => (p.position ? "Move splice" : p.buildUp ? "Splice CMA build-up" : "Edit splice"),
+export const setSpliceProps = def<{ id: string; type?: Splice["type"]; cover?: Splice["cover"]; pn?: string; nodeId?: string; barrels?: number; position?: Point; facing?: 1 | -1; buildUp?: Splice["buildUp"] }>("setSpliceProps", {
+  label: (p) => (p.position ? "Move splice" : p.facing && !p.position ? "Flip splice" : p.buildUp ? "Splice CMA build-up" : "Edit splice"),
   run(proj, p, { cat }) {
     const h = H(proj);
     const s = h.splices.find((x) => x.id === p.id);
@@ -1100,6 +1116,7 @@ export const setSpliceProps = def<{ id: string; type?: Splice["type"]; cover?: S
     }
     if (p.nodeId) s.nodeId = p.nodeId;
     if (p.position) s.position = { ...p.position };
+    if (p.facing) s.facing = p.facing;
     if (p.buildUp) s.buildUp = p.buildUp.map((b) => ({ ...b }));
     if (p.barrels && p.barrels !== s.barrels) {
       const n = Math.max(1, Math.min(8, Math.round(p.barrels)));
@@ -1443,6 +1460,7 @@ export const setActivePedigree = def<{ id: string }>("setActivePedigree", {
   label: (p) => `Switch pedigree`,
   run(proj, p) {
     if (proj.pedigreeScheme.pedigrees.some((x) => x.id === p.id)) currentRevision(proj).activePedigreeId = p.id;
+    relabelWorking(proj);
   },
 });
 
@@ -1458,6 +1476,7 @@ export const setPedigreeScheme = def<{ scheme: PedigreeScheme; activeId?: string
     }
     const cur = currentRevision(proj);
     if (p.activeId && !cur.frozen) cur.activePedigreeId = p.activeId;
+    relabelWorking(proj);
   },
 });
 
@@ -1593,7 +1612,7 @@ export const setCustomerFurnished = def<{ pn: string; furnished: boolean; arriva
 });
 
 /** Freeze the current revision (immutable) and continue on the next letter (§4.3). */
-export const freezeRevision = def<{ notes: string; newRevisionId: string; release: ReleaseSnapshot; at: string }>("freezeRevision", {
+export const freezeRevision = def<{ notes: string; newRevisionId: string; release: ReleaseSnapshot; at: string; nextLabel?: string; major?: boolean }>("freezeRevision", {
   label: () => "Freeze revision",
   allowFrozen: false,
   run(proj, p) {
@@ -1602,8 +1621,12 @@ export const freezeRevision = def<{ notes: string; newRevisionId: string; releas
     cur.frozenAt = p.at;
     cur.notes = p.notes;
     cur.release = p.release;
-    const next = nextRevisionLabel(cur.label);
-    proj.revisions.push({ id: p.newRevisionId, label: next, notes: "", frozen: false, activePedigreeId: cur.activePedigreeId, harness: snapshot(cur.harness) });
+    // Next label from the pedigree's revision scheme, unless the user typed one.
+    const auto = workingRevisionLabel(proj, cur.activePedigreeId, { major: p.major });
+    const typed = p.nextLabel?.trim();
+    if (typed && proj.revisions.some((r) => r.label === typed)) throw new CommandRejectedError(`Rev ${typed} already exists.`);
+    const next = typed || auto;
+    proj.revisions.push({ id: p.newRevisionId, label: next, labelPinned: !!typed && typed !== auto, notes: "", frozen: false, activePedigreeId: cur.activePedigreeId, harness: snapshot(cur.harness) });
     proj.currentRevisionId = p.newRevisionId;
   },
 });
@@ -1615,14 +1638,6 @@ export const openRevision = def<{ id: string }>("openRevision", {
     if (proj.revisions.some((r) => r.id === p.id)) proj.currentRevisionId = p.id;
   },
 });
-
-export function nextRevisionLabel(label: string): string {
-  // A..Z then AA.. (skip I, O, Q, S, X, Z per ASME Y14.35 convention)
-  const letters = "ABCDEFGHJKLMNPRTUVWY";
-  const i = letters.indexOf(label);
-  if (i >= 0 && i < letters.length - 1) return letters[i + 1]!;
-  return label + "A";
-}
 
 /** Swap every use of a part PN for another (BOM alternates, §11). */
 export const replacePart = def<{ fromPn: string; toPn: string }>("replacePart", {
@@ -1682,15 +1697,30 @@ export const mergeHarness = def<{ harness: Harness; label?: string }>("mergeHarn
 export { derive };
 export type { CustomRule, Accessory };
 
-/** Flying-lead ends: how the bare wire ends are finished, and how much insulation is stripped. */
-export const setLeadEnd = def<{ ids: string[]; finish?: NonNullable<ConnectorInstance["leadEnd"]>["finish"]; stripMm?: number }>("setLeadEnd", {
-  label: (p) => (p.finish ? `Lead ends: ${p.finish}` : "Edit lead ends"),
+/**
+ * Flying-lead end finishes. `ids`: set the default for whole flying-lead ends. `pins`: set (or with `clear`, reset to
+ * the end's default) individual leads, so one bundle of flying leads can carry different finishes per wire.
+ */
+export const setLeadEnd = def<{ ids?: string[]; pins?: NetMember[]; finish?: LeadEnd["finish"]; stripMm?: number; clear?: boolean }>("setLeadEnd", {
+  label: (p) => (p.clear ? "Lead end: use default" : p.finish ? `Lead ends: ${p.finish}` : "Edit lead ends"),
   run(proj, p) {
-    for (const id of p.ids) {
-      const c = connectorById(H(proj), id);
+    const h = H(proj);
+    for (const id of p.ids ?? []) {
+      const c = connectorById(h, id);
       if (!c) continue;
       const cur = c.leadEnd ?? { finish: "tinned" as const, stripMm: 6 };
       c.leadEnd = { finish: p.finish ?? cur.finish, stripMm: p.stripMm ?? cur.stripMm };
+    }
+    for (const m of p.pins ?? []) {
+      const c = connectorById(h, m.connectorId);
+      if (!c) continue;
+      const pin = (c.pins[m.cavityId] ??= { netId: null });
+      if (p.clear) {
+        delete pin.leadEnd;
+        continue;
+      }
+      const cur = leadEndAt(c, m.cavityId);
+      pin.leadEnd = { finish: p.finish ?? cur.finish, stripMm: p.stripMm ?? cur.stripMm };
     }
   },
 });
@@ -1723,8 +1753,12 @@ function spliceAt(h: Harness, net: Net, at: string, opts: { id: string; others?:
   for (const o of others) unlink(net, at, o);
   net.links!.push([at, spliceKey(opts.id, 0)]);
   for (const o of others) net.links!.push([spliceKey(opts.id, out), o]);
+  // Barrel 1 faces back toward the pin (which leaves its card on the card's attach side).
+  const pinConn = h.connectors.find((c) => c.id === at.slice(0, at.indexOf(":")));
+  const rot = pinConn ? ((pinConn.rotation % 360) + 360) % 360 : 0;
+  const facing: 1 | -1 = rot > 90 && rot < 270 ? 1 : -1;
   // nodeId "" → sync places it on the best bundle node for the net.
-  h.splices.push({ id: opts.id, label: nextLabel(h.splices.map((s) => s.label), "SP"), netId: net.id, nodeId: "", type: opts.type ?? DEFAULT_SPLICE.type, pn: "", cover: "heatShrink", pinned: false, barrels, position: opts.position, buildUp: [] });
+  h.splices.push({ id: opts.id, label: nextLabel(h.splices.map((s) => s.label), "SP"), netId: net.id, nodeId: "", type: opts.type ?? DEFAULT_SPLICE.type, pn: "", cover: "heatShrink", pinned: false, barrels, position: opts.position, facing, buildUp: [] });
 }
 
 /** Turn a branch point (a pin carrying two or more wires) into a splice: the pin gets one wire to the splice, the branches leave the splice. */
@@ -1808,3 +1842,83 @@ function applyBranchDefault(proj: Project, h: Harness, keys: string[]) {
     } else spliceAt(h, net, k, { id: uid() });
   }
 }
+
+/**
+ * A working revision's label follows its pedigree's revision scheme (switching DEV → FLT turns "3" into "A", or into
+ * the letter after the last FLT release), until the user types a label of their own.
+ */
+function relabelWorking(proj: Project) {
+  const cur = currentRevision(proj);
+  if (cur.frozen || cur.labelPinned) return;
+  cur.label = workingRevisionLabel(proj, cur.activePedigreeId, { exceptRevisionId: cur.id });
+}
+
+/** Rename the working revision ("" = follow the pedigree's revision scheme again). */
+export const setRevisionLabel = def<{ label: string }>("setRevisionLabel", {
+  label: (p) => (p.label ? `Rev ${p.label}` : "Automatic revision label"),
+  run(proj, p) {
+    const cur = currentRevision(proj);
+    const label = p.label.trim();
+    if (!label) {
+      cur.labelPinned = false;
+      relabelWorking(proj);
+      return;
+    }
+    if (proj.revisions.some((r) => r.id !== cur.id && r.label === label)) throw new CommandRejectedError(`Rev ${label} already exists.`);
+    cur.label = label;
+    cur.labelPinned = true;
+  },
+});
+
+// ─── Schematic wire drawing ─────────────────────────────────────────────────
+
+/** A wire's schematic path (corner points); null returns it to automatic routing. */
+export const setWirePath = def<{ ids: string[]; path: Point[] | null }>("setWirePath", {
+  label: (p) => (p.path ? "Move wire" : p.ids.length === 1 ? "Auto-route wire" : `Auto-route ${p.ids.length} wires`),
+  run(proj, p) {
+    for (const id of p.ids) {
+      const w = H(proj).wires.find((x) => x.id === id);
+      if (!w) continue;
+      if (p.path?.length) w.schPath = p.path.map((q) => ({ x: q.x, y: q.y }));
+      else delete w.schPath;
+    }
+  },
+});
+
+/**
+ * Move one end of a wire to another pin or splice barrel: the drawn connection is re-pointed, the new pin joins the
+ * net, and the old pin leaves it only if nothing else is wired to it. The wire's own path is kept.
+ */
+export const moveWireEnd = def<{ wireId: string; end: "from" | "to"; to: WireEnd }>("moveWireEnd", {
+  label: (p) => (p.to.kind === "splice" ? "Move wire to splice barrel" : "Reconnect wire"),
+  run(proj, p) {
+    const h = H(proj);
+    const w = h.wires.find((x) => x.id === p.wireId);
+    const net = w && h.nets.find((n) => n.id === w.netId);
+    if (!w || !net) return;
+    materializeLinks(h, net);
+    const moving = p.end === "from" ? w.from : w.to;
+    const fixed = p.end === "from" ? w.to : w.from;
+    const kOld = endKey(moving);
+    const kFixed = endKey(fixed);
+    const kNew = endKey(p.to);
+    if (kNew === kOld || kNew === kFixed) return;
+    if (p.to.kind === "splice") {
+      const s = h.splices.find((x) => x.id === (p.to as { spliceId: string }).spliceId);
+      if (!s) return;
+      if (s.netId !== net.id) throw new CommandRejectedError(`${s.label} is on another net.`);
+      if (p.to.barrel >= s.barrels) throw new CommandRejectedError(`${s.label} has ${s.barrels} barrel${s.barrels === 1 ? "" : "s"}.`);
+    } else {
+      setNoConnect(h, p.to, false);
+      const cur = netOfPin(h, p.to.connectorId, p.to.cavityId);
+      if (cur && cur.id !== net.id) mergeNets(h, net, cur);
+      else if (!cur) setPinNet(h, p.to, net.id);
+    }
+    unlink(net, kOld, kFixed);
+    net.links!.push([kNew, kFixed]);
+    // Keep the wire record (colour, gauge, path) by re-pointing it; sync matches it to the new connection.
+    if (p.end === "from") w.from = p.to;
+    else w.to = p.to;
+    if (moving.kind === "pin" && !linksAt(net, kOld).length) setPinNet(h, { connectorId: moving.connectorId, cavityId: moving.cavityId }, null);
+  },
+});

@@ -13,11 +13,16 @@ import {
   setConnectorProps,
   setPinSignals,
   setSegmentProps,
+  FLYING_LEAD_SIZE,
   SCH_GRID,
   snapToGrid,
   connectToSplice,
   setSpliceProps,
   spliceGeometry,
+  schematicRoutes,
+  dragSegment,
+  moveWireEnd,
+  setWirePath,
   uid,
   updateLabel,
   type Command,
@@ -25,6 +30,7 @@ import {
   type Harness,
   type Point,
   type Wire,
+  type WireEnd,
 } from "@hs/model";
 import { cvdFilterMatrix, semantic } from "@hs/ui-tokens";
 import { dispatch, useProject } from "../store/project";
@@ -41,6 +47,7 @@ import { FloatingToolbar } from "./FloatingToolbar";
 import { ContextBar } from "./ContextBar";
 import { NotesLayer } from "./NotesLayer";
 import { SpliceSymbols } from "./SpliceSymbols";
+import { WireHandles } from "./WireHandles";
 import { openFile } from "../lib/files";
 import { Kbd } from "../ui/primitives";
 
@@ -53,7 +60,10 @@ type Drag =
   | { kind: "marquee"; start: Point; cur: Point; additive: boolean }
   | { kind: "note"; id: string; start: Point; cur: Point; moved: boolean }
   | { kind: "label"; id: string; start: Point; cur: Point; moved: boolean; screen: Point }
-  | { kind: "splice"; id: string; start: Point; cur: Point; moved: boolean };
+  | { kind: "splice"; id: string; start: Point; cur: Point; moved: boolean; facing: 1 | -1 }
+  | { kind: "wireSeg"; wireId: string; index: number; pts: Point[]; horizontal: boolean; dirs: [1 | -1, 1 | -1]; start: Point; cur: Point; moved: boolean }
+  | { kind: "wireEnd"; wireId: string; end: "from" | "to"; origin: Point; start: Point; cur: Point; moved: boolean }
+  | { kind: "spliceWire"; spliceId: string; barrel: number; origin: Point; start: Point; cur: Point; moved: boolean };
 
 function hitAt(e: { target: EventTarget | null }): { hit: string; id: string } | null {
   const el = (e.target as Element | null)?.closest?.("[data-hit]");
@@ -85,7 +95,8 @@ function hitAtPoint(x: number, y: number): { hit: string; id: string } | null {
 
 /** Compatible when the gauge ranges of the two contact sizes intersect (§5.4 invalid-target dimming). */
 function sizesCompatible(a: string, b: string): boolean {
-  if (a === b) return true;
+  // A flying lead is a bare wire end: it takes whatever gauge the other end's contact does.
+  if (a === b || a === FLYING_LEAD_SIZE || b === FLYING_LEAD_SIZE) return true;
   const cat = svc().cat;
   const ga = cat.contactSize(a)?.gauges ?? [];
   const gb = cat.contactSize(b)?.gauges ?? [];
@@ -166,10 +177,17 @@ export function Canvas() {
 
   // View harness: apply live drag offsets without dispatching every frame
   const h: Harness = useMemo(() => {
+    if (drag?.kind === "wireSeg" && drag.moved) {
+      const delta = snapToGrid(drag.horizontal ? drag.cur.y - drag.start.y : drag.cur.x - drag.start.x);
+      const path = dragSegment(drag.pts, drag.index, delta, drag.dirs[0], drag.dirs[1]);
+      return { ...h0, wires: h0.wires.map((w) => (w.id === drag.wireId ? { ...w, schPath: path } : w)) };
+    }
     if (drag?.kind === "splice" && drag.moved) {
       const sp = h0.splices.find((x) => x.id === drag.id);
       const base = sp && spliceGeometry(h0, sp).center;
-      return base ? { ...h0, splices: h0.splices.map((x) => (x.id === drag.id ? { ...x, position: { x: snapToGrid(base.x + drag.cur.x - drag.start.x), y: snapToGrid(base.y + drag.cur.y - drag.start.y) } } : x)) } : h0;
+      // Keep its orientation while it moves (it would otherwise turn to face its wires).
+      const facing = drag.facing;
+      return base ? { ...h0, splices: h0.splices.map((x) => (x.id === drag.id ? { ...x, facing, position: { x: snapToGrid(base.x + drag.cur.x - drag.start.x), y: snapToGrid(base.y + drag.cur.y - drag.start.y) } } : x)) } : h0;
     }
     if (drag?.kind === "label" && drag.moved) {
       const mm = labelDistanceAt(h0, drag.id, drag.cur);
@@ -201,6 +219,15 @@ export function Canvas() {
     }
     return m;
   }, [h.connectors, cat, level, bundles]);
+  // Schematic wire polylines: drawn by the wire layer and dragged here (segments and ends of the selected wire).
+  const autoRoute = project.settings.schematicAutoRoute;
+  const schRoutes = useMemo(() => (!bundles && level !== "overview" ? schematicRoutes(h, layouts, { auto: autoRoute }) : null), [bundles, level, h, layouts, autoRoute]);
+  /** Which way a wire leaves an end: a pin card's attach side, or the splice barrel port's side. */
+  const endDir = (e: WireEnd): 1 | -1 => {
+    if (e.kind === "pin") return layouts.get(e.connectorId)?.facing ?? 1;
+    const sp = h.splices.find((x) => x.id === e.spliceId);
+    return (sp && spliceGeometry(h, sp, layouts).ports.find((x) => x.barrel === (e.barrel ?? 0))?.dir) ?? 1;
+  };
   // Per-connector pin → wires and pin → name maps, reused when content is unchanged so memoized cards skip re-render
   const connCache = useRef(new Map<string, { wKey: string; wires: Map<string, Wire[]>; nKey: string; names: Map<string, string> }>());
   const perConn = useMemo(() => {
@@ -343,14 +370,60 @@ export function Canvas() {
       setDrag({ kind: "note", id: hit.id, start: p, cur: p, moved: false });
       return;
     }
+    if (hit.hit === "wire-seg" && schRoutes) {
+      const i = hit.id.lastIndexOf(":");
+      const wireId = hit.id.slice(0, i);
+      const pts = schRoutes.get(wireId);
+      const w = h.wires.find((x) => x.id === wireId);
+      if (pts && w) {
+        const index = Number(hit.id.slice(i + 1));
+        setDrag({ kind: "wireSeg", wireId, index, pts, horizontal: pts[index]!.y === pts[index + 1]!.y, dirs: [endDir(w.from), endDir(w.to)], start: p, cur: p, moved: false });
+        return;
+      }
+    }
+    if (hit.hit === "wire-end" && schRoutes) {
+      const i = hit.id.lastIndexOf(":");
+      const wireId = hit.id.slice(0, i);
+      const end = hit.id.slice(i + 1) as "from" | "to";
+      const pts = schRoutes.get(wireId);
+      if (pts) setDrag({ kind: "wireEnd", wireId, end, origin: end === "from" ? pts[0]! : pts[pts.length - 1]!, start: p, cur: p, moved: false });
+      return;
+    }
+    if (hit.hit === "splice-port" && !bundles) {
+      const i = hit.id.lastIndexOf(":");
+      const spliceId = hit.id.slice(0, i);
+      const barrel = Number(hit.id.slice(i + 1));
+      const sp = h.splices.find((x) => x.id === spliceId);
+      const port = sp && spliceGeometry(h, sp, layouts).ports.find((x) => x.barrel === barrel);
+      if (port) setDrag({ kind: "spliceWire", spliceId, barrel, origin: port.p, start: p, cur: p, moved: false });
+      return;
+    }
     if (hit.hit === "splice" && !bundles) {
-      setDrag({ kind: "splice", id: hit.id, start: p, cur: p, moved: false });
+      const sp = h.splices.find((x) => x.id === hit.id);
+      setDrag({ kind: "splice", id: hit.id, start: p, cur: p, moved: false, facing: (sp && (sp.facing ?? spliceGeometry(h, sp, layouts).ports[0]?.dir)) ?? -1 });
       return;
     }
     if (hit.hit === "label") {
       // Click: edit the label. Drag: slide it along its bundle.
       setDrag({ kind: "label", id: hit.id, start: p, cur: p, moved: false, screen: { x: e.clientX, y: e.clientY } });
       return;
+    }
+    // Schematic: pressing on a wire grabs the segment under the pointer, so it drags on the first click (a click
+    // without moving just selects it). Shift/Ctrl/Alt keep their selection meaning.
+    if (hit.hit === "wire" && !bundles && schRoutes && !(e.shiftKey || e.ctrlKey || e.metaKey || e.altKey)) {
+      const pts = schRoutes.get(hit.id);
+      const w = h.wires.find((x) => x.id === hit.id);
+      if (pts && w && pts.length > 1) {
+        const dist = (a: Point, b: Point) => {
+          const t = Math.max(0, Math.min(1, ((p.x - a.x) * (b.x - a.x) + (p.y - a.y) * (b.y - a.y)) / (((b.x - a.x) ** 2 + (b.y - a.y) ** 2) || 1)));
+          return Math.hypot(p.x - (a.x + (b.x - a.x) * t), p.y - (a.y + (b.y - a.y) * t));
+        };
+        let index = 0;
+        for (let i = 1; i < pts.length - 1; i++) if (dist(pts[i]!, pts[i + 1]!) < dist(pts[index]!, pts[index + 1]!)) index = i;
+        ui.select("wire", [hit.id]);
+        setDrag({ kind: "wireSeg", wireId: hit.id, index, pts, horizontal: pts[index]!.y === pts[index + 1]!.y, dirs: [endDir(w.from), endDir(w.to)], start: p, cur: p, moved: false });
+        return;
+      }
     }
     // simple click targets
     const map: Record<string, Parameters<typeof ui.select>[0]> = { wire: "wire", splice: "splice", clamp: "clamp", boot: "boot", hardware: "hardware", shield: "shield" };
@@ -581,11 +654,28 @@ export function Canvas() {
       if (dispatch(cmds, "Re-attach bundle")) ui.select("segment", [s.id]);
       return;
     }
+    if (dr.kind === "wireSeg") {
+      if (!dr.moved) ui.select("wire", [dr.wireId], add);
+      else {
+        const path = h.wires.find((x) => x.id === dr.wireId)?.schPath;
+        if (path) dispatch(setWirePath({ ids: [dr.wireId], path }), "Move wire");
+      }
+      return;
+    }
+    if (dr.kind === "wireEnd" || dr.kind === "spliceWire") {
+      if (!dr.moved) return;
+      const over = hitsAtPoint(e.clientX, e.clientY).find((x) => ["pin", "signal", "splice-port"].includes(x.hit));
+      if (!over) return;
+      const target: WireEnd = over.hit === "splice-port" ? { kind: "splice", spliceId: over.id.slice(0, over.id.lastIndexOf(":")), barrel: Number(over.id.slice(over.id.lastIndexOf(":") + 1)) } : { kind: "pin", connectorId: over.id.split(":")[0]!, cavityId: over.id.slice(over.id.indexOf(":") + 1) };
+      if (dr.kind === "wireEnd") dispatch(moveWireEnd({ wireId: dr.wireId, end: dr.end, to: target }));
+      else if (target.kind === "pin") dispatch(connectToSplice({ pin: { connectorId: target.connectorId, cavityId: target.cavityId }, spliceId: dr.spliceId, barrel: dr.barrel }), "Wire into splice");
+      return;
+    }
     if (dr.kind === "splice") {
       if (!dr.moved) ui.select("splice", [dr.id], add);
       else {
         const moved = h.splices.find((x) => x.id === dr.id);
-        if (moved?.position) dispatch(setSpliceProps({ id: dr.id, position: moved.position }), "Move splice");
+        if (moved?.position) dispatch(setSpliceProps({ id: dr.id, position: moved.position, facing: moved.facing }), "Move splice");
       }
       return;
     }
@@ -752,6 +842,13 @@ export function Canvas() {
         </g>
       );
     }
+  } else if ((drag?.kind === "wireEnd" || drag?.kind === "spliceWire") && drag.moved) {
+    preview = (
+      <g data-hit="drag-preview" pointerEvents="none">
+        <path d={`M${drag.origin.x},${drag.origin.y} L${drag.cur.x},${drag.origin.y} L${drag.cur.x},${drag.cur.y}`} stroke={semantic("accent", theme)} strokeWidth={1.6} fill="none" strokeDasharray="5 3" />
+        <rect x={drag.cur.x - 4} y={drag.cur.y - 4} width={8} height={8} fill="none" stroke={semantic("accent", theme)} strokeWidth={1.5} />
+      </g>
+    );
   } else if (drag?.kind === "marquee") {
     const x = Math.min(drag.start.x, drag.cur.x);
     const y = Math.min(drag.start.y, drag.cur.y);
@@ -820,8 +917,9 @@ export function Canvas() {
               flash={flashSet}
             />
           )}
-          <WireLayer h={h} d={d} layouts={layouts} level={level} theme={theme} selected={sel.kind === "wire" ? selSet : EMPTY} hoverId={ui.hover?.id ?? null} sev={sev} focusNetId={focusNet} shieldView={ui.shieldView} colorLabels={ui.wireColorLabels} k={kq} flash={flashSet} mode={mode} />
+          <WireLayer h={h} d={d} layouts={layouts} level={level} theme={theme} selected={sel.kind === "wire" ? selSet : EMPTY} hoverId={ui.hover?.id ?? null} sev={sev} focusNetId={focusNet} shieldView={ui.shieldView} colorLabels={ui.wireColorLabels} k={kq} flash={flashSet} mode={mode} schRoutes={schRoutes} />
           {bundles ? <SpliceMarks h={h} level={level} theme={theme} selected={sel.kind === "splice" ? selSet : EMPTY} /> : <SpliceSymbols h={h} layouts={layouts} level={level} theme={theme} selected={sel.kind === "splice" ? selSet : EMPTY} sev={sev} />}
+          {!bundles && sel.kind === "wire" && sel.ids.length === 1 && schRoutes?.get(sel.ids[0]!) && !drag && <WireHandles id={sel.ids[0]!} pts={schRoutes.get(sel.ids[0]!)!} theme={theme} k={kq} />}
           {h.connectors.map((c) => (
             <ConnectorView
               key={c.id}
