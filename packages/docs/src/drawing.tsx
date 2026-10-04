@@ -1,5 +1,5 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
-import { BUILD_UP_STRAND_MM, buildUps } from "@hs/model";
+import { BUILD_UP_STRAND_MM, buildUps, cmaReductions } from "@hs/model";
 import type { DocData } from "./data";
 import { C, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, pdfSafe, s, Swatch, Table } from "./common";
 import { HarnessDiagram } from "./diagram";
@@ -15,7 +15,8 @@ const SHEETS: Record<string, [number, number]> = {
 export function drawingNotes(data: DocData): string[] {
   const { ped, project, dfm, cat, rev } = data;
   const notes: string[] = [];
-  notes.push(`Workmanship per ${ped.workmanship}.`);
+  const red = cmaReductions(rev.harness);
+  notes.push(`Workmanship per ${ped.workmanship}${red.length ? ", except the CMA reductions noted below" : ""}.`);
   notes.push(`Build class (pedigree): ${ped.name} (${ped.code}), scheme “${project.pedigreeScheme.name}” v${project.pedigreeScheme.version}.`);
   const insp = ped.inspections.map((i) => {
     const t = data.inspections.find((x) => x.id === i.typeId);
@@ -42,6 +43,10 @@ export function drawingNotes(data: DocData): string[] {
   if (tools.size) notes.push(`Crimp tooling (verify before use): ${[...tools.values()].join("; ")}.`);
   const bu = buildUps(rev.harness);
   if (bu.length) notes.push(`CMA build-up (filler strands crimped in with the conductors, ${BUILD_UP_STRAND_MM} mm each, cut from the BOM filler wire): ${bu.map((b) => `${b.where}: ${b.count}× ${b.gauge} AWG`).join("; ")}.`);
+  if (red.length)
+    notes.push(
+      `WORKMANSHIP EXCEPTION - CMA REDUCTION (strands removed to fit the contact; not permitted by ${ped.workmanship}; requires engineering and customer approval before build): ${red.map((r) => `${r.where}: remove ${r.reduction.strandsRemoved} of ${r.reduction.strands} strands from ${r.reduction.gauge} AWG (${r.fill.wireCma.toLocaleString("en-US")} to ${r.fill.cma.toLocaleString("en-US")} CMA)`).join("; ")}.`,
+    );
   const sp = rev.harness.splices;
   if (sp.length) notes.push(`Splices: ${sp.map((s) => `${s.label} ${s.pn || "(part to be selected)"}, ${s.barrels === 1 ? "single-ended" : `${s.barrels} barrels`}, ${s.cover === "potting" ? "potted" : "heat-shrink covered"}`).join("; ")}.`);
   const rs = project.rulesets.map((r) => `${r.name} v${r.version}${r.enforced ? " (enforced)" : ""}`);

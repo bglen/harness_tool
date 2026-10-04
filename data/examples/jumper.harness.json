@@ -8,6 +8,7 @@
     "autoCommit": true,
     "serviceLoopMm": 0,
     "defaultWireSpec": "M22759/16",
+    "schematicAutoRoute": true,
     "defaultColor": {
       "base": 9,
       "stripes": []

@@ -1,4 +1,5 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
+import { cmaReductions } from "@hs/model";
 import type { DocData } from "./data";
 import { C, ExportBanner, fontMono, fontUi, pdfSafe, s, Table } from "./common";
 import { DOC_COC, DOC_FAI, DOC_LOT, DOC_MATCERT, DOC_SERIAL, DOC_SOURCE, DOC_TDP, type SimulatedBuild } from "./mfgSim";
@@ -58,6 +59,8 @@ export function MfgReportDocument({ data, sim }: { data: DocData; sim: Simulated
   );
   const serialRange = sim.serials.length > 1 ? `${sim.serials[0]!.serial} – ${sim.serials[sim.serials.length - 1]!.serial}` : sim.serials[0]!.serial;
   const qa = sim.serials[0]!.inspector;
+  // Workmanship exceptions the design calls for (CMA reduction), declared on the certificate.
+  const devs = cmaReductions(data.rev.harness).map((r) => `CMA reduction at ${r.where}: ${r.reduction.strandsRemoved} of ${r.reduction.strands} strands removed (${r.reduction.gauge} AWG)`);
   return (
     <Document title={`${reportNo} Manufacturing Report (example)`} author={MAKER} creator="Harness Studio" producer="Harness Studio">
       <Page size="LETTER" style={pageStyle}>
@@ -88,6 +91,7 @@ export function MfgReportDocument({ data, sim }: { data: DocData; sim: Simulated
           </Text>
         </View>
         <KV k="Workmanship" v={ped.workmanship || "IPC/WHMA-A-620"} />
+        {devs.length > 0 && <KV k="Approved deviations" v={devs.join("; ")} />}
         <Text style={s.h2}>Order</Text>
         <KV k="Customer" v={order.customer} />
         <KV k="Customer PO" v={order.po} mono />
@@ -110,7 +114,7 @@ export function MfgReportDocument({ data, sim }: { data: DocData; sim: Simulated
         <View break>
           <Text style={s.h1}>Certificate of Conformance</Text>
           <Text style={{ ...s.p, fontSize: 9.5, color: C.text, lineHeight: 1.5 }}>
-            {MAKER} certifies that the {order.qty} harness{order.qty === 1 ? "" : "es"} listed below, part number {project.partNumber} Rev {rev.label}, were manufactured, inspected and tested in accordance with drawing {project.titleBlock.drawingNumber || project.partNumber} Rev {rev.label}, the {ped.name} ({ped.code}) pedigree requirements and customer purchase order {order.po}, and conform in all respects to those requirements. Workmanship meets {ped.workmanship || "IPC/WHMA-A-620"}. Records supporting this certification are on file and available for review.
+            {MAKER} certifies that the {order.qty} harness{order.qty === 1 ? "" : "es"} listed below, part number {project.partNumber} Rev {rev.label}, were manufactured, inspected and tested in accordance with drawing {project.titleBlock.drawingNumber || project.partNumber} Rev {rev.label}, the {ped.name} ({ped.code}) pedigree requirements and customer purchase order {order.po}, and conform in all respects to those requirements{devs.length ? ", except the approved deviations listed on the cover" : ""}. Workmanship meets {ped.workmanship || "IPC/WHMA-A-620"}{devs.length ? " except where those deviations apply" : ""}. Records supporting this certification are on file and available for review.
           </Text>
           <Table
             cols={[{ label: "Serial", w: 1, mono: true }, { label: "Completed", w: 1 }, { label: "Assembled by", w: 1.2 }, { label: "Inspected by", w: 1.2 }, { label: "Tested by", w: 1.2 }, { label: "Status", w: 0.8 }]}

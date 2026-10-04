@@ -28,6 +28,8 @@ export const PinAssignmentSchema = z.object({
   noConnect: z.boolean().optional(),
   /** CMA build-up: filler strands crimped in with the wire(s) to bring the barrel's circular mil area up to the contact's minimum. */
   buildUp: z.object({ gauge: z.number(), count: z.number().int().min(1) }).optional(),
+  /** CMA reduction: strands cut from the heaviest conductor so it fits the contact barrel. A workmanship exception. */
+  cmaReduction: z.object({ strandsRemoved: z.number().int().min(1) }).optional(),
   /** Flying-lead positions: this lead's own end finish (else the flying-lead end's default). */
   leadEnd: LeadEndSchema.optional(),
 });
@@ -409,6 +411,8 @@ export const PedigreeSchema = z.object({
   process: z
     .object({
       noSplices: z.boolean().optional(),
+      /** CMA reduction (strands cut to fit a contact) not allowed at this build class. */
+      noCmaReduction: z.boolean().optional(),
       /** How a wire branching off a pin is built by default: two wires in the contact, or a splice. */
       branchJoin: z.enum(["doubleCrimp", "splice"]).optional(),
       noManualRework: z.boolean().optional(),

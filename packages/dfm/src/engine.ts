@@ -40,6 +40,7 @@ export function pedigreeRules(ped: ResolvedPedigree): RuleInstance[] {
   const r = (id: string, type: string, title: string, severity: Severity, params: Record<string, unknown> = {}): RuleInstance => ({ id: `PED-${ped.code}-${id}`, type, category: "Process", severity, title, description: "", rationale: `Required by pedigree ${ped.name}.`, params, enabled: true });
   // Titles name the finding (what's wrong), not the requirement.
   if (ped.process.noSplices) out.push(r("SPL", "no_splices", "Splice or daisy chain used (not allowed)", "error"));
+  if (ped.process.noCmaReduction) out.push(r("CMAR", "cma_reduction_not_allowed", "CMA reduction used (not allowed)", "error"));
   if (ped.process.noPotting) out.push(r("POT", "no_potting", "Potting used (not allowed)", "error"));
   if (ped.process.requireBoots) out.push(r("BOOT", "require_boots", "Backshell without a boot", "error"));
   if (ped.process.serializedLabels) out.push(r("SER", "serialized_labels", "Serialized ID label missing", "error"));

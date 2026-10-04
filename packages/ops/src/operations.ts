@@ -1,4 +1,4 @@
-import { buildUps, cavityStates, derive, leadEndAt, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
+import { buildUps, cavityStates, cmaReductions, derive, leadEndAt, extentCoverage, type CatalogIndex, type Derived, type InspectionType, type MachineProfile, type Project, type ResolvedPedigree, type Revision } from "@hs/model";
 
 export type OpKind =
   | "connectorLoad"
@@ -7,6 +7,7 @@ export type OpKind =
   | "contactCrimpInsert"
   | "leadEnd"
   | "cmaBuildUp"
+  | "cmaReduction"
   | "sealingPlug"
   | "wireCutStrip"
   | "wireLayPerM"
@@ -66,6 +67,7 @@ const OP_LABEL: Record<OpKind, string> = {
   contactCrimpInsert: "Contact crimp + insert",
   leadEnd: "Flying-lead end finish",
   cmaBuildUp: "CMA build-up",
+  cmaReduction: "CMA reduction (strand removal)",
   sealingPlug: "Sealing plug insertion",
   wireCutStrip: "Wire cut + strip",
   wireLayPerM: "Wire layup",
@@ -197,6 +199,7 @@ export function deriveOperations(project: Project, rev: Revision, cat: CatalogIn
   for (const l of h.labels) push("label", 1, caps.labelTypes.includes(l.type), [], caps.labelTypes.includes(l.type) ? undefined : `${l.type} labels applied by hand`);
   for (const s of h.splices) push("splice", 1, caps.supportsSplices, [s.label], caps.supportsSplices ? undefined : "Splices are manual operations");
   for (const b of buildUps(h)) push("cmaBuildUp", 1, false, [b.where], "CMA build-up strands are added by hand");
+  for (const r of cmaReductions(h)) push("cmaReduction", 1, false, [r.where], "Strand removal is done by hand (workmanship exception)");
   let cure = 0;
   for (const p of h.potting) {
     const comp = cat.potting(p.compoundPn);

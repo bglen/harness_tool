@@ -220,6 +220,7 @@ export function PedigreeEditor() {
             {tab === "Process" && (
               <div className="grid grid-cols-2 gap-3">
                 <Toggle checked={!!resolved.process.noSplices} onChange={(v) => upd({ process: { ...p.process, noSplices: v } })} label="Splices / daisy chains not allowed" />
+                <Toggle checked={!!resolved.process.noCmaReduction} onChange={(v) => upd({ process: { ...p.process, noCmaReduction: v } })} label="CMA reduction (cutting strands to fit a contact) not allowed" />
                 <Toggle checked={!!resolved.process.noPotting} onChange={(v) => upd({ process: { ...p.process, noPotting: v } })} label="Potting not allowed" />
                 <Toggle checked={!!resolved.process.noManualRework} onChange={(v) => upd({ process: { ...p.process, noManualRework: v } })} label="No manual rework" />
                 <Toggle checked={!!resolved.process.serializedLabels} onChange={(v) => upd({ process: { ...p.process, serializedLabels: v } })} label="Serialized identification label required" />

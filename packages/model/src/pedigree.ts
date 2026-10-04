@@ -72,6 +72,7 @@ export function monotonicityWarnings(scheme: PedigreeScheme): string[] {
     const hi = res[i]!;
     const flags: [keyof ResolvedPedigree["process"], string][] = [
       ["noSplices", "splices"],
+      ["noCmaReduction", "CMA reduction (strand removal)"],
       ["noPotting", "potting"],
       ["noManualRework", "manual rework"],
     ];

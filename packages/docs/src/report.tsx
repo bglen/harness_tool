@@ -1,5 +1,5 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
-import { affectedParts, resolvePedigree, type NetClass } from "@hs/model";
+import { affectedParts, cmaReductions, resolvePedigree, type NetClass } from "@hs/model";
 import { opLabel } from "@hs/ops";
 import type { DocData } from "./data";
 import { C, DEMO_FOOTER, DraftStamp, ExportBanner, fmtLen, fontMono, fontUi, money, pdfSafe, s, Swatch, Table } from "./common";
@@ -345,10 +345,20 @@ export function ReportDocument({ data, sections, hideQuote: hideQuoteIn, redact 
         )}
         {on("mfgtest") && (
           <Section title="9 Manufacturing & test">
-            <Text style={s.p}>Workmanship: {ped.workmanship}.</Text>
+            <Text style={s.p}>Workmanship: {ped.workmanship}{cmaReductions(h).length ? ", with the exceptions below" : ""}.</Text>
+            {cmaReductions(h).length > 0 && (
+              <View>
+                <Text style={{ ...s.h2, color: C.warning }}>Workmanship exceptions: CMA reduction</Text>
+                <Text style={s.p}>Strands are removed from these conductors so they fit their contacts. {ped.workmanship} does not permit strand removal: each needs engineering and customer approval before build, and it lowers current capacity and crimp pull strength of the conductor.</Text>
+                <Table
+                  cols={[{ label: "Contact", w: 0.8, mono: true }, { label: "Conductor", w: 1 }, { label: "Strands removed", w: 1, align: "right" }, { label: "CMA (before to after)", w: 1.4, align: "right" }]}
+                  rows={cmaReductions(h).map((r) => [r.where, `${r.reduction.gauge} AWG, ${r.fill.wires.map((w) => w.label).join(", ")}`, `${r.reduction.strandsRemoved} of ${r.reduction.strands} (${Math.round((100 * r.reduction.strandsRemoved) / r.reduction.strands)} %)`, `${r.fill.wireCma.toLocaleString("en-US")} to ${r.fill.cma.toLocaleString("en-US")}`])}
+                />
+              </View>
+            )}
             <Table cols={[{ label: "Inspection / test", w: 2 }, { label: "Sampling", w: 1 }, { label: "Parameters", w: 2.5 }, { label: "Where", w: 0.8 }]} rows={ped.inspections.map((i) => { const t = data.inspections.find((x) => x.id === i.typeId); return [t?.name ?? i.typeId, i.sampling, pdfSafe(Object.entries(i.params).filter(([, v]) => typeof v !== "object").map(([k, v]) => `${t?.params.find((p) => p.key === k)?.label ?? k} ${v}${t?.params.find((p) => p.key === k)?.unit ? " " + t!.params.find((p) => p.key === k)!.unit : ""}`).join(", ") || "—"), t?.inHouse ? "in-house" : "outsourced"]; })} />
             <Text style={s.p}>Parts policy: {[ped.partsPolicy.qplOnly && "QPL/approved parts only", ped.partsPolicy.noAlternates && "no alternates without approval", ped.partsPolicy.authorizedDistributionOnly && "authorized distribution only", ped.partsPolicy.bannedFinishes?.length && `banned shell classes ${ped.partsPolicy.bannedFinishes.join("/")}`, ped.partsPolicy.dateCodeMaxYears && `date codes at most ${ped.partsPolicy.dateCodeMaxYears} years old`].filter(Boolean).join("; ") || "standard"}.</Text>
-            <Text style={s.p}>Process: {[ped.process.noSplices && "no splices", ped.process.noPotting && "no potting", ped.process.noManualRework && "no manual rework", ped.process.serializedLabels && "serialized labels", ped.process.doubleBandClamps && "double band clamps", ped.process.bendRadiusMultiple && `bend radius at least ${ped.process.bendRadiusMultiple}× OD`, ped.process.minBraidCoverage && `braid coverage at least ${ped.process.minBraidCoverage}%`].filter(Boolean).join("; ") || "standard"}.</Text>
+            <Text style={s.p}>Process: {[ped.process.noSplices && "no splices", ped.process.noCmaReduction && "no CMA reduction", ped.process.noPotting && "no potting", ped.process.noManualRework && "no manual rework", ped.process.serializedLabels && "serialized labels", ped.process.doubleBandClamps && "double band clamps", ped.process.bendRadiusMultiple && `bend radius at least ${ped.process.bendRadiusMultiple}× OD`, ped.process.minBraidCoverage && `braid coverage at least ${ped.process.minBraidCoverage}%`].filter(Boolean).join("; ") || "standard"}.</Text>
             <Text style={s.p}>Deliverables: {ped.documentation.join(", ") || "—"}. Markings: {ped.markings.map((m) => m.text).join(", ") || "—"}.</Text>
             <Text style={s.h2}>Pedigree comparison</Text>
             <Table cols={[{ label: "Pedigree", w: 1.2 }, { label: "Workmanship", w: 2 }, { label: "Inspections", w: 3 }]} rows={[...project.pedigreeScheme.pedigrees].sort((a, b) => a.rank - b.rank).map((p) => { const r = resolvePedigree(project.pedigreeScheme, p.id); return [`${p.code} ${p.name}`, r.workmanship, r.inspections.map((i) => `${data.inspections.find((t) => t.id === i.typeId)?.name ?? i.typeId} ${i.sampling}`).join(", ")]; })} />

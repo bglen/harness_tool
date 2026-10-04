@@ -39,6 +39,7 @@ import {
   setBackshell,
   setConnectorPart,
   setLeadEnd,
+  setPinCmaReduction,
   setNetProps,
   setPedigreeScheme,
   setPinContact,
@@ -835,5 +836,42 @@ describe("moving wire ends", () => {
     p = run(p, [moveWireEnd({ wireId: w.id, end: w.from.kind === "pin" ? "from" : "to", to: { kind: "pin", connectorId: "p3", cavityId: "2" } })]);
     expect(ends()).toContain("SP/0>p3-2");
     expect(currentHarness(p).connectors.find((c) => c.id === "p3")!.pins["1"]?.netId ?? null).toBeNull();
+  });
+});
+
+describe("CMA reduction (heavy wire into a small contact)", () => {
+  const pin = (connectorId: string, cavityId: string) => ({ connectorId, cavityId });
+  const heavy = (p0 = newProject({ now: AT })) => {
+    let p = run(p0, [addConnector({ id: "j1", pn: SOCKET, position: { x: 0, y: 0 } }), addConnector({ id: "p2", pn: SOCKET, position: { x: 400, y: 0 }, rotation: 180 })]);
+    p = run(p, [connectPins({ pairs: [{ a: pin("j1", "1"), b: pin("p2", "1") }] })]);
+    return run(p, [setWireProps({ ids: [currentHarness(p).wires[0]!.id], gauge: 20 })]);
+  };
+  const findings = (p: Project, id: string) => runDfm({ project: p, cat, profile }).results.filter((r) => r.eff.rule.id === id).flatMap((r) => r.violations);
+
+  it("works out the strands to cut, fixes the gauge error, and flags the workmanship exception", () => {
+    let p = heavy();
+    const g = findings(p, "MFG-ELEC-001");
+    expect(g).toHaveLength(2); // both ends: 20 AWG into size 22D
+    expect(g[0]!.fix?.label).toBe("Remove 8 of 19 strands (CMA reduction)");
+    p = run(p, g.flatMap((v) => v.fix!.commands));
+    expect(findings(p, "MFG-ELEC-001")).toHaveLength(0);
+    expect(findings(p, "MFG-CMP-008")).toHaveLength(0); // 1,216 → 704 CMA fits the 754 max
+    const exc = findings(p, "MFG-CMP-009");
+    expect(exc).toHaveLength(2);
+    expect(exc[0]!.message).toMatch(/8 of 19 strands removed from 20 AWG \(1,216 → 704 CMA/);
+    const rev = currentRevision(p);
+    expect(deriveOperations(p, rev, cat, profile, resolvePedigree(p.pedigreeScheme, rev.activePedigreeId), inspections).ops.filter((o) => o.kind === "cmaReduction")).toHaveLength(1);
+  });
+
+  it("is an error where the pedigree forbids it, which then offers a lighter gauge instead", () => {
+    let p = newProject({ now: AT });
+    const scheme = structuredClone(p.pedigreeScheme);
+    scheme.pedigrees[0]!.process = { ...scheme.pedigrees[0]!.process, noCmaReduction: true };
+    p = heavy(run(p, [setPedigreeScheme({ scheme })]));
+    expect(findings(p, "MFG-ELEC-001")[0]!.fix?.label).toBe("Change to 22 AWG");
+    p = run(p, [setPinCmaReduction({ connectorId: "j1", cavityId: "1", strandsRemoved: 8 })]);
+    const ped = runDfm({ project: p, cat, profile }).results.find((r) => r.eff.rule.type === "cma_reduction_not_allowed")!;
+    expect(ped.eff.severity).toBe("error");
+    expect(ped.violations).toHaveLength(1);
   });
 });

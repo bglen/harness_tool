@@ -297,6 +297,13 @@ export const ConnectorView = memo(function ConnectorView({ c, L, level, names, c
                 </text>
               </g>
             )}
+            {/* crimp CMA adjustments: strands cut (workmanship exception) or build-up added */}
+            {w && (pin?.cmaReduction || pin?.buildUp) && (
+              <text className="mono" x={colWire + (wide ? 76 : 40)} y={r.y + 4} fontSize={9} fill={pin?.cmaReduction ? "var(--status-warning)" : tt}>
+                <title>{pin?.cmaReduction ? `CMA reduction: ${pin.cmaReduction.strandsRemoved} strands removed (workmanship exception)` : `CMA build-up: ${pin!.buildUp!.count}× ${pin!.buildUp!.gauge} AWG`}</title>
+                {pin?.cmaReduction ? `−${pin.cmaReduction.strandsRemoved}s` : "+CMA"}
+              </text>
+            )}
             {wide && contact && (
               <text className="mono" x={colContact} y={r.y + 4} fontSize={9.5} fill={tt}>
                 {contact}

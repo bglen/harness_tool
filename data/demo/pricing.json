@@ -26,6 +26,7 @@
     "contactCrimpInsert": 1.2,
     "leadEnd": 0.9,
     "cmaBuildUp": 1.5,
+    "cmaReduction": 2,
     "wireCutStrip": 0.6,
     "splice": 4,
     "daisyChain": 3,

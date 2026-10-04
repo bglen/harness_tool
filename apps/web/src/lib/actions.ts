@@ -371,7 +371,7 @@ export const ACTIONS: Action[] = [
     },
   },
   { id: "pLeadEnd", label: "Lead end…", group: "Connector", icon: "scissors", bar: ["pin"], menu: ["pin"], when: (c) => c.kind === "pin" && c.ids.length > 0 && c.ids.every((k) => !!svc().cat.connector(c.h.connectors.find((x) => x.id === k.split(":")[0])?.pn ?? "")?.flyingLead), run: (c) => pop("leadEnd", c) },
-  { id: "pinBuildUp", label: "CMA build-up…", group: "Splice", icon: "plus", menu: ["pin"], when: (c) => c.kind === "pin" && c.ids.length === 1 && contactFill(c.h, ...(c.ids[0]!.split(":") as [string, string])).wires.length > 0, run: (c) => pop("pinBuildUp", c) },
+  { id: "pinBuildUp", label: "Crimp CMA (build-up / reduction)…", group: "Splice", icon: "plus", menu: ["pin"], when: (c) => c.kind === "pin" && c.ids.length === 1 && contactFill(c.h, ...(c.ids[0]!.split(":") as [string, string])).wires.length > 0, run: (c) => pop("pinBuildUp", c) },
 
   // ─── Delete ──────────────────────────────────────────────────────────────
   {

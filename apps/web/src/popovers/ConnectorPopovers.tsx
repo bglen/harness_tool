@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { buildUpFor, contactCmaRange, contactFill, contactPnFor, currentHarness, formatDiameter, formatLength, parseLength, setAccessory, setBackshell, setLeadEnd, setPinBuildUp, type Accessory } from "@hs/model";
+import { buildUpFor, contactCmaRange, contactFill, contactPnFor, currentHarness, currentRevision, reductionFor, resolvePedigree, setPinCmaReduction, formatDiameter, formatLength, parseLength, setAccessory, setBackshell, setLeadEnd, setPinBuildUp, type Accessory } from "@hs/model";
 import { Check, X } from "lucide-react";
 import { dispatch, useProject } from "../store/project";
 import { useUi } from "../store/ui";
@@ -261,7 +261,11 @@ function LengthInput({ mm, units, onCommit, placeholder }: { mm?: number; units:
   return <input className={cx(inputCls, "mono h-7 w-24 text-xs")} value={v} placeholder={placeholder} onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === "Enter" && commit()} />;
 }
 
-/** CMA build-up in a contact: filler strands crimped in with the wire(s) to reach the contact's minimum circular mil area. */
+/**
+ * Crimp CMA at a contact: what the barrel holds against the contact's window, with CMA build-up (filler strands, for a
+ * light conductor) or CMA reduction (strands cut from a heavy one, a workmanship exception the pedigree may forbid).
+ * The tool works out what's needed; both stay editable.
+ */
 export function PinBuildUpPopover({ x, y, pinKey }: { x: number; y: number; pinKey: string }) {
   const project = useProject((s) => s.project)!;
   const h = currentHarness(project);
@@ -272,34 +276,70 @@ export function PinBuildUpPopover({ x, y, pinKey }: { x: number; y: number; pinK
   const f = contactFill(h, connectorId, cavityId);
   const range = contactCmaRange(cat, contactPnFor(h, cat, connectorId, cavityId, Math.max(...f.wires.map((w) => w.gauge), 22)));
   const need = range ? buildUpFor({ ...f, buildUp: null, cma: f.wireCma }, range.min) : null;
-  const bu = c.pins[cavityId]?.buildUp;
-  const set = (b: { gauge: number; count: number } | null) => dispatch(setPinBuildUp({ connectorId, cavityId, buildUp: b }));
+  const cut = range ? reductionFor(f, range.max) : null;
+  const pin = c.pins[cavityId];
+  const bu = pin?.buildUp;
+  const red = f.reduction;
+  const ped = resolvePedigree(project.pedigreeScheme, currentRevision(project).activePedigreeId);
+  const setBu = (b: { gauge: number; count: number } | null) => dispatch(setPinBuildUp({ connectorId, cavityId, buildUp: b }));
+  const setCut = (n: number | null) => dispatch(setPinCmaReduction({ connectorId, cavityId, strandsRemoved: n }));
   const fmt = (n: number) => n.toLocaleString("en-US");
   const out = range && (f.cma < range.min || f.cma > range.max);
   return (
-    <Floating x={x} y={y} onClose={() => useUi.getState().openPopover(null)} width={320} className="flex flex-col gap-2 p-3">
+    <Floating x={x} y={y} onClose={() => useUi.getState().openPopover(null)} width={380} className="flex flex-col gap-3 p-3">
       <div className="text-sm font-semibold">
-        CMA build-up at {c.refDes}-{cavityId}
+        Crimp CMA at {c.refDes}-{cavityId}
       </div>
       <div className="text-xs text-text-secondary">
         {f.wires.map((w) => `${w.label} (${w.gauge} AWG)`).join(", ")}: <span className={cx("mono", out ? "text-status-error" : "text-text-primary")}>{fmt(f.cma)} CMA</span>
+        {f.cma !== f.wireCma && <span className="text-text-tertiary"> (conductors {fmt(f.wireCma)})</span>}
         {range ? ` · contact takes ${fmt(range.min)}–${fmt(range.max)}` : " · contact range unknown"}
       </div>
-      {bu ? (
-        <div className="flex items-center gap-2 text-xs">
-          <input type="number" min={1} max={9} aria-label="Build-up strands" className={cx(inputCls, "mono h-7 w-14")} value={bu.count} onChange={(e) => set({ gauge: bu.gauge, count: Math.max(1, Number(e.target.value) || 1) })} />
-          <span>strands of</span>
-          <Select value={String(bu.gauge)} onChange={(v) => set({ gauge: Number(v), count: bu.count })} options={[16, 18, 20, 22, 24, 26, 28].map((g) => ({ value: String(g), label: `${g} AWG` }))} />
-          <button className="ml-auto text-accent hover:underline" onClick={() => set(null)}>
-            remove
-          </button>
-        </div>
-      ) : (
-        <Button size="sm" onClick={() => set(need ?? { gauge: Math.max(...f.wires.map((w) => w.gauge), 22), count: 1 })}>
-          {need ? `Add ${need.count}× ${need.gauge} AWG build-up` : "Add build-up"}
-        </Button>
-      )}
-      <div className="text-2xs text-text-tertiary">Recorded on the drawing notes, the BOM (filler wire) and the operations list.</div>
+      <Section title="Build-up (light conductor)">
+        {bu ? (
+          <div className="flex items-center gap-2 text-xs">
+            <input type="number" min={1} max={9} aria-label="Build-up strands" className={cx(inputCls, "mono h-7 w-14")} value={bu.count} onChange={(e) => setBu({ gauge: bu.gauge, count: Math.max(1, Number(e.target.value) || 1) })} />
+            <span>strands of</span>
+            <Select value={String(bu.gauge)} onChange={(v) => setBu({ gauge: Number(v), count: bu.count })} options={[16, 18, 20, 22, 24, 26, 28].map((g) => ({ value: String(g), label: `${g} AWG` }))} />
+            <button className="ml-auto text-accent hover:underline" onClick={() => setBu(null)}>
+              remove
+            </button>
+          </div>
+        ) : (
+          <Button size="sm" disabled={!!red} onClick={() => setBu(need ?? { gauge: Math.max(...f.wires.map((w) => w.gauge), 22), count: 1 })}>
+            {need ? `Add ${need.count}× ${need.gauge} AWG build-up (needed)` : "Add build-up"}
+          </Button>
+        )}
+      </Section>
+      <Section title="Reduction (heavy conductor)">
+        {red ? (
+          <div className="flex flex-col gap-1 text-xs">
+            <div className="flex items-center gap-2">
+              <span>Remove</span>
+              <input type="number" min={1} max={red.strands - 1} aria-label="Strands removed" className={cx(inputCls, "mono h-7 w-14")} value={red.strandsRemoved} onChange={(e) => setCut(Math.max(1, Math.min(red.strands - 1, Number(e.target.value) || 1)))} />
+              <span>
+                of {red.strands} strands from the {red.gauge} AWG conductor (−{fmt(red.removedCma)} CMA, {Math.round((100 * red.strandsRemoved) / red.strands)} %)
+              </span>
+              <button className="ml-auto text-accent hover:underline" onClick={() => setCut(null)}>
+                remove
+              </button>
+            </div>
+            {cut && cut.strandsRemoved !== red.strandsRemoved && <div className="text-2xs text-text-tertiary">Fitting the contact needs {cut.strandsRemoved} strands removed.</div>}
+          </div>
+        ) : cut ? (
+          <Button size="sm" disabled={!!bu} onClick={() => setCut(cut.strandsRemoved)}>
+            Remove {cut.strandsRemoved} of {cut.strands} strands to fit (−{fmt(cut.removedCma)} CMA)
+          </Button>
+        ) : (
+          <div className="text-2xs text-text-tertiary">{range && f.wireCma > range.max ? "Can't be fitted by cutting strands: use a larger contact or a step-down splice." : "Not needed: the conductor fits the contact."}</div>
+        )}
+        {(red || cut) && (
+          <div className={cx("text-2xs", ped.process.noCmaReduction ? "text-status-error" : "text-status-warning")}>
+            {ped.process.noCmaReduction ? `Not allowed at ${ped.name}: the checks will flag it as an error.` : `Workmanship exception: ${ped.workmanship} doesn't permit strand removal. It's flagged in the checks and called out on the drawing and design report for approval.`}
+          </div>
+        )}
+      </Section>
+      <div className="text-2xs text-text-tertiary">Both are recorded on the drawing notes and the operations list; build-up also adds filler wire to the BOM.</div>
     </Floating>
   );
 }

@@ -12,23 +12,36 @@ export interface BarrelFill {
   /** Drain wires terminated in the barrel (contacts only), by gauge. */
   drains: number[];
   buildUp: { gauge: number; count: number } | null;
-  /** Conductors only. */
+  /** Strands cut from the heaviest conductor (contacts only). */
+  reduction: CmaReduction | null;
+  /** Conductors only, as supplied. */
   wireCma: number;
-  /** Conductors + build-up. */
+  /** What the barrel actually holds: conductors + build-up − reduction. */
   cma: number;
 }
 
-const fill = (wires: Wire[], drains: number[], buildUp: BarrelFill["buildUp"]): BarrelFill => {
+/** A CMA reduction worked out against the conductor it is applied to. */
+export interface CmaReduction {
+  gauge: number;
+  strands: number;
+  strandsRemoved: number;
+  /** CMA taken away. */
+  removedCma: number;
+}
+
+const fill = (wires: Wire[], drains: number[], buildUp: BarrelFill["buildUp"], strandsRemoved = 0): BarrelFill => {
   const wireCma = wires.reduce((s, w) => s + circularMils(w.gauge), 0) + drains.reduce((s, g) => s + circularMils(g), 0);
-  return { wires, drains, buildUp, wireCma, cma: wireCma + (buildUp ? buildUp.count * circularMils(buildUp.gauge) : 0) };
+  const heaviest = Math.min(...wires.map((w) => w.gauge), ...drains);
+  const reduction = strandsRemoved && Number.isFinite(heaviest) ? reductionOn(heaviest, strandsRemoved) : null;
+  return { wires, drains, buildUp, reduction, wireCma, cma: wireCma + (buildUp ? buildUp.count * circularMils(buildUp.gauge) : 0) - (reduction?.removedCma ?? 0) };
 };
 
 /** What's crimped in a contact. */
 export function contactFill(h: Harness, connectorId: string, cavityId: string): BarrelFill {
   const wires = h.wires.filter((w) => [w.from, w.to].some((e) => e.kind === "pin" && e.connectorId === connectorId && e.cavityId === cavityId));
   const drains = h.terminations.filter((t) => t.method === "drainToPin" && t.drainPin?.connectorId === connectorId && t.drainPin.cavityId === cavityId).map((t) => t.drain?.gauge ?? 22);
-  const b = h.connectors.find((c) => c.id === connectorId)?.pins[cavityId]?.buildUp;
-  return fill(wires, drains, b ?? null);
+  const pin = h.connectors.find((c) => c.id === connectorId)?.pins[cavityId];
+  return fill(wires, drains, pin?.buildUp ?? null, pin?.cmaReduction?.strandsRemoved ?? 0);
 }
 
 /** What's crimped in each barrel of a splice. */
@@ -67,5 +80,48 @@ export function buildUps(h: Harness): { where: string; gauge: number; count: num
   const out: { where: string; gauge: number; count: number; objectId: string }[] = [];
   for (const c of h.connectors) for (const [cav, pin] of Object.entries(c.pins)) if (pin.buildUp) out.push({ where: `${c.refDes}-${cav}`, ...pin.buildUp, objectId: c.id });
   for (const s of h.splices) for (const b of s.buildUp) out.push({ where: `${s.label}${s.barrels > 1 ? ` barrel ${b.barrel + 1}` : ""}`, gauge: b.gauge, count: b.count, objectId: s.id });
+  return out;
+}
+
+/**
+ * Nominal stranding by AWG (MIL-W-22759 / M27500: 19 strands up to 14 AWG, 37 above). Seed values: verify against
+ * the wire spec sheet. Used to turn a CMA reduction into a number of strands.
+ */
+const STRANDS_BY_AWG: Record<number, number> = { 30: 7, 28: 7, 26: 19, 24: 19, 22: 19, 20: 19, 18: 19, 16: 19, 14: 19, 12: 37, 10: 37, 8: 133 };
+export function strandingOf(awg: number): { strands: number; strandCma: number } {
+  const strands = STRANDS_BY_AWG[awg] ?? 19;
+  return { strands, strandCma: circularMils(awg) / strands };
+}
+
+function reductionOn(gauge: number, strandsRemoved: number): CmaReduction {
+  const { strands, strandCma } = strandingOf(gauge);
+  const n = Math.min(strandsRemoved, strands - 1);
+  return { gauge, strands, strandsRemoved: n, removedCma: Math.round(n * strandCma) };
+}
+
+/**
+ * Smallest CMA reduction that brings a barrel down to `max`: strands cut from its heaviest conductor (build-up
+ * removed first, since it's the thing to drop). Null when nothing is needed or it can't be done by cutting strands.
+ */
+export function reductionFor(f: BarrelFill, max: number): CmaReduction | null {
+  const excess = f.wireCma - max;
+  if (excess <= 0) return null;
+  const gauge = Math.min(...f.wires.map((w) => w.gauge), ...f.drains);
+  if (!Number.isFinite(gauge)) return null;
+  const { strands, strandCma } = strandingOf(gauge);
+  const n = Math.ceil(excess / strandCma - 1e-9);
+  if (n >= strands) return null;
+  return reductionOn(gauge, n);
+}
+
+/** Every CMA reduction in the harness, for the build notes, operations and checks. */
+export function cmaReductions(h: Harness): { where: string; connectorId: string; cavityId: string; reduction: CmaReduction; fill: BarrelFill }[] {
+  const out: { where: string; connectorId: string; cavityId: string; reduction: CmaReduction; fill: BarrelFill }[] = [];
+  for (const c of h.connectors)
+    for (const [cav, pin] of Object.entries(c.pins)) {
+      if (!pin.cmaReduction) continue;
+      const f = contactFill(h, c.id, cav);
+      if (f.reduction) out.push({ where: `${c.refDes}-${cav}`, connectorId: c.id, cavityId: cav, reduction: f.reduction, fill: f });
+    }
   return out;
 }

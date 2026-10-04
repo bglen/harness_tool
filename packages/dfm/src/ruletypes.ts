@@ -24,6 +24,9 @@ import {
   updateLayer,
   uid,
   buildUpFor,
+  cmaReductions,
+  reductionFor,
+  setPinCmaReduction,
   contactCmaRange,
   contactFill,
   makeSplice,
@@ -208,21 +211,27 @@ export const RULE_TYPES: RuleType[] = [
           const pn = contactPnFor(ctx.h, ctx.cat, c.id, e.cavityId, w.gauge);
           const cp = pn ? ctx.cat.contactsByPn.get(pn) : undefined;
           if (!cp) continue;
-          if (c.pins[e.cavityId]?.buildUp) continue; // built up: the CMA check decides
+          if (c.pins[e.cavityId]?.buildUp || c.pins[e.cavityId]?.cmaReduction) continue; // built up or reduced: the CMA check decides
           if (w.gauge > cp.gaugeMin || w.gauge < cp.gaugeMax) {
             const target = w.gauge > cp.gaugeMin ? cp.gaugeMin : cp.gaugeMax;
             const thin = w.gauge > cp.gaugeMin;
-            const bu = thin ? buildUpFor(contactFill(ctx.h, c.id, e.cavityId), contactCmaRange(ctx.cat, cp.pn)!.min) : null;
+            const fill = contactFill(ctx.h, c.id, e.cavityId);
+            const range = contactCmaRange(ctx.cat, cp.pn)!;
+            const bu = thin ? buildUpFor(fill, range.min) : null;
+            // Too heavy: where the pedigree allows it, cut strands to fit (worked out here, adjustable afterwards).
+            const cut = !thin && !ctx.ped.process.noCmaReduction ? reductionFor(fill, range.max) : null;
             out.push({
               objectIds: [w.id, c.id],
               objectKind: "wire",
-              message: `${wireDesc(ctx, w)}: ${w.gauge} AWG doesn't fit the size ${cav.size} contact at ${pinLabel(ctx, c.id, e.cavityId)} (${cp.gaugeMax}–${cp.gaugeMin} AWG).`,
-              // Too thin: build the barrel up (keeps the wire); too thick: a lighter gauge.
+              message: `${wireDesc(ctx, w)}: ${w.gauge} AWG doesn't fit the size ${cav.size} contact at ${pinLabel(ctx, c.id, e.cavityId)} (${cp.gaugeMax}–${cp.gaugeMin} AWG).${cut ? ` Fitting it needs ${cut.strandsRemoved} of ${cut.strands} strands removed (CMA reduction, a workmanship exception).` : ""}`,
+              // Too thin: build the barrel up (keeps the wire); too thick: CMA reduction, else a lighter gauge.
               fix: bu
                 ? { label: `Add ${bu.count}× ${bu.gauge} AWG build-up`, commands: [setPinBuildUp({ connectorId: c.id, cavityId: e.cavityId, buildUp: bu })] }
-                : ctx.cat.wire(w.spec, target)
-                  ? { label: `Change to ${target} AWG`, commands: [setWireProps({ ids: [w.id], gauge: target })] }
-                  : undefined,
+                : cut
+                  ? { label: `Remove ${cut.strandsRemoved} of ${cut.strands} strands (CMA reduction)`, commands: [setPinCmaReduction({ connectorId: c.id, cavityId: e.cavityId, strandsRemoved: cut.strandsRemoved })] }
+                  : ctx.cat.wire(w.spec, target)
+                    ? { label: `Change to ${target} AWG`, commands: [setWireProps({ ids: [w.id], gauge: target })] }
+                    : undefined,
             });
           }
         }
@@ -1391,13 +1400,24 @@ export const RULE_TYPES: RuleType[] = [
         if (ctx.cat.connector(c.pn)?.flyingLead) continue;
         for (const cav of Object.keys(c.pins)) {
           const f = contactFill(ctx.h, c.id, cav);
-          if (f.wires.length + f.drains.length + (f.buildUp ? 1 : 0) < 2) continue;
+          if (f.wires.length + f.drains.length + (f.buildUp ? 1 : 0) < 2 && !f.reduction) continue;
           const range = contactCmaRange(ctx.cat, contactPnFor(ctx.h, ctx.cat, c.id, cav, Math.max(...f.wires.map((w) => w.gauge), 22)));
           if (!range) continue;
           const where = pinLabel(ctx, c.id, cav);
           if (f.cma > range.max)
-            out.push({ objectIds: [c.id, ...f.wires.map((w) => w.id)], objectKind: "pin", subject: cav, message: `${where}: ${fmt(f.cma)} CMA in the contact (max ${fmt(range.max)})${f.buildUp ? `, including ${f.buildUp.count}× ${f.buildUp.gauge} AWG build-up` : ""}. Too much copper to crimp: use a splice or fewer / thinner wires.`, fix: f.wires.length >= 2 && !f.buildUp ? { label: "Make splice", commands: [makeSplice({ at: { connectorId: c.id, cavityId: cav }, spliceId: uid() })] } : undefined });
+            out.push({ objectIds: [c.id, ...f.wires.map((w) => w.id)], objectKind: "pin", subject: cav, message: `${where}: ${fmt(f.cma)} CMA in the contact (max ${fmt(range.max)})${f.buildUp ? `, including ${f.buildUp.count}× ${f.buildUp.gauge} AWG build-up` : ""}. Too much copper to crimp: use a splice or fewer / thinner wires.`, fix: (() => {
+                // Several wires: a splice; one heavy wire: cut strands where the pedigree allows it.
+                if (f.wires.length >= 2 && !f.buildUp) return { label: "Make splice", commands: [makeSplice({ at: { connectorId: c.id, cavityId: cav }, spliceId: uid() })] };
+                const cut = !ctx.ped.process.noCmaReduction && !f.buildUp ? reductionFor(f, range.max) : null;
+                return cut ? { label: `Remove ${cut.strandsRemoved} of ${cut.strands} strands (CMA reduction)`, commands: [setPinCmaReduction({ connectorId: c.id, cavityId: cav, strandsRemoved: cut.strandsRemoved })] } : undefined;
+              })() });
           else if (f.cma < range.min) {
+            // Too many strands cut: back the reduction off to what's needed; otherwise build the barrel up.
+            if (f.reduction) {
+              const need = reductionFor(f, range.max);
+              out.push({ objectIds: [c.id, ...f.wires.map((w) => w.id)], objectKind: "pin", subject: cav, message: `${where}: ${fmt(f.cma)} CMA after removing ${f.reduction.strandsRemoved} strands (min ${fmt(range.min)}): too many strands cut.`, fix: need ? { label: `Remove only ${need.strandsRemoved} strands`, commands: [setPinCmaReduction({ connectorId: c.id, cavityId: cav, strandsRemoved: need.strandsRemoved })] } : { label: "Remove the CMA reduction", commands: [setPinCmaReduction({ connectorId: c.id, cavityId: cav, strandsRemoved: null })] } });
+              continue;
+            }
             const bu = buildUpFor(f, range.min);
             out.push({ objectIds: [c.id, ...f.wires.map((w) => w.id)], objectKind: "pin", subject: cav, message: `${where}: ${fmt(f.cma)} CMA in the contact (min ${fmt(range.min)}). The crimp won't grip: add CMA build-up.`, fix: bu ? { label: `Add ${bu.count}× ${bu.gauge} AWG build-up`, commands: [setPinBuildUp({ connectorId: c.id, cavityId: cav, buildUp: bu })] } : undefined });
           }
@@ -1445,6 +1465,35 @@ export const RULE_TYPES: RuleType[] = [
         }
       }
       return out;
+    },
+  },
+  {
+    id: "cma_reduction",
+    name: "CMA reduction (workmanship exception)",
+    description: "Lists every contact where strands are cut from a conductor so it fits the crimp barrel. Strand removal is not permitted by IPC/WHMA-A-620; each one needs engineering (and usually customer) approval and is called out in the design package.",
+    example: "P1-3: 8 of 19 strands removed from 20 AWG to fit a size 22D contact.",
+    category: "Components",
+    params: [],
+    depends: ["wire", "pin", "connector"],
+    evaluate(ctx) {
+      return cmaReductions(ctx.h).map((r) => ({
+        objectIds: [r.connectorId, ...r.fill.wires.map((w) => w.id)],
+        objectKind: "pin" as const,
+        subject: r.cavityId,
+        message: `${pinLabel(ctx, r.connectorId, r.cavityId)}: CMA reduction, ${r.reduction.strandsRemoved} of ${r.reduction.strands} strands removed from ${r.reduction.gauge} AWG (${r.fill.wireCma.toLocaleString("en-US")} → ${r.fill.cma.toLocaleString("en-US")} CMA, −${Math.round((100 * r.reduction.strandsRemoved) / r.reduction.strands)} % of that conductor). Workmanship exception to IPC/WHMA-A-620: needs approval.`,
+      }));
+    },
+  },
+  {
+    id: "cma_reduction_not_allowed",
+    name: "CMA reduction used",
+    description: "CMA reduction (cutting strands to fit a contact) not allowed at this build class.",
+    example: "No strand removal at Flight.",
+    category: "Process",
+    params: [],
+    depends: ["pin"],
+    evaluate(ctx) {
+      return cmaReductions(ctx.h).map((r) => ({ objectIds: [r.connectorId], objectKind: "pin" as const, subject: r.cavityId, message: `${pinLabel(ctx, r.connectorId, r.cavityId)}: CMA reduction is not allowed at ${ctx.ped.name}. Use a contact that takes ${r.reduction.gauge} AWG, a lighter wire, or a step-down splice.`, fix: { label: "Remove the CMA reduction", commands: [setPinCmaReduction({ connectorId: r.connectorId, cavityId: r.cavityId, strandsRemoved: null })] } }));
     },
   },
   {

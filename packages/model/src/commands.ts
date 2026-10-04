@@ -1922,3 +1922,15 @@ export const moveWireEnd = def<{ wireId: string; end: "from" | "to"; to: WireEnd
     if (moving.kind === "pin" && !linksAt(net, kOld).length) setPinNet(h, { connectorId: moving.connectorId, cavityId: moving.cavityId }, null);
   },
 });
+
+/** CMA reduction at a contact: strands cut from its heaviest conductor (null removes it). A workmanship exception. */
+export const setPinCmaReduction = def<{ connectorId: string; cavityId: string; strandsRemoved: number | null }>("setPinCmaReduction", {
+  label: (p) => (p.strandsRemoved ? `CMA reduction: remove ${p.strandsRemoved} strands` : "Remove CMA reduction"),
+  run(proj, p) {
+    const c = connectorById(H(proj), p.connectorId);
+    if (!c) return;
+    const pin = (c.pins[p.cavityId] ??= { netId: null });
+    if (p.strandsRemoved && p.strandsRemoved > 0) pin.cmaReduction = { strandsRemoved: Math.round(p.strandsRemoved) };
+    else delete pin.cmaReduction;
+  },
+});
